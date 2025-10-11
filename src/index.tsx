@@ -45,6 +45,18 @@ const server = serve({
         message: `Hello, ${name}!`,
       })
     },
+
+    "/api/track.mp3": new Response(
+      await Bun.file(
+        "\\\\Swisscheese\\plex\\Library\\mp3\\Ghost\\" +
+          "Seven Inches of Satanic Panic\\Mary On A Cross.mp3"
+      ).bytes(),
+      {
+        headers: {
+          "Content-Type": "audio/mpeg",
+        },
+      }
+    ),
   },
 
   development: process.env.NODE_ENV !== "production" && {

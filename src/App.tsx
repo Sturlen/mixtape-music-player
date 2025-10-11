@@ -1,8 +1,8 @@
-import { APITester } from "./APITester";
-import "./index.css";
+import { APITester } from "./APITester"
+import "./index.css"
 
-import logo from "./logo.svg";
-import reactLogo from "./react.svg";
+import logo from "./logo.svg"
+import reactLogo from "./react.svg"
 
 export function App() {
   return (
@@ -12,13 +12,14 @@ export function App() {
         <img src={reactLogo} alt="React Logo" className="logo react-logo" />
       </div>
 
-      <h1>Bun + React</h1>
+      <h1>Spelemann</h1>
       <p>
         Edit <code>src/App.tsx</code> and save to test HMR
       </p>
       <APITester />
+      <audio src="/api/track.mp3" controls />
     </div>
-  );
+  )
 }
 
-export default App;
+export default App
