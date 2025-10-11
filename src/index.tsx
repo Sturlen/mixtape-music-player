@@ -8,16 +8,16 @@ join
 const music_exts = ["mp3", "flac"] as const
 const art_exts = ["jpeg", "png", "webp"] as const
 
-const dir_path = "\\\\Swisscheese\\plex\\Library\\mp3\\Ghost\\"
+const dir_path = "\\\\Swisscheese\\plex\\Library\\mp3\\"
 
 // read all the files in the current directory
 const file_strings = await readdir(dir_path, { recursive: true })
 const files = file_strings.map((x) => Bun.file(x))
 
-files.forEach(console.log)
+// files.forEach(console.log)
 const split_files = file_strings.map((x) => x.split(path.sep))
-const albums = Object.groupBy(file_strings, (arr) => arr.split(path.sep)[0])
-console.log(albums)
+const artists = Object.groupBy(file_strings, (arr) => arr.split(path.sep)[0])
+console.log(artists)
 
 const server = serve({
   routes: {
@@ -57,6 +57,24 @@ const server = serve({
         },
       }
     ),
+    "/api/playback/:artist/album/:album/track/:track/file.mp3": async (req) => {
+      // todo: investigate possible filepath injection attacks
+      const sanitize = (str: string) => str.replace(/[\\/]/g, "")
+      const artist = sanitize(req.params.artist)
+      const album = sanitize(req.params.album)
+      const track = sanitize(req.params.track)
+
+      return new Response(
+        await Bun.file(
+          `\\\\Swisscheese\\plex\\Library\\mp3\\${artist}\\${album}\\${track}.mp3`
+        ).bytes(),
+        {
+          headers: {
+            "Content-Type": "audio/mpeg",
+          },
+        }
+      )
+    },
   },
 
   development: process.env.NODE_ENV !== "production" && {

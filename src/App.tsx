@@ -18,6 +18,10 @@ export function App() {
       </p>
       <APITester />
       <audio src="/api/track.mp3" controls />
+      <audio
+        src="/api/playback/Ghost/album/Seven Inches of Satanic Panic/track/Kiss The Go-Goat/file.mp3"
+        controls
+      />
     </div>
   )
 }
