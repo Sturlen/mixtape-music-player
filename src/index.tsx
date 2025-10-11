@@ -10,6 +10,14 @@ const art_exts = ["jpeg", "png", "webp"] as const
 
 const dir_path = "\\\\Swisscheese\\plex\\Library\\mp3\\"
 
+const db = {
+  artists: new Map(),
+  albums: new Map(),
+  tracks: new Map(),
+}
+
+// parser
+
 // read all the files in the current directory
 const file_strings = await readdir(dir_path, { recursive: true })
 const files = file_strings.map((x) => Bun.file(x))
@@ -22,6 +30,7 @@ console.log(artists)
 const server = serve({
   routes: {
     // Serve index.html for all unmatched routes.
+    // todo: 404 pgae
     "/*": index,
 
     "/api/hello": {
