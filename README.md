@@ -1,4 +1,4 @@
-# bun-react-template
+# Spelemann - Self Hosted Music
 
 To install dependencies:
 
@@ -19,3 +19,5 @@ bun start
 ```
 
 This project was created using `bun init` in bun v1.2.23. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+
+[Name](https://snl.no/spelemann)
