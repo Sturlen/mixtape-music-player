@@ -3,6 +3,7 @@ import index from "./index.html"
 
 import { readdir } from "node:fs/promises"
 import path from "node:path"
+import Elysia from "elysia"
 
 const music_exts = ["mp3", "flac"] as const
 const art_exts = ["jpeg", "png", "webp"] as const
@@ -112,83 +113,33 @@ for (const artist_dir of artist_dirs) {
   }
 }
 
-const file_strings = await readdir(music_root_path, { recursive: true })
-const files = file_strings.map((x) => Bun.file(x))
+const app = new Elysia()
+  .get("/*", index)
+  .get("/api/artists", Response.json(db.artists))
+  .get("/api/artists/:artistId", async ({ params: { artistId } }) => {
+    return Response.json(db.artists.find((a) => a.id == artistId))
+  })
+  .get("/api/albums", Response.json(db.albums))
+  .get("/api/albums/:albumId", async ({ params: { albumId } }) => {
+    return Response.json(db.albums.find((a) => a.id == albumId))
+  })
+  .get("/api/tracks", Response.json(db.tracks))
+  .get("/api/tracks/:trackId", async ({ params: { trackId } }) => {
+    return Response.json(db.tracks.find((track) => track.id == trackId))
+  })
+  .get("/api/playback/:track", async (req) => {
+    const track = db.tracks.find((track) => track.id === req.params.track)
 
-// files.forEach(console.log)
-const split_files = file_strings.map((x) => x.split(path.sep))
-const artists = Object.groupBy(file_strings, (arr) => arr.split(path.sep)[0])
-// console.log(artists)
+    if (!track) {
+      return new Response("Track not found", { status: 404 })
+    }
 
-const server = serve({
-  routes: {
-    // Serve index.html for all unmatched routes.
-    // todo: 404 pgae
-    "/*": index,
+    const file = Bun.file(track.path)
 
-    "/api/hello": {
-      async GET(req) {
-        return Response.json({
-          message: "Hello, world!",
-          method: "GET",
-        })
+    return new Response(await file.bytes(), {
+      headers: {
+        "Content-Type": file.type,
       },
-      async PUT(req) {
-        return Response.json({
-          message: "Hello, world!",
-          method: "PUT",
-        })
-      },
-    },
-
-    "/api/hello/:name": async (req) => {
-      const name = req.params.name
-      return Response.json({
-        message: `Hello, ${name}!`,
-      })
-    },
-
-    "/api/track.mp3": new Response(
-      await Bun.file(
-        "\\\\Swisscheese\\plex\\Library\\mp3\\Ghost\\" +
-          "Seven Inches of Satanic Panic\\Mary On A Cross.mp3"
-      ).bytes(),
-      {
-        headers: {
-          "Content-Type": "audio/mpeg",
-        },
-      }
-    ),
-    "/api/tracks": Response.json(db.tracks),
-    "/api/tracks/:trackId": async (req) => {
-      return Response.json(
-        db.tracks.find((track) => track.id == req.params.trackId)
-      )
-    },
-    "/api/playback/:track": async (req) => {
-      const track = db.tracks.find((track) => track.id === req.params.track)
-
-      if (!track) {
-        return new Response("Track not found", { status: 404 })
-      }
-
-      const file = Bun.file(track.path)
-
-      return new Response(await file.bytes(), {
-        headers: {
-          "Content-Type": file.type,
-        },
-      })
-    },
-  },
-
-  development: process.env.NODE_ENV !== "production" && {
-    // Enable browser hot reloading in development
-    hmr: true,
-
-    // Echo console logs from the browser to the server
-    console: true,
-  },
-})
-
-console.log(`🚀 Server running at ${server.url}`)
+    })
+  })
+  .listen(3000)
