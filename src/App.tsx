@@ -1,10 +1,46 @@
 import { APITester } from "./APITester"
+import { treaty } from "@elysiajs/eden"
 import "./index.css"
 
 import logo from "./logo.svg"
 import reactLogo from "./react.svg"
 
+import type { App } from "./index"
+import { useQuery } from "@tanstack/react-query"
+import { useRef, useState } from "react"
+
+// todo: fix localhost
+const client = treaty<App>("localhost:3000")
+
+function raise(message: string) {
+  throw new Error(message)
+}
+
+async function getArtists() {
+  const { data, error } = await client.api.artists.get()
+  if (error) {
+    throw new Error("error")
+  }
+  return data
+}
+
+function useArtists() {
+  return useQuery({ queryKey: ["albums"], queryFn: getArtists })
+}
+
 export function App() {
+  const { data: artists } = useArtists()
+
+  const player = useRef<HTMLAudioElement>(null)
+
+  function setTrack(id: string) {
+    console.log(id)
+    if (player.current) {
+      player.current.src = `/api/playback/${id}`
+      player.current?.play()
+    }
+  }
+
   return (
     <div className="app">
       <article
@@ -15,21 +51,39 @@ export function App() {
           padding: "2rem",
         }}
       >
-        <div className="logo-container">
-          <img src={logo} alt="Bun Logo" className="logo bun-logo" />
-          <img src={reactLogo} alt="React Logo" className="logo react-logo" />
-        </div>
+        <audio ref={player} controls />
 
         <h1>Spelemann</h1>
         <p>
           Edit <code>src/App.tsx</code> and save to test HMR
         </p>
-        <APITester />
-        <audio src="/api/track.mp3" controls />
-        <audio
-          src="/api/playback/Ghost/album/Seven Inches of Satanic Panic/track/Kiss The Go-Goat/file.mp3"
-          controls
-        />
+
+        <div>
+          {artists?.map((a) => (
+            <div>
+              <h2>{a.name}</h2>
+              <div style={{ backgroundColor: "grey" }}>
+                {a.albums.map((al) => (
+                  <details>
+                    <summary>{al.name}</summary>
+                    <div>
+                      {al.tracks.map((tr) => (
+                        <div>
+                          <button
+                            style={{ backgroundColor: "black", color: "white" }}
+                            onClick={() => setTrack(tr.id)}
+                          >
+                            <span>{tr.name}</span>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       </article>
       <div
         style={{

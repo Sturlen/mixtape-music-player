@@ -8,11 +8,16 @@
 import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
 import { App } from "./App"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+
+const queryClient = new QueryClient()
 
 const elem = document.getElementById("root")!
 const app = (
   <StrictMode>
-    <App />
+    <QueryClientProvider client={queryClient}>
+      <App />
+    </QueryClientProvider>
   </StrictMode>
 )
 

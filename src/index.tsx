@@ -113,9 +113,11 @@ for (const artist_dir of artist_dirs) {
   }
 }
 
+console.log(db.tracks)
+
 const app = new Elysia()
   .get("/*", index)
-  .get("/api/artists", Response.json(db.artists))
+  .get("/api/artists", () => db.artists)
   .get("/api/artists/:artistId", async ({ params: { artistId } }) => {
     return Response.json(db.artists.find((a) => a.id == artistId))
   })
@@ -143,3 +145,7 @@ const app = new Elysia()
     })
   })
   .listen(3000)
+
+export type App = typeof app
+
+console.log("Running!")
