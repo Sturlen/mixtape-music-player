@@ -2,30 +2,123 @@ import { serve } from "bun"
 import index from "./index.html"
 
 import { readdir } from "node:fs/promises"
-import path, { join } from "node:path"
-join
+import path from "node:path"
 
 const music_exts = ["mp3", "flac"] as const
 const art_exts = ["jpeg", "png", "webp"] as const
 
-const dir_path = "\\\\Swisscheese\\plex\\Library\\mp3\\"
+// TODO: make a config for this
+const music_root_path = "\\\\Swisscheese\\plex\\Library\\mp3\\"
+
+type Track = {
+  id: string
+  name: string
+  playtimeSeconds: number
+  path: string
+}
+
+type Album = {
+  id: string
+  name: string
+  tracks: Track[]
+  imagePath?: string
+}
+
+type Artist = {
+  id: string
+  name: string
+  albums: Album[]
+}
 
 const db = {
-  artists: new Map(),
-  albums: new Map(),
-  tracks: new Map(),
+  artists: new Array<Artist>(),
+  albums: new Array<Album>(),
+  tracks: new Array<Track>(),
 }
 
 // parser
 
 // read all the files in the current directory
-const file_strings = await readdir(dir_path, { recursive: true })
+const artist_dirents = await readdir(music_root_path, {
+  recursive: false,
+  withFileTypes: true,
+})
+const artist_dirs = artist_dirents
+  .filter((x) => x.isDirectory())
+  .map((x) => x.name)
+
+for (const artist_dir of artist_dirs) {
+  const artist: Artist = {
+    id: crypto.randomUUID(),
+    name: artist_dir,
+    albums: [],
+  }
+  const albums = (
+    await readdir(path.join(music_root_path, artist_dir), {
+      withFileTypes: true,
+    })
+  )
+    .filter((x) => x.isDirectory())
+    .map((x) => x.name)
+
+  // console.log(artist_dir, albums)
+  db.artists.push(artist)
+
+  for (const album_name of albums) {
+    const album: Album = {
+      id: crypto.randomUUID(),
+      name: album_name,
+      tracks: [],
+    }
+
+    db.albums.push(album)
+    artist.albums.push(album)
+
+    // console.log(album_name)
+
+    const tracks = (
+      await readdir(path.join(music_root_path, artist_dir, album_name), {
+        withFileTypes: true,
+      })
+    )
+      .filter((x) => !x.isDirectory())
+      .map((x) => x.name)
+
+    for (const track_name of tracks) {
+      const track_path = path.join(
+        music_root_path,
+        artist_dir,
+        album_name,
+        track_name
+      )
+      const file = Bun.file(track_path)
+
+      const track: Track = {
+        id: crypto.randomUUID(),
+        name: track_name,
+        playtimeSeconds: 0,
+        path: track_path,
+      }
+
+      if (file.type.startsWith("audio/")) {
+        db.tracks.push(track)
+        album.tracks.push(track)
+      } else if (file.type.startsWith("image/")) {
+        album.imagePath = track_path
+      }
+    }
+
+    // TODO: too many loops, too many loops
+  }
+}
+
+const file_strings = await readdir(music_root_path, { recursive: true })
 const files = file_strings.map((x) => Bun.file(x))
 
 // files.forEach(console.log)
 const split_files = file_strings.map((x) => x.split(path.sep))
 const artists = Object.groupBy(file_strings, (arr) => arr.split(path.sep)[0])
-console.log(artists)
+// console.log(artists)
 
 const server = serve({
   routes: {
@@ -66,23 +159,26 @@ const server = serve({
         },
       }
     ),
-    "/api/playback/:artist/album/:album/track/:track/file.mp3": async (req) => {
-      // todo: investigate possible filepath injection attacks
-      const sanitize = (str: string) => str.replace(/[\\/]/g, "")
-      const artist = sanitize(req.params.artist)
-      const album = sanitize(req.params.album)
-      const track = sanitize(req.params.track)
-
-      return new Response(
-        await Bun.file(
-          `\\\\Swisscheese\\plex\\Library\\mp3\\${artist}\\${album}\\${track}.mp3`
-        ).bytes(),
-        {
-          headers: {
-            "Content-Type": "audio/mpeg",
-          },
-        }
+    "/api/tracks": Response.json(db.tracks),
+    "/api/tracks/:trackId": async (req) => {
+      return Response.json(
+        db.tracks.find((track) => track.id == req.params.trackId)
       )
+    },
+    "/api/playback/:track": async (req) => {
+      const track = db.tracks.find((track) => track.id === req.params.track)
+
+      if (!track) {
+        return new Response("Track not found", { status: 404 })
+      }
+
+      const file = Bun.file(track.path)
+
+      return new Response(await file.bytes(), {
+        headers: {
+          "Content-Type": file.type,
+        },
+      })
     },
   },
 
