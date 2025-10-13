@@ -4,12 +4,13 @@ import index from "./index.html"
 import { readdir } from "node:fs/promises"
 import path from "node:path"
 import Elysia from "elysia"
+import { env } from "./env"
 
 const music_exts = ["mp3", "flac"] as const
 const art_exts = ["jpeg", "png", "webp"] as const
 
 // TODO: make a config for this
-const music_root_path = "\\\\Swisscheese\\plex\\Library\\mp3\\"
+const music_root_path = env.MUSIC_PATH
 
 type Track = {
   id: string

@@ -2,9 +2,6 @@ import { APITester } from "./APITester"
 import { treaty } from "@elysiajs/eden"
 import "./index.css"
 
-import logo from "./logo.svg"
-import reactLogo from "./react.svg"
-
 import type { App } from "./index"
 import { useQuery } from "@tanstack/react-query"
 import { useRef, useState } from "react"
