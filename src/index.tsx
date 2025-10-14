@@ -1,6 +1,6 @@
 import { serve } from "bun"
 import index from "./index.html"
-
+import { openapi, fromTypes } from "@elysiajs/openapi"
 import { readdir } from "node:fs/promises"
 import path from "node:path"
 import Elysia from "elysia"
@@ -117,6 +117,12 @@ for (const artist_dir of artist_dirs) {
 console.log(db.tracks)
 
 const app = new Elysia()
+  .use(
+    openapi({
+      path: "/openapi",
+      references: fromTypes(),
+    })
+  )
   .get("/*", index)
   .get("/api/artists", () => db.artists)
   .get("/api/artists/:artistId", async ({ params: { artistId } }) => {
