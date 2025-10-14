@@ -122,9 +122,24 @@ const app = new Elysia()
   .get("/api/artists/:artistId", async ({ params: { artistId } }) => {
     return Response.json(db.artists.find((a) => a.id == artistId))
   })
-  .get("/api/albums", Response.json(db.albums))
+  .get("/api/albums", {
+    albums: db.albums.map((alb) => ({
+      ...alb,
+      imagePath: undefined,
+      imageUrl: `/api/albumArt/${alb.id}`,
+    })),
+  })
   .get("/api/albums/:albumId", async ({ params: { albumId } }) => {
-    return Response.json(db.albums.find((a) => a.id == albumId))
+    const album = db.albums.find((a) => a.id == albumId)
+    return {
+      album: album
+        ? {
+            ...album,
+            imagePath: undefined,
+            imageUrl: `/api/albumArt/${albumId}`,
+          }
+        : undefined,
+    }
   })
   .get("/api/tracks", Response.json(db.tracks))
   .get("/api/tracks/:trackId", async ({ params: { trackId } }) => {
@@ -134,10 +149,29 @@ const app = new Elysia()
     const track = db.tracks.find((track) => track.id === req.params.track)
 
     if (!track) {
-      return new Response("Track not found", { status: 404 })
+      return new Response("Art not found", { status: 404 })
     }
 
     const file = Bun.file(track.path)
+
+    return new Response(await file.bytes(), {
+      headers: {
+        "Content-Type": file.type,
+      },
+    })
+  })
+  .get("/api/albumArt/:albumId", async (req) => {
+    const album = db.albums.find((alb) => alb.id === req.params.albumId)
+
+    if (!album) {
+      return new Response("Album not found", { status: 404 })
+    }
+
+    if (!album.imagePath) {
+      return new Response("Album has no album art", { status: 404 })
+    }
+
+    const file = Bun.file(album.imagePath)
 
     return new Response(await file.bytes(), {
       headers: {

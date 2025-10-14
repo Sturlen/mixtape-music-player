@@ -5,6 +5,7 @@ import "./index.css"
 import type { App } from "./index"
 import { useQuery } from "@tanstack/react-query"
 import { useRef, useState } from "react"
+import { Album } from "./Album"
 
 // todo: fix localhost
 const client = treaty<App>("localhost:3000")
@@ -28,16 +29,6 @@ function useArtists() {
 export function App() {
   const { data: artists } = useArtists()
 
-  const player = useRef<HTMLAudioElement>(null)
-
-  function setTrack(id: string) {
-    console.log(id)
-    if (player.current) {
-      player.current.src = `/api/playback/${id}`
-      player.current?.play()
-    }
-  }
-
   return (
     <div className="app">
       <article
@@ -48,34 +39,18 @@ export function App() {
           padding: "2rem",
         }}
       >
-        <audio ref={player} controls />
-
         <h1>Spelemann</h1>
         <p>
           Edit <code>src/App.tsx</code> and save to test HMR
         </p>
 
         <div>
-          {artists?.map((a) => (
+          {artists?.map((artist) => (
             <div>
-              <h2>{a.name}</h2>
+              <h2>{artist.name}</h2>
               <div style={{ backgroundColor: "grey" }}>
-                {a.albums.map((al) => (
-                  <details>
-                    <summary>{al.name}</summary>
-                    <div>
-                      {al.tracks.map((tr) => (
-                        <div>
-                          <button
-                            style={{ backgroundColor: "black", color: "white" }}
-                            onClick={() => setTrack(tr.id)}
-                          >
-                            <span>{tr.name}</span>
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </details>
+                {artist.albums.map((album) => (
+                  <Album albumId={album.id} />
                 ))}
               </div>
             </div>
