@@ -57,7 +57,11 @@ export function Album({ albumId }: { albumId: string }) {
                 setTrack(track.id)
                 play()
               }}
-              style={{ backgroundColor: "black", color: "white" }}
+              style={{
+                backgroundColor: "black",
+                color: "white",
+                borderRadius: "2rem",
+              }}
             >
               <span>{track.name}</span>
             </button>

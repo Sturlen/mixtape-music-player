@@ -6,6 +6,7 @@ import type { App } from "./index"
 import { useQuery } from "@tanstack/react-query"
 import { useRef, useState } from "react"
 import { Album } from "./Album"
+import { useAudioPlayer } from "./Player"
 
 // todo: fix localhost
 const client = treaty<App>("localhost:3000")
@@ -28,6 +29,7 @@ function useArtists() {
 
 export function App() {
   const { data: artists } = useArtists()
+  const { play, pause } = useAudioPlayer()
 
   return (
     <div className="app">
@@ -40,9 +42,12 @@ export function App() {
         }}
       >
         <h1>Spelemann</h1>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
+        <button onClick={() => play()}>
+          <span>Play</span>
+        </button>
+        <button onClick={() => pause()}>
+          <span>Pause</span>
+        </button>
 
         <div>
           {artists?.map((artist) => (

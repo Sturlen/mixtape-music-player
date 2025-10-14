@@ -7,62 +7,54 @@ import {
   type PropsWithChildren,
 } from "react"
 
-interface PlayerContextType {
+import { create } from "zustand"
+
+type PlayerState = {
+  audio: HTMLAudioElement | undefined
   isPlaying: boolean
   play: () => void
   pause: () => void
   setTrack: (trackId: string) => void
+
+  setAudio: (el?: HTMLAudioElement) => void
 }
 
-const PlayerContext = createContext<PlayerContextType | undefined>(undefined)
-
-export const PlayerProvider = ({ children }: PropsWithChildren) => {
-  const [isPlaying, setIsPlaying] = useState(false)
-
-  const audioRef = React.useRef<HTMLAudioElement | null>(null)
-
-  function setTrack(id: string) {
-    console.log("setTrack", id)
-    if (!audioRef.current) {
-      console.log("no")
+export const useAudioPlayer = create<PlayerState>((set, get) => ({
+  isPlaying: false,
+  audio: undefined,
+  setAudio: (audio) => set({ audio }),
+  setTrack: (trackId) => {
+    const a = get().audio
+    console.log("setTrack", a, trackId)
+    if (!a) {
       return
     }
-    audioRef.current.src = `/api/playback/${id}`
-    audioRef.current.play() // todo: should it auto play?
-    console.log(audioRef.current, audioRef.current.src)
-  }
+    a.src = `/api/playback/${trackId}`
+    a.play()
+  },
+  play: () => {
+    console.log("play")
+    const a = get().audio
+    a?.play()
+    set({ isPlaying: true })
+  },
+  pause: () => {
+    const a = get().audio
+    a?.pause()
+    set({ isPlaying: false })
+  },
+}))
 
-  async function play() {
-    return audioRef.current?.play()
-  }
-
-  function pause() {
-    audioRef.current?.pause()
-  }
+export const PlayerProvider = ({ children }: PropsWithChildren) => {
+  const setAudio = useAudioPlayer((s) => s.setAudio)
 
   useEffect(() => {
-    const audio = new Audio()
-    audioRef.current = new Audio()
+    setAudio(new Audio())
+    console.log("audio set")
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause()
-        audioRef.current.src = ""
-        audioRef.current = null
-      }
+      setAudio()
     }
   }, [])
 
-  return (
-    <PlayerContext.Provider value={{ isPlaying, play, pause, setTrack }}>
-      {children}
-    </PlayerContext.Provider>
-  )
-}
-
-export const useAudioPlayer = () => {
-  const context = useContext(PlayerContext)
-  if (!context) {
-    throw new Error("usePlayer must be used within a PlayerProvider")
-  }
-  return context
+  return children
 }
