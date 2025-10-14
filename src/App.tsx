@@ -1,5 +1,6 @@
 import { APITester } from "./APITester"
 import { treaty } from "@elysiajs/eden"
+import { PauseIcon, PlayIcon } from "lucide-react"
 import "./index.css"
 
 import type { App } from "./index"
@@ -29,7 +30,6 @@ function useArtists() {
 
 export function App() {
   const { data: artists } = useArtists()
-  const { play, pause } = useAudioPlayer()
 
   return (
     <div className="app">
@@ -42,13 +42,7 @@ export function App() {
         }}
       >
         <h1>Spelemann</h1>
-        <button onClick={() => play()}>
-          <span>Play</span>
-        </button>
-        <button onClick={() => pause()}>
-          <span>Pause</span>
-        </button>
-
+        <Controls />
         <div>
           {artists?.map((artist) => (
             <div>
@@ -84,3 +78,26 @@ export function App() {
 }
 
 export default App
+
+function Controls() {
+  const { play, pause, currentTime } = useAudioPlayer()
+
+  return (
+    <div>
+      <button
+        onClick={() => play()}
+        style={{ background: "black", border: "white" }}
+      >
+        <PlayIcon />
+      </button>
+      <button
+        onClick={() => pause()}
+        style={{ background: "black", border: "white" }}
+      >
+        <PauseIcon />
+      </button>
+
+      <div>{currentTime}</div>
+    </div>
+  )
+}

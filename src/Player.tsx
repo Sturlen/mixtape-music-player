@@ -12,16 +12,26 @@ import { create } from "zustand"
 type PlayerState = {
   audio: HTMLAudioElement | undefined
   isPlaying: boolean
-  play: () => void
+  // https://goo.gl/LdLk22
+  // todo: fix AbortError
+  isLoading: boolean
+  play: () => Promise<void>
   pause: () => void
   setTrack: (trackId: string) => void
+  currentTime: number
+  setCurrentTime: (currentTime: number) => void
+  duration: number
 
   setAudio: (el?: HTMLAudioElement) => void
 }
 
 export const useAudioPlayer = create<PlayerState>((set, get) => ({
   isPlaying: false,
+  isLoading: false,
   audio: undefined,
+  currentTime: 0,
+  duration: 0,
+  setCurrentTime: (currentTime) => set({ currentTime }),
   setAudio: (audio) => set({ audio }),
   setTrack: (trackId) => {
     const a = get().audio
@@ -30,29 +40,59 @@ export const useAudioPlayer = create<PlayerState>((set, get) => ({
       return
     }
     a.src = `/api/playback/${trackId}`
-    a.play()
+    get().play()
   },
-  play: () => {
-    console.log("play")
+  play: async () => {
+    console.log("try play")
     const a = get().audio
-    a?.play()
+    const isLoading = get().isLoading
+    if (!a) {
+      return
+    }
+
+    if (isLoading) {
+      console.log("player is already loading")
+      return
+    }
+    try {
+      set({ isLoading: true })
+      await a.play()
+    } catch (error) {
+      console.error(error)
+    } finally {
+      set({ isLoading: false })
+    }
+
     set({ isPlaying: true })
   },
   pause: () => {
     const a = get().audio
-    a?.pause()
+    const playPromise = get().isLoading
+    if (!a || playPromise) {
+      return
+    }
+    a.pause()
     set({ isPlaying: false })
   },
 }))
 
 export const PlayerProvider = ({ children }: PropsWithChildren) => {
   const setAudio = useAudioPlayer((s) => s.setAudio)
+  const setCurrentTime = useAudioPlayer((s) => s.setCurrentTime)
 
   useEffect(() => {
-    setAudio(new Audio())
+    const audio = new Audio()
+    audio.volume = 0.1
+
+    const onTime = () => setCurrentTime(audio.currentTime)
+
+    audio.addEventListener("timeupdate", onTime)
+
+    setAudio(audio)
     console.log("audio set")
     return () => {
       setAudio()
+      audio.removeEventListener("timeupdate", onTime)
     }
   }, [])
 

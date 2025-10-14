@@ -26,7 +26,8 @@ function useAlbum(albumId: string) {
 
 export function Album({ albumId }: { albumId: string }) {
   const { data } = useAlbum(albumId)
-  const { setTrack, play } = useAudioPlayer()
+  const play = useAudioPlayer((s) => s.play)
+  const setTrack = useAudioPlayer((s) => s.setTrack)
 
   if (!data) {
     return <div></div>
