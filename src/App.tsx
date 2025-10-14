@@ -80,26 +80,58 @@ export function App() {
 export default App
 
 function Controls() {
-  const { play, pause, currentTime, duration } = useAudioPlayer()
+  const { play, pause, currentTime, duration, isPlaying } = useAudioPlayer()
 
   return (
     <div>
-      <button
-        onClick={() => play()}
-        style={{ background: "black", border: "white" }}
-      >
-        <PlayIcon />
-      </button>
-      <button
-        onClick={() => pause()}
-        style={{ background: "black", border: "white" }}
-      >
-        <PauseIcon />
-      </button>
+      {isPlaying ? (
+        <button
+          onClick={() => pause()}
+          style={{ background: "black", border: "white" }}
+        >
+          <PauseIcon />
+        </button>
+      ) : (
+        <button
+          onClick={() => play()}
+          style={{ background: "black", border: "white" }}
+        >
+          <PlayIcon />
+        </button>
+      )}
 
       <div>
-        {currentTime}: {duration}
+        <CurrentTime />
+        <Duration />
       </div>
     </div>
   )
+}
+
+function CurrentTime() {
+  const time = useAudioPlayer((s) => s.currentTime)
+  if (!Number.isFinite(time)) {
+    return <span>--:--</span>
+  }
+
+  return <span>{toMinutes(time)}</span>
+}
+
+function Duration() {
+  const duration = useAudioPlayer((s) => s.duration)
+  if (!Number.isFinite(duration)) {
+    return <span>--:--</span>
+  }
+
+  return <span style={{ color: "grey" }}>{toMinutes(duration)}</span>
+}
+
+function toMinutes(seconds: number) {
+  const mins = Math.floor(seconds / 60)
+    .toFixed(0)
+    .padStart(2, "0")
+  const secs = Math.floor(seconds % 60)
+    .toString()
+    .padStart(2, "0")
+  return `${mins}:${secs}`
 }

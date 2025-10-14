@@ -17,6 +17,7 @@ type PlayerState = {
   isLoading: boolean
   play: () => Promise<void>
   pause: () => void
+  setIsPlaying: (isPlaying: boolean) => void
   setTrack: (trackId: string) => void
   currentTime: number
   setCurrentTime: (currentTime: number) => void
@@ -35,6 +36,7 @@ export const useAudioPlayer = create<PlayerState>((set, get) => ({
   setCurrentTime: (currentTime) => set({ currentTime }),
   setAudio: (audio) => set({ audio }),
   setDuration: (duration) => set({ duration }),
+  setIsPlaying: (isPlaying) => set({ isPlaying }),
   setTrack: (trackId) => {
     const a = get().audio
     console.log("setTrack", a, trackId)
@@ -81,6 +83,7 @@ export const useAudioPlayer = create<PlayerState>((set, get) => ({
 export const PlayerProvider = ({ children }: PropsWithChildren) => {
   const setAudio = useAudioPlayer((s) => s.setAudio)
   const setCurrentTime = useAudioPlayer((s) => s.setCurrentTime)
+  const setIsPlaying = useAudioPlayer((s) => s.setIsPlaying)
 
   useEffect(() => {
     const audio = new Audio()
@@ -88,15 +91,22 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
 
     const onTime = () => setCurrentTime(audio.currentTime)
     const durationChange = () => setCurrentTime(audio.duration)
+    const onPlaying = () => setIsPlaying(true)
+    const onPause = () => setIsPlaying(false)
 
     audio.addEventListener("timeupdate", onTime)
     audio.addEventListener("durationchange", durationChange)
+    audio.addEventListener("playing", onPlaying)
+    audio.addEventListener("pause", onPause)
 
     setAudio(audio)
     console.log("audio set")
     return () => {
       setAudio()
       audio.removeEventListener("timeupdate", onTime)
+      audio.removeEventListener("durationchange", durationChange)
+      audio.removeEventListener("playing", onPlaying)
+      audio.removeEventListener("pause", onPause)
     }
   }, [])
 
