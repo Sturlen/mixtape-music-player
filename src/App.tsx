@@ -80,7 +80,9 @@ export function App() {
 export default App
 
 function Controls() {
-  const { play, pause, currentTime, duration, isPlaying } = useAudioPlayer()
+  const play = useAudioPlayer.use.play()
+  const pause = useAudioPlayer.use.pause()
+  const isPlaying = useAudioPlayer.use.isPlaying()
 
   return (
     <div>
@@ -109,7 +111,7 @@ function Controls() {
 }
 
 function CurrentTime() {
-  const time = useAudioPlayer((s) => s.currentTime)
+  const time = useAudioPlayer.use.currentTime()
   if (!Number.isFinite(time)) {
     return <span>--:--</span>
   }
@@ -118,7 +120,7 @@ function CurrentTime() {
 }
 
 function Duration() {
-  const duration = useAudioPlayer((s) => s.duration)
+  const duration = useAudioPlayer.use.duration()
   if (!Number.isFinite(duration)) {
     return <span>--:--</span>
   }

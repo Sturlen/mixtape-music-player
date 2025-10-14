@@ -7,7 +7,7 @@ import {
   type PropsWithChildren,
 } from "react"
 
-import { create } from "zustand"
+import { create, type StoreApi, type UseBoundStore } from "zustand"
 
 type PlayerState = {
   audio: HTMLAudioElement | undefined
@@ -27,7 +27,23 @@ type PlayerState = {
   setAudio: (el?: HTMLAudioElement) => void
 }
 
-export const useAudioPlayer = create<PlayerState>((set, get) => ({
+type WithSelectors<S> = S extends { getState: () => infer T }
+  ? S & { use: { [K in keyof T]: () => T[K] } }
+  : never
+
+const createSelectors = <S extends UseBoundStore<StoreApi<object>>>(
+  _store: S
+) => {
+  const store = _store as WithSelectors<typeof _store>
+  store.use = {}
+  for (const k of Object.keys(store.getState())) {
+    ;(store.use as any)[k] = () => store((s) => s[k as keyof typeof s])
+  }
+
+  return store
+}
+
+export const useAudioPlayerBase = create<PlayerState>((set, get) => ({
   isPlaying: false,
   isLoading: false,
   audio: undefined,
@@ -80,10 +96,12 @@ export const useAudioPlayer = create<PlayerState>((set, get) => ({
   },
 }))
 
+export const useAudioPlayer = createSelectors(useAudioPlayerBase)
+
 export const PlayerProvider = ({ children }: PropsWithChildren) => {
-  const setAudio = useAudioPlayer((s) => s.setAudio)
-  const setCurrentTime = useAudioPlayer((s) => s.setCurrentTime)
-  const setIsPlaying = useAudioPlayer((s) => s.setIsPlaying)
+  const setAudio = useAudioPlayer.use.setAudio()
+  const setCurrentTime = useAudioPlayer.use.setCurrentTime()
+  const setIsPlaying = useAudioPlayer.use.setIsPlaying()
 
   useEffect(() => {
     const audio = new Audio()
