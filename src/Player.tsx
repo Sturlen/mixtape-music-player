@@ -20,6 +20,7 @@ type PlayerState = {
   setTrack: (trackId: string) => void
   currentTime: number
   setCurrentTime: (currentTime: number) => void
+  setDuration: (duration: number) => void
   duration: number
 
   setAudio: (el?: HTMLAudioElement) => void
@@ -33,6 +34,7 @@ export const useAudioPlayer = create<PlayerState>((set, get) => ({
   duration: 0,
   setCurrentTime: (currentTime) => set({ currentTime }),
   setAudio: (audio) => set({ audio }),
+  setDuration: (duration) => set({ duration }),
   setTrack: (trackId) => {
     const a = get().audio
     console.log("setTrack", a, trackId)
@@ -63,7 +65,7 @@ export const useAudioPlayer = create<PlayerState>((set, get) => ({
       set({ isLoading: false })
     }
 
-    set({ isPlaying: true })
+    set({ isPlaying: true, duration: a.duration })
   },
   pause: () => {
     const a = get().audio
@@ -85,8 +87,10 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
     audio.volume = 0.1
 
     const onTime = () => setCurrentTime(audio.currentTime)
+    const durationChange = () => setCurrentTime(audio.duration)
 
     audio.addEventListener("timeupdate", onTime)
+    audio.addEventListener("durationchange", durationChange)
 
     setAudio(audio)
     console.log("audio set")

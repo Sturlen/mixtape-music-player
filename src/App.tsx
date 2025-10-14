@@ -80,7 +80,7 @@ export function App() {
 export default App
 
 function Controls() {
-  const { play, pause, currentTime } = useAudioPlayer()
+  const { play, pause, currentTime, duration } = useAudioPlayer()
 
   return (
     <div>
@@ -97,7 +97,9 @@ function Controls() {
         <PauseIcon />
       </button>
 
-      <div>{currentTime}</div>
+      <div>
+        {currentTime}: {duration}
+      </div>
     </div>
   )
 }
