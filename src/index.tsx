@@ -5,6 +5,7 @@ import { readdir } from "node:fs/promises"
 import path from "node:path"
 import Elysia from "elysia"
 import { env } from "./env"
+import staticPlugin from "@elysiajs/static"
 
 const music_exts = ["mp3", "flac"] as const
 const art_exts = ["jpeg", "png", "webp"] as const
@@ -17,6 +18,7 @@ type Track = {
   name: string
   playtimeSeconds: number
   path: string
+  URL: string
 }
 
 type Album = {
@@ -24,6 +26,7 @@ type Album = {
   name: string
   tracks: Track[]
   imagePath?: string
+  imageURL?: string
 }
 
 type Artist = {
@@ -93,6 +96,12 @@ for (const artist_dir of artist_dirs) {
         album_name,
         track_name
       )
+      const track_url = path.join(
+        music_root_path,
+        artist_dir,
+        album_name,
+        track_name
+      )
       const file = Bun.file(track_path)
 
       const track: Track = {
@@ -100,6 +109,7 @@ for (const artist_dir of artist_dirs) {
         name: track_name,
         playtimeSeconds: 0,
         path: track_path,
+        URL: `/public/${artist_dir}/${album_name}/${track_name}`,
       }
 
       if (file.type.startsWith("audio/")) {
@@ -107,6 +117,7 @@ for (const artist_dir of artist_dirs) {
         album.tracks.push(track)
       } else if (file.type.startsWith("image/")) {
         album.imagePath = track_path
+        album.imageURL = `/public/${artist_dir}/${album_name}/${track_name}`
       }
     }
 
@@ -123,7 +134,10 @@ const app = new Elysia()
       references: fromTypes(),
     })
   )
-  .get("/*", index)
+  .use(
+    staticPlugin({ prefix: "/public", assets: env.MUSIC_PATH, decodeURI: true })
+  )
+  .get("/", index)
   .get("/api/artists", () => db.artists)
   .get("/api/artists/:artistId", async ({ params: { artistId } }) => {
     return Response.json(db.artists.find((a) => a.id == artistId))
@@ -132,7 +146,6 @@ const app = new Elysia()
     albums: db.albums.map((alb) => ({
       ...alb,
       imagePath: undefined,
-      imageUrl: `/api/albumArt/${alb.id}`,
     })),
   })
   .get("/api/albums/:albumId", async ({ params: { albumId } }) => {
@@ -150,40 +163,6 @@ const app = new Elysia()
   .get("/api/tracks", Response.json(db.tracks))
   .get("/api/tracks/:trackId", async ({ params: { trackId } }) => {
     return Response.json(db.tracks.find((track) => track.id == trackId))
-  })
-  .get("/api/playback/:track", async (req) => {
-    const track = db.tracks.find((track) => track.id === req.params.track)
-
-    if (!track) {
-      return new Response("Art not found", { status: 404 })
-    }
-
-    const file = Bun.file(track.path)
-
-    return new Response(await file.bytes(), {
-      headers: {
-        "Content-Type": file.type,
-      },
-    })
-  })
-  .get("/api/albumArt/:albumId", async (req) => {
-    const album = db.albums.find((alb) => alb.id === req.params.albumId)
-
-    if (!album) {
-      return new Response("Album not found", { status: 404 })
-    }
-
-    if (!album.imagePath) {
-      return new Response("Album has no album art", { status: 404 })
-    }
-
-    const file = Bun.file(album.imagePath)
-
-    return new Response(await file.bytes(), {
-      headers: {
-        "Content-Type": file.type,
-      },
-    })
   })
   .listen(3000)
 

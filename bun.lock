@@ -6,6 +6,7 @@
       "dependencies": {
         "@elysiajs/eden": "^1.4.3",
         "@elysiajs/openapi": "^1.4.11",
+        "@elysiajs/static": "^1.4.4",
         "@t3-oss/env-core": "^0.13.8",
         "@tanstack/react-query": "^5.90.2",
         "elysia": "^1.4.11",
@@ -28,6 +29,8 @@
     "@elysiajs/eden": ["@elysiajs/eden@1.4.3", "", { "peerDependencies": { "elysia": ">= 1.4.0-exp.0" } }, "sha512-mX0v5cTvTJiDsDWNEEyuoqudOvW5J+tXsvp/ZOJXJF3iCIEJI0Brvm78ymPrvwiOG4nUr3lS8BxUfbNf32DSXA=="],
 
     "@elysiajs/openapi": ["@elysiajs/openapi@1.4.11", "", { "peerDependencies": { "elysia": ">= 1.4.0" } }, "sha512-d75bMxYJpN6qSDi/z9L1S7SLk1S/8Px+cTb3W2lrYzU8uQ5E0kXdy1oOMJEfTyVsz3OA19NP9KNxE7ztSbLBLg=="],
+
+    "@elysiajs/static": ["@elysiajs/static@1.4.4", "", { "peerDependencies": { "elysia": ">= 1.4.0" } }, "sha512-PT/uGvBHQL5I+APAGiuRjhVfySe5YmrJdPtSc2QyM6CgNp4WDCmPfhPoVYkHNaH5QGWdP62hMq0HUnClNxR3zw=="],
 
     "@sinclair/typebox": ["@sinclair/typebox@0.34.41", "", {}, "sha512-6gS8pZzSXdyRHTIqoqSVknxolr1kzfy4/CeDnrzsVz8TTIWUbOBr6gnzOmTYJ3eXQNh4IYHIGi5aIL7sOZ2G/g=="],
 

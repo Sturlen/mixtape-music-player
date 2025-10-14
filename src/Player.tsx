@@ -53,13 +53,13 @@ export const useAudioPlayerBase = create<PlayerState>((set, get) => ({
   setAudio: (audio) => set({ audio }),
   setDuration: (duration) => set({ duration }),
   setIsPlaying: (isPlaying) => set({ isPlaying }),
-  setTrack: (trackId) => {
+  setTrack: (trackURL) => {
     const a = get().audio
-    console.log("setTrack", a, trackId)
+    console.log("setTrack", a, trackURL)
     if (!a) {
       return
     }
-    a.src = `/api/playback/${trackId}`
+    a.src = trackURL
     get().play()
   },
   play: async () => {

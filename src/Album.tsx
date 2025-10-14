@@ -44,7 +44,7 @@ export function Album({ albumId }: { albumId: string }) {
       <summary>
         {album.name}{" "}
         <img
-          src={album.imageUrl}
+          src={album.imageURL}
           alt={album.name}
           width={"128rem"}
           height={"128rem"}
@@ -55,7 +55,7 @@ export function Album({ albumId }: { albumId: string }) {
           <div>
             <button
               onClick={() => {
-                setTrack(track.id)
+                setTrack(track.URL)
                 play()
               }}
               style={{
