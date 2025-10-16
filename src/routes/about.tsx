@@ -1,3 +1,4 @@
+import Page from "@/Components/Page"
 import { createFileRoute } from "@tanstack/react-router"
 
 export const Route = createFileRoute("/about")({
@@ -5,5 +6,9 @@ export const Route = createFileRoute("/about")({
 })
 
 function About() {
-  return <div className="p-2">Hello from About!</div>
+  return (
+    <Page>
+      <div className="p-2">Hello from About!</div>
+    </Page>
+  )
 }

@@ -1,4 +1,5 @@
 import { App } from "@/App"
+import Page from "@/Components/Page"
 import { createFileRoute } from "@tanstack/react-router"
 
 export const Route = createFileRoute("/")({
@@ -6,5 +7,9 @@ export const Route = createFileRoute("/")({
 })
 
 function Index() {
-  return <App />
+  return (
+    <Page>
+      <App />
+    </Page>
+  )
 }

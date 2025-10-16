@@ -33,21 +33,12 @@ export function App() {
 
   return (
     <div className="app">
-      <article
-        style={{
-          backgroundColor: "black",
-          borderRadius: "16px",
-          overflow: "hidden",
-          padding: "2rem",
-        }}
-      >
-        <h1>Spelemann</h1>
-
+      <article>
         <div>
           {artists?.map((artist) => (
             <div>
               <h2>{artist.name}</h2>
-              <div style={{ backgroundColor: "grey" }}>
+              <div>
                 {artist.albums.map((album) => (
                   <Album albumId={album.id} />
                 ))}
@@ -56,23 +47,6 @@ export function App() {
           ))}
         </div>
       </article>
-      <div
-        style={{
-          position: "fixed",
-          bottom: "16px",
-          right: "16px",
-          background: "rgba(0,0,0,0.7)",
-          color: "#fff",
-          padding: "8px 16px",
-          borderRadius: "8px",
-          fontSize: "0.9rem",
-          zIndex: 1000,
-          textAlign: "left",
-        }}
-      >
-        <div style={{ fontStyle: "italic" }}>Brudeferden i Hardanger</div>
-        <div>Photo: Nasjonalmuseet / Børre Høstland</div>
-      </div>
     </div>
   )
 }
