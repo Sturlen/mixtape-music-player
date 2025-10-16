@@ -1,40 +1,68 @@
-import { PauseIcon, PlayIcon } from "lucide-react"
+import {
+  CrosshairIcon,
+  PauseIcon,
+  PlayIcon,
+  SkipBackIcon,
+  SkipForwardIcon,
+} from "lucide-react"
 import { useAudioPlayer } from "./Player"
+import { cn } from "./lib/utils"
 
 export function Controls() {
   const play = useAudioPlayer.use.play()
   const pause = useAudioPlayer.use.pause()
   const isPlaying = useAudioPlayer.use.isPlaying()
 
+  const progress =
+    useAudioPlayer.use.currentTime() / useAudioPlayer.use.duration()
+
+  const durationTakeUp = 0.93 + (3.0 - 0.93) * progress // s/rev
+  const durationSupply = 3.0 - (3.0 - 0.93) * progress // reverse relationship
+
+  const spoolStyle = {
+    "--progress": progress,
+    "--takeup-duration": `${durationTakeUp}s`,
+    "--supply-duration": `${durationSupply}s`,
+  }
+
   return (
-    <div
-      style={{
-        position: "fixed",
-        height: "100px",
-        bottom: "1rem",
-        left: "1rem",
-        zIndex: 999,
-      }}
-    >
-      {isPlaying ? (
-        <button
-          onClick={() => pause()}
-          style={{ background: "black", border: "white" }}
-        >
-          <PauseIcon />
+    <div className="bg-background rounded-2xl fixed left-4 bottom-10 z-50 p-4">
+      <div className="flex p-2  justify-between">
+        <CrosshairIcon
+          className={cn({ reel: isPlaying })}
+          style={{ animationDuration: durationSupply.toFixed() + "s" }}
+        />
+        <CrosshairIcon
+          className={cn({ reel: isPlaying })}
+          style={{ animationDuration: durationTakeUp.toFixed() + "s" }}
+        />
+      </div>
+      <div className="bg-amber-200 text-background px-1">Now Playing</div>
+      <div>
+        <CurrentTime />
+        <Duration />
+      </div>
+      <div>
+        <button>
+          <SkipBackIcon />
         </button>
-      ) : (
         <button
           onClick={() => play()}
           style={{ background: "black", border: "white" }}
         >
           <PlayIcon />
         </button>
-      )}
 
-      <div>
-        <CurrentTime />
-        <Duration />
+        <button
+          onClick={() => pause()}
+          style={{ background: "black", border: "white" }}
+        >
+          <PauseIcon />
+        </button>
+
+        <button>
+          <SkipForwardIcon />
+        </button>
       </div>
     </div>
   )
