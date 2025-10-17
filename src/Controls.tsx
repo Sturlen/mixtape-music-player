@@ -27,45 +27,60 @@ export function Controls() {
   }
 
   return (
-    <div className="bg-background rounded-2xl fixed left-4 bottom-10 z-50 p-4">
-      <div className="flex p-2  justify-between">
-        <CrosshairIcon
-          className={cn({ reel: isPlaying })}
-          style={{ animationDuration: durationSupply.toFixed() + "s" }}
-        />
-        <CrosshairIcon
-          className={cn({ reel: isPlaying })}
-          style={{ animationDuration: durationTakeUp.toFixed() + "s" }}
-        />
-      </div>
-      <div className="bg-amber-200 text-background px-1 w-40 overflow-ellipsis text-nowrap overflow-hidden">
-        <span>Now Playing: {track?.name ?? "None"}</span>
-      </div>
-      <div>
-        <CurrentTime />
-        <Duration />
-      </div>
-      <div>
-        <button>
-          <SkipBackIcon />
-        </button>
-        <button
-          onClick={() => play()}
-          style={{ background: "black", border: "white" }}
-        >
-          <PlayIcon />
-        </button>
+    <div className="fixed left-4 bottom-10 z-50 bg-[url(cassette.webp)] bg-contain bg-center w-80 h-50 overflow-hidden bg-no-repeat flex flex-col">
+      <div className="relative">
+        <div className="bg-amber-200 text-background left-[28px] top-[20px] right-[28px] overflow-ellipsis text-nowrap overflow-hidden absolute h-[30px]">
+          <span>{track?.name ?? "None"}</span>
+        </div>
+        <div>
+          <CrosshairIcon
+            size={"40px"}
+            className={cn(
+              { reel: isPlaying },
+              "absolute left-[75px] top-[70px]"
+            )}
+            style={{ animationDuration: durationSupply.toFixed() + "s" }}
+          />
+          <CrosshairIcon
+            size={"40px"}
+            className={cn(
+              { reel: isPlaying },
+              "absolute left-[205px] top-[70px]"
+            )}
+            style={{ animationDuration: durationTakeUp.toFixed() + "s" }}
+          />
+        </div>
 
-        <button
-          onClick={() => pause()}
-          style={{ background: "black", border: "white" }}
-        >
-          <PauseIcon />
-        </button>
+        <div className="grow"></div>
 
-        <button>
-          <SkipForwardIcon />
-        </button>
+        <div className="absolute top-[120px]  left-[22px] right-[22px] flex justify-center">
+          <div className="backdrop-blur-sm px-2">
+            <CurrentTime />
+            <Duration />
+          </div>
+        </div>
+        <div className="absolute top-[170px] w-full left-0 right-0 flex justify-between px-4">
+          <button>
+            <SkipBackIcon />
+          </button>
+          <button
+            onClick={() => play()}
+            style={{ background: "black", border: "white" }}
+          >
+            <PlayIcon />
+          </button>
+
+          <button
+            onClick={() => pause()}
+            style={{ background: "black", border: "white" }}
+          >
+            <PauseIcon />
+          </button>
+
+          <button>
+            <SkipForwardIcon />
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -86,7 +101,7 @@ function Duration() {
     return <span>--:--</span>
   }
 
-  return <span style={{ color: "grey" }}>{toMinutes(duration)}</span>
+  return <span className="text-muted-foreground">{toMinutes(duration)}</span>
 }
 
 function toMinutes(seconds: number) {
