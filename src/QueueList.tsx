@@ -53,7 +53,7 @@ export function PlaybackQueue() {
       <section id="playback-queue" className="h-full ml-10">
         <ol className="flex flex-col-reverse h-full w-full gap-4">
           {tracks.map((tr, i) => (
-            <li key="tr" className="">
+            <li key={tr.queueId} className="">
               <div
                 data-active={i === queueIndex}
                 className="flex gap-2 data-[active=true]:bg-accent"

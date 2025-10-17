@@ -32,7 +32,7 @@ type PlayerState = {
   setCurrentTime: (currentTime: number) => void
   setDuration: (duration: number) => void
   duration: number
-  queueTracks: Track[]
+  queueTracks: (Track & { queueId: string })[]
   queueIndex: number
   queueRemove: (trackIndex: number) => void
   queuePush: (track: Track) => void
@@ -68,7 +68,7 @@ export const useAudioPlayerBase = create<PlayerState>((set, get) => ({
   queueIndex: 0,
   queuePush: (tr: Track) => {
     const queueTracks = [...get().queueTracks]
-    queueTracks.push(tr)
+    queueTracks.push({ ...tr, queueId: crypto.randomUUID() })
     set({ queueTracks })
     if (!get().currentTrack) {
       get().queueSkip()
@@ -96,6 +96,7 @@ export const useAudioPlayerBase = create<PlayerState>((set, get) => ({
     return prev_track
   },
   queueRemove: (deleteIndex) => {
+    console.log("deleteindex", 0, get().queueTracks)
     const exitsts = get().queueTracks[deleteIndex]
     if (!exitsts) {
       return
@@ -103,18 +104,18 @@ export const useAudioPlayerBase = create<PlayerState>((set, get) => ({
     const queueTracks = [...get().queueTracks]
     queueTracks.splice(deleteIndex, 1)
 
-    if (deleteIndex === get().queueIndex) {
-      // TODO: handle when user deletes currently playing track
-      return
-    }
-
     if (deleteIndex < get().queueIndex) {
-      // TODO: handle when user deletes track before current track
-      // set({ queueIndex: get().queueIndex - 1 })'
-      return
+      set({ queueIndex: get().queueIndex - 1, queueTracks })
+    } else if (deleteIndex === get().queueIndex) {
+      if (deleteIndex === 0) {
+        // TODO: handle when user deletes last track
+      } else {
+        get().queueSkip()
+        set({ queueTracks })
+      }
+    } else {
+      set({ queueTracks })
     }
-
-    set({ queueTracks })
   },
   setCurrentTime: (currentTime) => set({ currentTime }),
   setAudio: (audio) => set({ audio }),
@@ -122,7 +123,10 @@ export const useAudioPlayerBase = create<PlayerState>((set, get) => ({
   setIsPlaying: (isPlaying) => set({ isPlaying }),
   playTrack: (track) => {
     const player = get()
-    set({ queueIndex: 0, queueTracks: [track] })
+    set({
+      queueIndex: 0,
+      queueTracks: [{ ...track, queueId: crypto.randomUUID() }],
+    })
     player.setTrack(track)
   },
   setTrack: (track) => {
