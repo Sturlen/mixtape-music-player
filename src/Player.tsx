@@ -180,9 +180,14 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
   const setCurrentTime = useAudioPlayer.use.setCurrentTime()
   const setIsPlaying = useAudioPlayer.use.setIsPlaying()
   const queueSkip = useAudioPlayer.use.queueSkip()
+  const audio_el = React.useRef<HTMLAudioElement>(null)
 
   useEffect(() => {
-    const audio = new Audio()
+    const audio = audio_el.current
+    if (!audio) {
+      console.log("no audio el")
+      return
+    }
     audio.volume = 0.1
 
     const onTime = () => setCurrentTime(audio.currentTime)
@@ -209,7 +214,12 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
     }
   }, [])
 
-  return children
+  return (
+    <>
+      {children}
+      <audio ref={audio_el} />
+    </>
+  )
 }
 
 function raise(message: string): never {
