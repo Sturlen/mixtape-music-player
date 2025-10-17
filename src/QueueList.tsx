@@ -6,6 +6,7 @@ export function PlaybackQueue() {
   const tracks = useAudioPlayer.use.queueTracks()
   const has_queue = tracks.length > 0
   const queueIndex = useAudioPlayer.use.queueIndex()
+  const queueRemove = useAudioPlayer.use.queueRemove()
 
   return (
     <div
@@ -60,7 +61,10 @@ export function PlaybackQueue() {
                 <div className="p-2 px-4 truncate h-10 w-100 bg-background rounded-full">
                   {tr.name}
                 </div>
-                <button className="bg-background hover:bg-foreground text-foreground hover:text-background rounded-full p-2">
+                <button
+                  onClick={() => queueRemove(i)}
+                  className="bg-background hover:bg-foreground text-foreground hover:text-background rounded-full p-2"
+                >
                   <XIcon />
                 </button>
               </div>

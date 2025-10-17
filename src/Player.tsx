@@ -34,6 +34,7 @@ type PlayerState = {
   duration: number
   queueTracks: Track[]
   queueIndex: number
+  queueRemove: (trackIndex: number) => void
   queuePush: (track: Track) => void
   queueSkip: () => Track | undefined
   queuePrev: () => Track | undefined
@@ -93,6 +94,26 @@ export const useAudioPlayerBase = create<PlayerState>((set, get) => ({
     set({ queueIndex: get().queueIndex - 1 })
     get().setTrack(prev_track)
     return prev_track
+  },
+  queueRemove: (deleteIndex) => {
+    const exitsts = get().queueTracks[deleteIndex]
+    if (!exitsts) {
+      return
+    }
+    const queueTracks = [...get().queueTracks]
+    queueTracks.splice(deleteIndex)
+
+    if (deleteIndex === get().queueIndex) {
+      // TODO: handle when user deletes currently playing track
+      return
+    }
+
+    if (deleteIndex < get().queueIndex) {
+      // TODO: handle when user deletes track before current track
+      return
+    }
+
+    set({ queueTracks })
   },
   setCurrentTime: (currentTime) => set({ currentTime }),
   setAudio: (audio) => set({ audio }),
@@ -184,4 +205,8 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
   }, [])
 
   return children
+}
+
+function raise(message: string): never {
+  throw new Error(message)
 }
