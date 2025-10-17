@@ -26,13 +26,17 @@ type PlayerState = {
   pause: () => void
   setIsPlaying: (isPlaying: boolean) => void
   setTrack: (trackId: Track) => void
+  /** The public api for starting a new track. */
+  playTrack: (track: Track) => void
   currentTime: number
   setCurrentTime: (currentTime: number) => void
   setDuration: (duration: number) => void
   duration: number
   queueTracks: Track[]
+  queueIndex: number
   queuePush: (track: Track) => void
   queueSkip: () => Track | undefined
+  queuePrev: () => Track | undefined
   setAudio: (el?: HTMLAudioElement) => void
 }
 
@@ -60,6 +64,7 @@ export const useAudioPlayerBase = create<PlayerState>((set, get) => ({
   currentTrack: undefined,
   duration: 0,
   queueTracks: [],
+  queueIndex: 0,
   queuePush: (tr: Track) => {
     const queueTracks = [...get().queueTracks]
     queueTracks.push(tr)
@@ -69,19 +74,35 @@ export const useAudioPlayerBase = create<PlayerState>((set, get) => ({
     }
   },
   queueSkip: () => {
-    const queue = [...get().queueTracks]
-    const next_track = queue.shift()
-    set({ queueTracks: queue })
+    const next_track = get().queueTracks[get().queueIndex + 1]
     if (!next_track) {
       return
     }
+    set({ queueIndex: get().queueIndex + 1 })
     get().setTrack(next_track)
     return next_track
+  },
+  queuePrev: () => {
+    if (get().queueIndex <= 0) {
+      return
+    }
+    const prev_track = get().queueTracks[get().queueIndex - 1]
+    if (!prev_track) {
+      return
+    }
+    set({ queueIndex: get().queueIndex - 1 })
+    get().setTrack(prev_track)
+    return prev_track
   },
   setCurrentTime: (currentTime) => set({ currentTime }),
   setAudio: (audio) => set({ audio }),
   setDuration: (duration) => set({ duration }),
   setIsPlaying: (isPlaying) => set({ isPlaying }),
+  playTrack: (track) => {
+    const player = get()
+    set({ queueIndex: 0, queueTracks: [track] })
+    player.setTrack(track)
+  },
   setTrack: (track) => {
     const a = get().audio
     console.log("setTrack", a, track)

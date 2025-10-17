@@ -12,6 +12,7 @@ export function Controls() {
   const play = useAudioPlayer.use.play()
   const pause = useAudioPlayer.use.pause()
   const skip = useAudioPlayer.use.queueSkip()
+  const prev = useAudioPlayer.use.queuePrev()
   const isPlaying = useAudioPlayer.use.isPlaying()
   const track = useAudioPlayer.use.currentTrack()
 
@@ -20,12 +21,6 @@ export function Controls() {
 
   const durationTakeUp = 0.93 + (3.0 - 0.93) * progress // s/rev
   const durationSupply = 3.0 - (3.0 - 0.93) * progress // reverse relationship
-
-  const spoolStyle = {
-    "--progress": progress,
-    "--takeup-duration": `${durationTakeUp}s`,
-    "--supply-duration": `${durationSupply}s`,
-  }
 
   return (
     <div className="fixed left-4 bottom-10 z-50 bg-[url(cassette.webp)] bg-contain bg-center w-80 h-50 overflow-hidden bg-no-repeat flex flex-col">
@@ -61,7 +56,7 @@ export function Controls() {
           </div>
         </div>
         <div className="absolute top-[170px] w-full left-0 right-0 flex justify-between px-4">
-          <button>
+          <button onClick={() => prev()}>
             <SkipBackIcon />
           </button>
           <button

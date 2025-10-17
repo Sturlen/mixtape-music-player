@@ -5,6 +5,7 @@ import { cn } from "./lib/utils"
 export function PlaybackQueue() {
   const tracks = useAudioPlayer.use.queueTracks()
   const has_queue = tracks.length > 0
+  const queueIndex = useAudioPlayer.use.queueIndex()
 
   return (
     <div
@@ -50,9 +51,12 @@ export function PlaybackQueue() {
       </div>
       <section id="playback-queue" className="h-full ml-10">
         <ol className="flex flex-col-reverse h-full w-full gap-4">
-          {tracks.map((tr) => (
-            <li className="">
-              <div className="flex gap-2">
+          {tracks.map((tr, i) => (
+            <li key="tr" className="">
+              <div
+                data-active={i === queueIndex}
+                className="flex gap-2 data-[active=true]:bg-accent"
+              >
                 <div className="p-2 px-4 truncate h-10 w-100 bg-background rounded-full">
                   {tr.name}
                 </div>

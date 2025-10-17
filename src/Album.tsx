@@ -27,7 +27,7 @@ function useAlbum(albumId: string) {
 export function Album({ albumId }: { albumId: string }) {
   const { data } = useAlbum(albumId)
   const play = useAudioPlayer((s) => s.play)
-  const setTrack = useAudioPlayer((s) => s.setTrack)
+  const playTrack = useAudioPlayer.use.playTrack()
   const queuePush = useAudioPlayer.use.queuePush()
 
   if (!data) {
@@ -53,10 +53,10 @@ export function Album({ albumId }: { albumId: string }) {
       </summary>
       <div>
         {album.tracks.map((track) => (
-          <div>
+          <div key={track.id}>
             <button
               onClick={() => {
-                setTrack({
+                playTrack({
                   name: track.name,
                   url: track.URL,
                   duration: track.playtimeSeconds,
