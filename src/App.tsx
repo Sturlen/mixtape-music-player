@@ -1,7 +1,6 @@
 import { APITester } from "./APITester"
 import { treaty } from "@elysiajs/eden"
 import { PauseIcon, PlayIcon } from "lucide-react"
-import "./index.css"
 
 import type { App } from "./index"
 import { useQuery } from "@tanstack/react-query"
