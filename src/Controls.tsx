@@ -12,6 +12,7 @@ export function Controls() {
   const play = useAudioPlayer.use.play()
   const pause = useAudioPlayer.use.pause()
   const isPlaying = useAudioPlayer.use.isPlaying()
+  const track = useAudioPlayer.use.currentTrack()
 
   const progress =
     useAudioPlayer.use.currentTime() / useAudioPlayer.use.duration()
@@ -37,7 +38,9 @@ export function Controls() {
           style={{ animationDuration: durationTakeUp.toFixed() + "s" }}
         />
       </div>
-      <div className="bg-amber-200 text-background px-1">Now Playing</div>
+      <div className="bg-amber-200 text-background px-1 w-40 overflow-ellipsis text-nowrap overflow-hidden">
+        <span>Now Playing: {track?.name ?? "None"}</span>
+      </div>
       <div>
         <CurrentTime />
         <Duration />

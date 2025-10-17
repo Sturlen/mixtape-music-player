@@ -55,7 +55,11 @@ export function Album({ albumId }: { albumId: string }) {
           <div>
             <button
               onClick={() => {
-                setTrack(track.URL)
+                setTrack({
+                  name: track.name,
+                  url: track.URL,
+                  duration: track.playtimeSeconds,
+                })
                 play()
               }}
               style={{

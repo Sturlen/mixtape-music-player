@@ -9,16 +9,23 @@ import {
 
 import { create, type StoreApi, type UseBoundStore } from "zustand"
 
+export type Track = {
+  name: string
+  duration: number
+  url: string
+}
+
 type PlayerState = {
   audio: HTMLAudioElement | undefined
   isPlaying: boolean
   // https://goo.gl/LdLk22
   // todo: fix AbortError
   isLoading: boolean
+  currentTrack: Track | undefined
   play: () => Promise<void>
   pause: () => void
   setIsPlaying: (isPlaying: boolean) => void
-  setTrack: (trackId: string) => void
+  setTrack: (trackId: Track) => void
   currentTime: number
   setCurrentTime: (currentTime: number) => void
   setDuration: (duration: number) => void
@@ -48,18 +55,20 @@ export const useAudioPlayerBase = create<PlayerState>((set, get) => ({
   isLoading: false,
   audio: undefined,
   currentTime: 0,
+  currentTrack: undefined,
   duration: 0,
   setCurrentTime: (currentTime) => set({ currentTime }),
   setAudio: (audio) => set({ audio }),
   setDuration: (duration) => set({ duration }),
   setIsPlaying: (isPlaying) => set({ isPlaying }),
-  setTrack: (trackURL) => {
+  setTrack: (track) => {
     const a = get().audio
-    console.log("setTrack", a, trackURL)
+    console.log("setTrack", a, track)
     if (!a) {
       return
     }
-    a.src = trackURL
+    set({ currentTrack: track })
+    a.src = track.url
     get().play()
   },
   play: async () => {
