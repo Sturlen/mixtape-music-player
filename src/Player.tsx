@@ -101,7 +101,7 @@ export const useAudioPlayerBase = create<PlayerState>((set, get) => ({
       return
     }
     const queueTracks = [...get().queueTracks]
-    queueTracks.splice(deleteIndex)
+    queueTracks.splice(deleteIndex, 1)
 
     if (deleteIndex === get().queueIndex) {
       // TODO: handle when user deletes currently playing track
@@ -110,6 +110,7 @@ export const useAudioPlayerBase = create<PlayerState>((set, get) => ({
 
     if (deleteIndex < get().queueIndex) {
       // TODO: handle when user deletes track before current track
+      // set({ queueIndex: get().queueIndex - 1 })'
       return
     }
 
