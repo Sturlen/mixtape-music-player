@@ -130,3 +130,29 @@
     transform: rotate(-360deg);
   }
 }
+
+.animate-text-scroll-y {
+  animation: scrollTextY 15s linear infinite; /* Apply the animation */
+}
+
+@keyframes scrollTextY {
+  0% {
+    transform: translateY(-100%); /* Start off-screen to the  */
+  }
+  100% {
+    transform: translateY(100%); /* End off-screen to the left */
+  }
+}
+
+.animate-text-scroll-y2 {
+  animation: scrollTextY2 15s linear infinite; /* Apply the animation */
+}
+
+@keyframes scrollTextY2 {
+  0% {
+    transform: translateY(-100%); /* Start off-screen to the  */
+  }
+  100% {
+    transform: translateY(100%); /* End off-screen to the left */
+  }
+}

@@ -1,35 +1,65 @@
-import {
-  CrosshairIcon,
-  PauseIcon,
-  PlayIcon,
-  SkipBackIcon,
-  SkipForwardIcon,
-} from "lucide-react"
+import { XIcon } from "lucide-react"
 import { useAudioPlayer } from "./Player"
 import { cn } from "./lib/utils"
 
 export function PlaybackQueue() {
   const tracks = useAudioPlayer.use.queueTracks()
-
-  const progress =
-    useAudioPlayer.use.currentTime() / useAudioPlayer.use.duration()
-
-  const durationTakeUp = 0.93 + (3.0 - 0.93) * progress // s/rev
-  const durationSupply = 3.0 - (3.0 - 0.93) * progress // reverse relationship
-
-  const spoolStyle = {
-    "--progress": progress,
-    "--takeup-duration": `${durationTakeUp}s`,
-    "--supply-duration": `${durationSupply}s`,
-  }
+  const has_queue = tracks.length > 0
 
   return (
-    <div className="fixed left-4 bottom-80 z-50 bg-background w-80 h-50 overflow-y-scroll bg-no-repeat flex flex-col">
-      <section id="playback-queue" className="relative h-full">
-        <ol className="flex flex-col-reverse h-full">
+    <div
+      data-active={has_queue}
+      className={cn(
+        "fixed left-4 bottom-80 z-50 w-80 h-50 flex flex-col invisible data-[active=true]:visible"
+      )}
+    >
+      <div
+        className="absolute bg-background overflow-hidden w-8 h-full"
+        style={{
+          writingMode: "vertical-lr",
+          textOrientation: "upright",
+        }}
+      >
+        <div
+          className="absolute top-[-100%] w-full h-full text-center animate-text-scroll-y left-[3px]"
+          style={{
+            writingMode: "vertical-lr",
+            textOrientation: "upright",
+          }}
+        >
+          NEXT UP
+        </div>
+        <div
+          className="absolute w-full h-full text-center animate-text-scroll-y left-[3px]"
+          style={{
+            writingMode: "vertical-lr",
+            textOrientation: "upright",
+          }}
+        >
+          NEXT UP
+        </div>
+        <div
+          className="absolute top-full w-full h-full text-center animate-text-scroll-y left-[3px]"
+          style={{
+            writingMode: "vertical-lr",
+            textOrientation: "upright",
+          }}
+        >
+          NEXT UP
+        </div>
+      </div>
+      <section id="playback-queue" className="h-full ml-10">
+        <ol className="flex flex-col-reverse h-full w-full gap-4">
           {tracks.map((tr) => (
             <li className="">
-              <div>{tr.name}</div>
+              <div className="flex gap-2">
+                <div className="p-2 px-4 truncate h-10 w-100 bg-background rounded-full">
+                  {tr.name}
+                </div>
+                <button className="bg-background hover:bg-foreground text-foreground hover:text-background rounded-full p-2">
+                  <XIcon />
+                </button>
+              </div>
             </li>
           ))}
         </ol>
