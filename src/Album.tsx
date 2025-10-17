@@ -28,6 +28,7 @@ export function Album({ albumId }: { albumId: string }) {
   const { data } = useAlbum(albumId)
   const play = useAudioPlayer((s) => s.play)
   const setTrack = useAudioPlayer((s) => s.setTrack)
+  const queuePush = useAudioPlayer.use.queuePush()
 
   if (!data) {
     return <div></div>
@@ -62,13 +63,22 @@ export function Album({ albumId }: { albumId: string }) {
                 })
                 play()
               }}
-              style={{
-                backgroundColor: "black",
-                color: "white",
-                borderRadius: "2rem",
-              }}
+              className="border-2 p-2 hover:bg-accent"
             >
               <span>{track.name}</span>
+            </button>
+            <button
+              className="border-2 p-2 hover:bg-accent"
+              onClick={() => {
+                queuePush({
+                  name: track.name,
+                  url: track.URL,
+                  duration: track.playtimeSeconds,
+                })
+                play()
+              }}
+            >
+              <span>queue</span>
             </button>
           </div>
         ))}

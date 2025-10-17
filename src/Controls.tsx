@@ -11,6 +11,7 @@ import { cn } from "./lib/utils"
 export function Controls() {
   const play = useAudioPlayer.use.play()
   const pause = useAudioPlayer.use.pause()
+  const skip = useAudioPlayer.use.queueSkip()
   const isPlaying = useAudioPlayer.use.isPlaying()
   const track = useAudioPlayer.use.currentTrack()
 
@@ -77,7 +78,7 @@ export function Controls() {
             <PauseIcon />
           </button>
 
-          <button>
+          <button onClick={() => skip()}>
             <SkipForwardIcon />
           </button>
         </div>

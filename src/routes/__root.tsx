@@ -1,4 +1,5 @@
 import Controls from "@/Controls"
+import PlaybackQueue from "@/QueueList"
 import { createRootRoute, Link, Outlet } from "@tanstack/react-router"
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools"
 
@@ -26,6 +27,7 @@ const RootLayout = () => (
     <hr />
     <Outlet />
     <Controls />
+    <PlaybackQueue />
     <div
       style={{
         position: "fixed",

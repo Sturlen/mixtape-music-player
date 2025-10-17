@@ -30,7 +30,9 @@ type PlayerState = {
   setCurrentTime: (currentTime: number) => void
   setDuration: (duration: number) => void
   duration: number
-
+  queueTracks: Track[]
+  queuePush: (track: Track) => void
+  queueSkip: () => Track | undefined
   setAudio: (el?: HTMLAudioElement) => void
 }
 
@@ -57,6 +59,25 @@ export const useAudioPlayerBase = create<PlayerState>((set, get) => ({
   currentTime: 0,
   currentTrack: undefined,
   duration: 0,
+  queueTracks: [],
+  queuePush: (tr: Track) => {
+    const queueTracks = [...get().queueTracks]
+    queueTracks.push(tr)
+    set({ queueTracks })
+    if (!get().currentTrack) {
+      get().queueSkip()
+    }
+  },
+  queueSkip: () => {
+    const queue = [...get().queueTracks]
+    const next_track = queue.shift()
+    set({ queueTracks: queue })
+    if (!next_track) {
+      return
+    }
+    get().setTrack(next_track)
+    return next_track
+  },
   setCurrentTime: (currentTime) => set({ currentTime }),
   setAudio: (audio) => set({ audio }),
   setDuration: (duration) => set({ duration }),
@@ -111,6 +132,7 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
   const setAudio = useAudioPlayer.use.setAudio()
   const setCurrentTime = useAudioPlayer.use.setCurrentTime()
   const setIsPlaying = useAudioPlayer.use.setIsPlaying()
+  const queueSkip = useAudioPlayer.use.queueSkip()
 
   useEffect(() => {
     const audio = new Audio()
@@ -120,11 +142,13 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
     const durationChange = () => setCurrentTime(audio.duration)
     const onPlaying = () => setIsPlaying(true)
     const onPause = () => setIsPlaying(false)
+    const onEnded = () => queueSkip()
 
     audio.addEventListener("timeupdate", onTime)
     audio.addEventListener("durationchange", durationChange)
     audio.addEventListener("playing", onPlaying)
     audio.addEventListener("pause", onPause)
+    audio.addEventListener("ended", onEnded)
 
     setAudio(audio)
     console.log("audio set")
@@ -134,6 +158,7 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
       audio.removeEventListener("durationchange", durationChange)
       audio.removeEventListener("playing", onPlaying)
       audio.removeEventListener("pause", onPause)
+      audio.removeEventListener("ended", onEnded)
     }
   }, [])
 
