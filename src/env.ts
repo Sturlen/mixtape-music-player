@@ -7,7 +7,7 @@ export const env = createEnv({
 
   server: {
     // DATABASE_URL: z.string().url(),
-    MUSIC_PATH: z.string().min(1),
+    MUSIC_PATH: z.string().min(1).default("./demo-music/"),
   },
 
   client: {
