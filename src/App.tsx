@@ -1,22 +1,10 @@
-import { APITester } from "./APITester"
-import { treaty } from "@elysiajs/eden"
-import { PauseIcon, PlayIcon } from "lucide-react"
-
 import type { App } from "./index"
 import { useQuery } from "@tanstack/react-query"
-import { useRef, useState } from "react"
 import { Album } from "./Album"
-import { useAudioPlayer } from "./Player"
-
-// todo: fix localhost
-const client = treaty<App>("localhost:3000")
-
-function raise(message: string) {
-  throw new Error(message)
-}
+import { EdenClient } from "./lib/eden"
 
 async function getArtists() {
-  const { data, error } = await client.api.artists.get()
+  const { data, error } = await EdenClient.api.artists.get()
   if (error) {
     throw new Error("error")
   }

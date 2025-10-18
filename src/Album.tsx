@@ -1,16 +1,9 @@
-import { APITester } from "./APITester"
-import { treaty } from "@elysiajs/eden"
-
-import type { App } from "./index"
 import { useQuery } from "@tanstack/react-query"
-import { useRef, useState } from "react"
 import { useAudioPlayer } from "./Player"
-
-// todo: fix localhost
-const client = treaty<App>("localhost:3000")
+import { EdenClient } from "./lib/eden"
 
 async function getAlbum(albumId: string) {
-  const { data, error } = await client.api.albums({ albumId }).get()
+  const { data, error } = await EdenClient.api.albums({ albumId }).get()
   if (error) {
     throw new Error("error")
   }
