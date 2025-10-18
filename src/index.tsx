@@ -6,6 +6,10 @@ import path from "node:path"
 import Elysia from "elysia"
 import { env } from "./env"
 import staticPlugin from "@elysiajs/static"
+import type { DBAlbum, DBArtist, DBTrack } from "./lib/types"
+
+import { initalizeDB } from "./db"
+import { artistsTable } from "./db/schema"
 
 const music_exts = ["mp3", "flac"] as const
 const art_exts = ["jpeg", "png", "webp"] as const
@@ -13,34 +17,18 @@ const art_exts = ["jpeg", "png", "webp"] as const
 // TODO: make a config for this
 const music_root_path = env.MUSIC_PATH
 
-type Track = {
-  id: string
-  name: string
-  playtimeSeconds: number
-  path: string
-  URL: string
-}
+const db = initalizeDB(env.DATABASE_URL)
+// const [artistr] = await db
+//     .insert(artistsTable)
+//     .values(artist)
+//     .returning({ artistId: artistsTable.id })
+//   const artistId = artistr?.artistId ?? NaN
 
-type Album = {
-  id: string
-  name: string
-  tracks: Track[]
-  imagePath?: string
-  imageURL?: string
+const parser_db = {
+  artists: new Array<DBArtist>(),
+  albums: new Array<DBAlbum>(),
+  tracks: new Array<DBTrack>(),
 }
-
-type Artist = {
-  id: string
-  name: string
-  albums: Album[]
-}
-
-const db = {
-  artists: new Array<Artist>(),
-  albums: new Array<Album>(),
-  tracks: new Array<Track>(),
-}
-
 // parser
 
 // read all the files in the current directory
@@ -53,7 +41,7 @@ const artist_dirs = artist_dirents
   .map((x) => x.name)
 
 for (const artist_dir of artist_dirs) {
-  const artist: Artist = {
+  const artist: DBArtist = {
     id: crypto.randomUUID(),
     name: artist_dir,
     albums: [],
@@ -67,16 +55,16 @@ for (const artist_dir of artist_dirs) {
     .map((x) => x.name)
 
   // console.log(artist_dir, albums)
-  db.artists.push(artist)
+  parser_db.artists.push(artist)
 
   for (const album_name of albums) {
-    const album: Album = {
+    const album: DBAlbum = {
       id: crypto.randomUUID(),
       name: album_name,
       tracks: [],
     }
 
-    db.albums.push(album)
+    parser_db.albums.push(album)
     artist.albums.push(album)
 
     // console.log(album_name)
@@ -104,7 +92,7 @@ for (const artist_dir of artist_dirs) {
       )
       const file = Bun.file(track_path)
 
-      const track: Track = {
+      const track: DBTrack = {
         id: crypto.randomUUID(),
         name: track_name,
         playtimeSeconds: 0,
@@ -113,7 +101,7 @@ for (const artist_dir of artist_dirs) {
       }
 
       if (file.type.startsWith("audio/")) {
-        db.tracks.push(track)
+        parser_db.tracks.push(track)
         album.tracks.push(track)
       } else if (file.type.startsWith("image/")) {
         album.imagePath = track_path
@@ -125,7 +113,18 @@ for (const artist_dir of artist_dirs) {
   }
 }
 
-console.log(db.tracks)
+console.log(parser_db.tracks)
+const artist_ids = await db
+  .insert(artistsTable)
+  .values(
+    parser_db.artists.map((artist) => ({
+      name: artist.name,
+    }))
+  )
+  .returning({ artistId: artistsTable.id })
+
+// loop over the artist id's an connect them to an artist object. then you can loop over the albums of that artist with the db id
+// or do it the easy way: for loop and add one artist at a time, mirroring the parse loop above.
 
 const app = new Elysia()
   .use(
@@ -138,18 +137,18 @@ const app = new Elysia()
     staticPlugin({ prefix: "/public", assets: env.MUSIC_PATH, decodeURI: true })
   )
   .get("/", index)
-  .get("/api/artists", () => db.artists)
+  .get("/api/artists", () => parser_db.artists)
   .get("/api/artists/:artistId", async ({ params: { artistId } }) => {
-    return Response.json(db.artists.find((a) => a.id == artistId))
+    return Response.json(parser_db.artists.find((a) => a.id == artistId))
   })
   .get("/api/albums", {
-    albums: db.albums.map((alb) => ({
+    albums: parser_db.albums.map((alb) => ({
       ...alb,
       imagePath: undefined,
     })),
   })
   .get("/api/albums/:albumId", async ({ params: { albumId } }) => {
-    const album = db.albums.find((a) => a.id == albumId)
+    const album = parser_db.albums.find((a) => a.id == albumId)
     return {
       album: album
         ? {
@@ -160,9 +159,9 @@ const app = new Elysia()
         : undefined,
     }
   })
-  .get("/api/tracks", Response.json(db.tracks))
+  .get("/api/tracks", Response.json(parser_db.tracks))
   .get("/api/tracks/:trackId", async ({ params: { trackId } }) => {
-    return Response.json(db.tracks.find((track) => track.id == trackId))
+    return Response.json(parser_db.tracks.find((track) => track.id == trackId))
   })
   .listen(env.PORT)
 

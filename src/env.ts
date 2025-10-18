@@ -6,7 +6,7 @@ export const env = createEnv({
   clientPrefix: "BUN_PUBLIC_",
 
   server: {
-    // DATABASE_URL: z.string().url(),
+    DATABASE_URL: z.string().default("./data/sqlite.db"),
     MUSIC_PATH: z.string().min(1).default("./demo-music/"),
     PORT: z.coerce.number().int().default(3000),
   },
