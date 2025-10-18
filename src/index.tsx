@@ -164,7 +164,7 @@ const app = new Elysia()
   .get("/api/tracks/:trackId", async ({ params: { trackId } }) => {
     return Response.json(db.tracks.find((track) => track.id == trackId))
   })
-  .listen(3000)
+  .listen(env.PORT)
 
 export type App = typeof app
 

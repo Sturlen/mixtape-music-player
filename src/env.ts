@@ -1,6 +1,6 @@
 // src/env.mjs
 import { createEnv } from "@t3-oss/env-core" // or core package
-import { z } from "zod"
+import * as z from "zod"
 
 export const env = createEnv({
   clientPrefix: "BUN_PUBLIC_",
@@ -8,6 +8,7 @@ export const env = createEnv({
   server: {
     // DATABASE_URL: z.string().url(),
     MUSIC_PATH: z.string().min(1).default("./demo-music/"),
+    PORT: z.coerce.number().int().default(3000),
   },
 
   client: {
