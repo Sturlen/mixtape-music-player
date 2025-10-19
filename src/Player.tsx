@@ -29,6 +29,7 @@ type PlayerState = {
   currentTrack: Track | undefined
   play: () => Promise<void>
   pause: () => void
+  stop: () => void
   setIsPlaying: (isPlaying: boolean) => void
   setTrack: (trackId: Track) => void
   /** The public api for starting a new track. */
@@ -144,9 +145,7 @@ export const useAudioPlayerBase = create<PlayerState>((set, get) => ({
   queueSet: (tracks) => {
     const player = get()
     const first_track = tracks[0]
-    if (!first_track) {
-      return
-    }
+
     set({
       queueIndex: 0,
       queueTracks: tracks.map((tr) => ({
@@ -154,6 +153,10 @@ export const useAudioPlayerBase = create<PlayerState>((set, get) => ({
         queueId: randomUUIDFallback(),
       })),
     })
+    if (!first_track) {
+      get().stop()
+      return
+    }
     player.setTrack(first_track)
   },
   setCurrentTime: (currentTime) => set({ currentTime }),
@@ -200,6 +203,20 @@ export const useAudioPlayerBase = create<PlayerState>((set, get) => ({
     }
 
     set({ isPlaying: true, duration: a.duration })
+  },
+  stop: () => {
+    set({
+      isPlaying: false,
+      currentTime: 0,
+      duration: 0,
+      currentTrack: undefined,
+    })
+    const el = get().audio
+    if (!el) {
+      return
+    }
+    el.src = ""
+    el.load()
   },
   pause: () => {
     const a = get().audio
