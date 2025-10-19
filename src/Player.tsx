@@ -44,6 +44,7 @@ type PlayerState = {
   queuePush: (track: Track) => void
   queueSkip: () => Track | undefined
   queuePrev: () => Track | undefined
+  queueSet: (tracks: Track[]) => void
   setAudio: (el?: HTMLAudioElement) => void
 }
 
@@ -139,6 +140,21 @@ export const useAudioPlayerBase = create<PlayerState>((set, get) => ({
     } else {
       set({ queueTracks })
     }
+  },
+  queueSet: (tracks) => {
+    const player = get()
+    const first_track = tracks[0]
+    if (!first_track) {
+      return
+    }
+    set({
+      queueIndex: 0,
+      queueTracks: tracks.map((tr) => ({
+        ...tr,
+        queueId: randomUUIDFallback(),
+      })),
+    })
+    player.setTrack(first_track)
   },
   setCurrentTime: (currentTime) => set({ currentTime }),
   setAudio: (audio) => set({ audio }),
