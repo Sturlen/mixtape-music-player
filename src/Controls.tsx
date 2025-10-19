@@ -7,6 +7,7 @@ import {
 } from "lucide-react"
 import { useAudioPlayer } from "./Player"
 import { cn } from "./lib/utils"
+import VolumeSlider from "./VolumeControl"
 
 export function Controls() {
   const play = useAudioPlayer.use.play()
@@ -78,6 +79,7 @@ export function Controls() {
           </button>
         </div>
       </div>
+      <VolumeSlider />
     </div>
   )
 }

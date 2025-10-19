@@ -17,6 +17,7 @@ export type Track = {
 
 type PlayerState = {
   audio: HTMLAudioElement | undefined
+  volume: number
   isPlaying: boolean
   // https://goo.gl/LdLk22
   // todo: fix AbortError
@@ -31,6 +32,7 @@ type PlayerState = {
   currentTime: number
   setCurrentTime: (currentTime: number) => void
   setDuration: (duration: number) => void
+  setVolume: (newVolumeFraction: number) => void
   duration: number
   queueTracks: (Track & { queueId: string })[]
   queueIndex: number
@@ -57,15 +59,32 @@ const createSelectors = <S extends UseBoundStore<StoreApi<object>>>(
   return store
 }
 
+export function clamp(value: number, min = 0, max = 1): number {
+  const low = Math.min(min, max)
+  const high = Math.max(min, max)
+  return Math.min(Math.max(value, low), high)
+}
+
 export const useAudioPlayerBase = create<PlayerState>((set, get) => ({
   isPlaying: false,
   isLoading: false,
   audio: undefined,
   currentTime: 0,
+  volume: 0.1,
   currentTrack: undefined,
   duration: 0,
   queueTracks: [],
   queueIndex: 0,
+  setVolume: (newVolumeFraction) => {
+    set({ volume: clamp(newVolumeFraction) })
+
+    const el = get().audio
+    if (!el) {
+      return
+    }
+
+    el.volume = clamp(newVolumeFraction)
+  },
   queuePush: (tr: Track) => {
     const queueTracks = [...get().queueTracks]
     queueTracks.push({ ...tr, queueId: crypto.randomUUID() })
@@ -181,6 +200,7 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
   const setIsPlaying = useAudioPlayer.use.setIsPlaying()
   const queueSkip = useAudioPlayer.use.queueSkip()
   const audio_el = React.useRef<HTMLAudioElement>(null)
+  const volume = useAudioPlayer.use.volume()
 
   useEffect(() => {
     const audio = audio_el.current
@@ -188,7 +208,7 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
       console.log("no audio el")
       return
     }
-    audio.volume = 0.1
+    audio.volume = volume // volume is controlled by Player
 
     const onTime = () => setCurrentTime(audio.currentTime)
     const durationChange = () => setCurrentTime(audio.duration)
