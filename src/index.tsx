@@ -168,4 +168,4 @@ const app = new Elysia()
 
 export type App = typeof app
 
-console.log("Running!")
+console.log("Spelemann running on port", env.PORT)
