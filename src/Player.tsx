@@ -8,6 +8,7 @@ import {
 } from "react"
 
 import { create, type StoreApi, type UseBoundStore } from "zustand"
+import { randomUUIDFallback } from "@/lib/uuid"
 
 export type Track = {
   name: string
@@ -19,6 +20,7 @@ type PlayerState = {
   audio: HTMLAudioElement | undefined
   volume: number
   isPlaying: boolean
+  // todo: improve loading states
   // https://goo.gl/LdLk22
   // todo: fix AbortError
   isLoading: boolean
@@ -87,7 +89,7 @@ export const useAudioPlayerBase = create<PlayerState>((set, get) => ({
   },
   queuePush: (tr: Track) => {
     const queueTracks = [...get().queueTracks]
-    queueTracks.push({ ...tr, queueId: crypto.randomUUID() })
+    queueTracks.push({ ...tr, queueId: randomUUIDFallback() })
     set({ queueTracks })
     if (!get().currentTrack) {
       get().queueSkip()
@@ -144,7 +146,7 @@ export const useAudioPlayerBase = create<PlayerState>((set, get) => ({
     const player = get()
     set({
       queueIndex: 0,
-      queueTracks: [{ ...track, queueId: crypto.randomUUID() }],
+      queueTracks: [{ ...track, queueId: randomUUIDFallback() }],
     })
     player.setTrack(track)
   },
