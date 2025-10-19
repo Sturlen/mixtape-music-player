@@ -45,26 +45,28 @@ export function PlaybackQueue() {
           NEXT UP
         </div>
       </div>
-      <section id="playback-queue" className="h-80 overflow-y-scroll">
+      <section id="playback-queue" className="h-80 overflow-y-auto">
         <ol className="flex flex-col h-full">
-          {tracks.map((tr, i) => (
-            <li key={tr.queueId} className="">
-              <div
-                data-active={i === queueIndex}
-                className="flex gap-2 data-[active=true]:bg-accent"
-              >
-                <div className="p-2 px-4 truncate h-10 w-100 bg-background rounded-full">
-                  {tr.name}
-                </div>
-                <button
-                  onClick={() => queueRemove(i)}
-                  className="bg-background hover:bg-foreground text-foreground hover:text-background rounded-full p-2"
+          {tracks ? (
+            tracks.map((tr, i) => (
+              <li key={tr.queueId} className="">
+                <div
+                  data-active={i === queueIndex}
+                  className="flex gap-2 data-[active=true]:bg-accent"
                 >
-                  <XIcon />
-                </button>
-              </div>
-            </li>
-          ))}
+                  <div className="p-2 px-4 truncate h-10 w-100">{tr.name}</div>
+                  <button
+                    onClick={() => queueRemove(i)}
+                    className="hover:bg-foreground text-foreground hover:text-background  p-2"
+                  >
+                    <XIcon />
+                  </button>
+                </div>
+              </li>
+            ))
+          ) : (
+            <p>No tracks in queue.</p>
+          )}
         </ol>
       </section>
     </div>

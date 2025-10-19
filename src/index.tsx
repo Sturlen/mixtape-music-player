@@ -107,7 +107,9 @@ for (const artist_dir of artist_dirs) {
 
       const track: Track = {
         id: crypto.randomUUID(),
-        name: filename,
+        name: removeLeadingTrackNumber(
+          removeExtension(filename).split(" - ").at(-1) ?? filename
+        ),
         playtimeSeconds: 0,
         path: track_path,
         URL: `/public/${artist_dir}/${album_name}/${filename}`,
@@ -128,6 +130,24 @@ for (const artist_dir of artist_dirs) {
   }
 }
 
+function removeExtension(name: string): string {
+  // Removes the last ".ext" if present and not at start (preserves ".env")
+  return name.replace(/(?<!^)\.[^./\\]+$/u, "")
+}
+
+function parseAndStripTrackNumber(input: string): {
+  trackNumber: number | null
+  title: string
+} {
+  const m = input.match(/^\s*(\d{1,3})\s*[-.)_:]?\s*(.*)$/u)
+  if (!m) return { trackNumber: null, title: input }
+  const [, num, rest] = m
+  return { trackNumber: Number(num), title: rest ?? input }
+}
+
+function removeLeadingTrackNumber(input: string): string {
+  return input.replace(/^\s*\d{1,3}\s*-\s*/u, "")
+}
 // console.log(db.tracks)
 
 const app = new Elysia()
