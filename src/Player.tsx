@@ -9,6 +9,7 @@ import {
 
 import { create, type StoreApi, type UseBoundStore } from "zustand"
 import { randomUUIDFallback } from "@/lib/uuid"
+import { useMediaSession } from "./lib/mediasession"
 
 export type Track = {
   name: string

@@ -1,4 +1,5 @@
 import Controls from "@/Controls"
+import { MediaSessionSync } from "@/MediaSession"
 import PlaybackQueue from "@/QueueList"
 import { createRootRoute, Link, Outlet } from "@tanstack/react-router"
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools"
@@ -46,6 +47,7 @@ const RootLayout = () => (
       <div>Photo: Nasjonalmuseet / Børre Høstland</div>
     </div>
     <TanStackRouterDevtools />
+    <MediaSessionSync />
   </>
 )
 
