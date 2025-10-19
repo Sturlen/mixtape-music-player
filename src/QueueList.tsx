@@ -9,14 +9,9 @@ export function PlaybackQueue() {
   const queueRemove = useAudioPlayer.use.queueRemove()
 
   return (
-    <div
-      data-active={has_queue}
-      className={cn(
-        "fixed left-4 bottom-80 z-50 w-80 h-50 flex flex-col invisible data-[active=true]:visible"
-      )}
-    >
+    <div className={cn("flex flex-col")}>
       <div
-        className="absolute bg-background overflow-hidden w-8 h-full"
+        className="absolute bg-background overflow-hidden w-8 h-full hidden"
         style={{
           writingMode: "vertical-lr",
           textOrientation: "upright",
@@ -50,8 +45,8 @@ export function PlaybackQueue() {
           NEXT UP
         </div>
       </div>
-      <section id="playback-queue" className="h-full ml-10">
-        <ol className="flex flex-col-reverse h-full w-full gap-4">
+      <section id="playback-queue" className="h-80 overflow-y-scroll">
+        <ol className="flex flex-col h-full">
           {tracks.map((tr, i) => (
             <li key={tr.queueId} className="">
               <div

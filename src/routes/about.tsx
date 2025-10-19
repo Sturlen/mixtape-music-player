@@ -8,7 +8,8 @@ export const Route = createFileRoute("/about")({
 function About() {
   return (
     <Page>
-      <div className="p-2">Hello from About!</div>
+      <div style={{ fontStyle: "italic" }}>Brudeferden i Hardanger</div>
+      <div>Photo: Nasjonalmuseet / Børre Høstland</div>
     </Page>
   )
 }

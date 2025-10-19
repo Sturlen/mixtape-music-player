@@ -1,13 +1,14 @@
 import Controls from "@/Controls"
 import { MediaSessionSync } from "@/MediaSessionSync"
 import PlaybackQueue from "@/QueueList"
+import VolumeSlider from "@/VolumeControl"
 import { createRootRoute, Link, Outlet } from "@tanstack/react-router"
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools"
 
 const RootLayout = () => (
-  <>
-    <header className="bg-black">
-      <div className="p-4">
+  <div className="h-full grid grid-rows-[8rem_1fr]">
+    <header className="bg-black h-full flex flex-col">
+      <div className="p-4 grow">
         <h1 className="text-3xl italic font-serif">Spelemann</h1>
       </div>
       <div className="flex">
@@ -25,30 +26,27 @@ const RootLayout = () => (
         </Link>
       </div>
     </header>
-    <hr />
-    <Outlet />
-    <Controls />
-    <PlaybackQueue />
-    <div
-      style={{
-        position: "fixed",
-        bottom: "16px",
-        right: "16px",
-        background: "rgba(0,0,0,0.7)",
-        color: "#fff",
-        padding: "8px 16px",
-        borderRadius: "8px",
-        fontSize: "0.9rem",
-        zIndex: 1000,
-        textAlign: "left",
-      }}
-    >
-      <div style={{ fontStyle: "italic" }}>Brudeferden i Hardanger</div>
-      <div>Photo: Nasjonalmuseet / Børre Høstland</div>
+    <div className="grid md:grid-cols-[32rem_1fr] h-full overflow-hidden gap-4">
+      <section className="md:flex flex-col p-10 border-4 hidden items-center">
+        <h2 className="text-2xl text-center pb-2">QUEUE</h2>
+        <PlaybackQueue />
+        <div className="grow"></div>
+        <h2 className="text-2xl text-center pb-2">PLAYBACK CONTROLS</h2>
+        <div className="bg-accent rounded-2xl w-full p-4 flex-col items-center justify-items-center">
+          <div className="flex justify-items-center items-center">
+            <Controls />
+            <VolumeSlider />
+          </div>
+        </div>
+      </section>
+      <div className="overflow-y-auto">
+        <Outlet />
+      </div>
     </div>
+
     <TanStackRouterDevtools />
     <MediaSessionSync />
-  </>
+  </div>
 )
 
 export const Route = createRootRoute({ component: RootLayout })

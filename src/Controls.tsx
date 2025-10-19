@@ -24,7 +24,7 @@ export function Controls() {
   const durationSupply = 3.0 - (3.0 - 0.93) * progress // reverse relationship
 
   return (
-    <div className="fixed left-4 bottom-10 z-50 bg-[url(cassette.webp)] bg-contain bg-center w-80 h-50 overflow-hidden bg-no-repeat flex flex-col">
+    <div className="relative bg-[url(cassette.webp)] bg-contain bg-center w-80 h-50 overflow-hidden bg-no-repeat flex flex-col">
       <div className="absolute left-[25px] bottom-[55px] h-[130px] w-[268px] object-cover overflow-hidden">
         <img className="absolute bottom-0 opacity-0" src={track?.artURL}></img>
         {/* TODO: implement cassette images properly */}
@@ -83,7 +83,6 @@ export function Controls() {
           </button>
         </div>
       </div>
-      <VolumeSlider />
     </div>
   )
 }
