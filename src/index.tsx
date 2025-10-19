@@ -19,6 +19,7 @@ type Track = {
   playtimeSeconds: number
   path: string
   URL: string
+  artURL?: string
 }
 
 type Album = {
@@ -89,27 +90,27 @@ for (const artist_dir of artist_dirs) {
       .filter((x) => !x.isDirectory())
       .map((x) => x.name)
 
-    for (const track_name of tracks) {
+    for (const filename of tracks) {
       const track_path = path.join(
         music_root_path,
         artist_dir,
         album_name,
-        track_name
+        filename
       )
       const track_url = path.join(
         music_root_path,
         artist_dir,
         album_name,
-        track_name
+        filename
       )
       const file = Bun.file(track_path)
 
       const track: Track = {
         id: crypto.randomUUID(),
-        name: track_name,
+        name: filename,
         playtimeSeconds: 0,
         path: track_path,
-        URL: `/public/${artist_dir}/${album_name}/${track_name}`,
+        URL: `/public/${artist_dir}/${album_name}/${filename}`,
       }
 
       if (file.type.startsWith("audio/")) {
@@ -117,7 +118,9 @@ for (const artist_dir of artist_dirs) {
         album.tracks.push(track)
       } else if (file.type.startsWith("image/")) {
         album.imagePath = track_path
-        album.imageURL = `/public/${artist_dir}/${album_name}/${track_name}`
+        album.imageURL = `/public/${artist_dir}/${album_name}/${filename}`
+        track.artURL = album.imageURL
+        console.log(filename, track.artURL)
       }
     }
 
@@ -125,7 +128,7 @@ for (const artist_dir of artist_dirs) {
   }
 }
 
-console.log(db.tracks)
+// console.log(db.tracks)
 
 const app = new Elysia()
   .use(
@@ -143,9 +146,10 @@ const app = new Elysia()
     return Response.json(db.artists.find((a) => a.id == artistId))
   })
   .get("/api/albums", {
-    albums: db.albums.map((alb) => ({
-      ...alb,
+    albums: db.albums.map((album) => ({
+      ...album,
       imagePath: undefined,
+      tracks: album.tracks.map((tr) => ({ ...tr, artURL: album.imageURL })),
     })),
   })
   .get("/api/albums/:albumId", async ({ params: { albumId } }) => {
@@ -156,6 +160,10 @@ const app = new Elysia()
             ...album,
             imagePath: undefined,
             imageUrl: `/api/albumArt/${albumId}`,
+            tracks: album.tracks.map((tr) => ({
+              ...tr,
+              artURL: album.imageURL,
+            })),
           }
         : undefined,
     }

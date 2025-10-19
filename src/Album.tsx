@@ -53,6 +53,7 @@ export function Album({ albumId }: { albumId: string }) {
                   name: track.name,
                   url: track.URL,
                   duration: track.playtimeSeconds,
+                  artURL: track.artURL,
                 })
                 play()
               }}
@@ -67,6 +68,7 @@ export function Album({ albumId }: { albumId: string }) {
                   name: track.name,
                   url: track.URL,
                   duration: track.playtimeSeconds,
+                  artURL: track.artURL,
                 })
                 play()
               }}

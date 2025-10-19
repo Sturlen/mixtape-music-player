@@ -25,8 +25,12 @@ export function Controls() {
 
   return (
     <div className="fixed left-4 bottom-10 z-50 bg-[url(cassette.webp)] bg-contain bg-center w-80 h-50 overflow-hidden bg-no-repeat flex flex-col">
+      <div className="absolute left-[25px] bottom-[55px] h-[130px] w-[268px] object-cover overflow-hidden">
+        <img className="absolute bottom-0 opacity-0" src={track?.artURL}></img>
+        {/* TODO: implement cassette images properly */}
+      </div>
       <div className="relative">
-        <div className="bg-amber-200 text-background left-[28px] top-[20px] right-[28px] overflow-ellipsis text-nowrap overflow-hidden absolute h-[30px]">
+        <div className="bg-amber-50 text-background left-[28px] top-[20px] right-[28px] overflow-ellipsis text-nowrap overflow-hidden absolute h-[30px]">
           <span>{track?.name ?? "None"}</span>
         </div>
         <div>

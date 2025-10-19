@@ -15,6 +15,7 @@ export type Track = {
   name: string
   duration: number
   url: string
+  artURL?: string
 }
 
 type PlayerState = {

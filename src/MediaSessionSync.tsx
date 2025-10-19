@@ -9,9 +9,15 @@ export function MediaSessionSync() {
   const queueSkip = useCallback(() => useAudioPlayer.use.queueSkip(), [])
   const queuePrev = useCallback(() => useAudioPlayer.use.queuePrev(), [])
 
+  const artwork = currentTrack?.artURL
+    ? [{ src: currentTrack?.artURL, sizes: "512x512" }]
+    : []
+
   useMediaSession({
     playbackState: isPlaying ? "playing" : "paused",
-    metadata: currentTrack ? { title: currentTrack.name } : undefined,
+    metadata: currentTrack
+      ? { title: currentTrack.name, artwork: artwork }
+      : undefined,
     handlers: {
       nexttrack: () => {
         queueSkip()
