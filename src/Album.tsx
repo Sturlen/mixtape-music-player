@@ -35,15 +35,15 @@ export function Album({ albumId }: { albumId: string }) {
   }
 
   return (
-    <details>
-      <summary>
-        {album.name}{" "}
-        <img
-          src={album.imageURL}
-          alt={album.name}
-          width={"128rem"}
-          height={"128rem"}
-        />
+    <div>
+      <img
+        src={album.imageURL}
+        alt={album.name}
+        className="size-40 bg-[url(cassette.webp)] bg-cover"
+      />
+      <h1 className="text-8xl font-extrabold mb-10">{album.name}</h1>
+
+      <div>
         <button
           className="hover:bg-accent p-4 border"
           onClick={() =>
@@ -59,10 +59,11 @@ export function Album({ albumId }: { albumId: string }) {
         >
           Play Album
         </button>
-      </summary>
+      </div>
+      <h2>TRACKS</h2>
       <div>
         {album.tracks.map((track) => (
-          <div key={track.id}>
+          <div key={track.id} className="w-full">
             <button
               onClick={() => {
                 playTrack({
@@ -94,7 +95,7 @@ export function Album({ albumId }: { albumId: string }) {
           </div>
         ))}
       </div>
-    </details>
+    </div>
   )
 }
 

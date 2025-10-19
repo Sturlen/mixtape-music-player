@@ -26,14 +26,18 @@ export function App() {
         <div className="mb-20">
           <h1 className="text-8xl font-extrabold">COLLECTION</h1>
           <span className="italic">
-            FIND YOUR <span className="text-amber-400">STYLE</span>
+            LOOK UPON YOUR MIGHTY BACKLOG AND{" "}
+            <span className="text-amber-400">✨DESPAIR✨</span>
           </span>
         </div>
         <ul className="flex flex-wrap gap-2">
           {artists?.map((artist) => (
-            <li>
+            <li className="w-40">
               <Link to="/artists/$id" params={{ id: artist.id }}>
-                <img src={artist.imageURL} className="size-40" />
+                <img
+                  src={artist.imageURL}
+                  className="size-40 bg-[url(cassette.webp)] bg-cover "
+                />
                 <h2>{artist.name}</h2>
               </Link>
             </li>
