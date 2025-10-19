@@ -34,6 +34,7 @@ type Artist = {
   id: string
   name: string
   albums: Album[]
+  imageURL?: string
 }
 
 const db = {
@@ -66,6 +67,22 @@ for (const artist_dir of artist_dirs) {
   )
     .filter((x) => x.isDirectory())
     .map((x) => x.name)
+
+  const artist_dir_files = (
+    await readdir(path.join(music_root_path, artist_dir), {
+      withFileTypes: true,
+    })
+  )
+    .filter((x) => x.isFile())
+    .map((file) => file.name)
+
+  for (const filename of artist_dir_files) {
+    const file = Bun.file(path.join(music_root_path, artist_dir, filename))
+    if (file.type.startsWith("image/")) {
+      artist.imageURL = `/public/${artist_dir}/${filename}`
+      console.log(artist.imageURL)
+    }
+  }
 
   // console.log(artist_dir, albums)
   db.artists.push(artist)
@@ -122,7 +139,6 @@ for (const artist_dir of artist_dirs) {
         album.imagePath = track_path
         album.imageURL = `/public/${artist_dir}/${album_name}/${filename}`
         track.artURL = album.imageURL
-        console.log(filename, track.artURL)
       }
     }
 
@@ -161,9 +177,20 @@ const app = new Elysia()
     staticPlugin({ prefix: "/public", assets: env.MUSIC_PATH, decodeURI: true })
   )
   .get("/", index)
-  .get("/api/artists", () => db.artists)
+  .get("/artists/*", index) // bug does not allow root wildcard, so requires you to declare all routes
+  .get("/albums/*", index)
+  .get("/api/artists/", () => db.artists)
   .get("/api/artists/:artistId", async ({ params: { artistId } }) => {
-    return Response.json(db.artists.find((a) => a.id == artistId))
+    const artist = db.artists.find((a) => a.id == artistId)
+    return {
+      artist: artist
+        ? {
+            ...artist,
+            imagePath: undefined,
+            imageUrl: `/api/albumArt/${artistId}`,
+          }
+        : undefined,
+    }
   })
   .get("/api/albums", {
     albums: db.albums.map((album) => ({

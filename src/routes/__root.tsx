@@ -1,3 +1,4 @@
+import { ScrollArea } from "@/Components/ui/scroll-area"
 import Controls from "@/Controls"
 import { MediaSessionSync } from "@/MediaSessionSync"
 import PlaybackQueue from "@/QueueList"
@@ -39,9 +40,9 @@ const RootLayout = () => (
           </div>
         </div>
       </section>
-      <div className="overflow-y-auto">
+      <ScrollArea className="overflow-y-auto bg-gradient-to-b from-accent from-20% to-black">
         <Outlet />
-      </div>
+      </ScrollArea>
     </div>
 
     <TanStackRouterDevtools />
