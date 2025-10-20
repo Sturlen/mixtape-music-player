@@ -21,10 +21,12 @@ export function App() {
   const { data: artists } = useArtists()
 
   return (
-    <div className="px-20 pt-40">
+    <div className="p-2 md:px-20 md:pt-40">
       <article>
         <div className="mb-20">
-          <h1 className="text-8xl font-extrabold">COLLECTION</h1>
+          <h1 className=" text-4xl md:text-6xl lg:text-8xl font-extrabold">
+            COLLECTION
+          </h1>
           <span className="italic">
             LOOK UPON YOUR MIGHTY BACKLOG AND{" "}
             <span className="text-amber-400">✨DESPAIR✨</span>

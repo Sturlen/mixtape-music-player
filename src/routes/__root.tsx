@@ -27,8 +27,8 @@ const RootLayout = () => (
         </Link>
       </div>
     </header>
-    <div className="grid md:grid-cols-[32rem_1fr] h-full overflow-hidden gap-4">
-      <section className="md:flex flex-col p-10 border-4 hidden items-center">
+    <div className="grid lg:grid-cols-[20rem_1fr] xl:grid-cols-[32rem_1fr] h-full overflow-hidden gap-4">
+      <section className="lg:flex flex-col p-10 border-4 hidden items-center">
         <h2 className="text-2xl text-center pb-2 font-inter-400">QUEUE</h2>
         <PlaybackQueue />
         <div className="grow"></div>
