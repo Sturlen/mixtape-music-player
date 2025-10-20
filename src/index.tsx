@@ -3,7 +3,7 @@ import index from "./index.html"
 import { openapi, fromTypes } from "@elysiajs/openapi"
 import { readdir } from "node:fs/promises"
 import path from "node:path"
-import Elysia from "elysia"
+import Elysia, { NotFoundError } from "elysia"
 import { env } from "./env"
 import staticPlugin from "@elysiajs/static"
 
@@ -34,6 +34,7 @@ type Artist = {
   id: string
   name: string
   albums: Album[]
+  imagePath?: string
   imageURL?: string
 }
 
@@ -55,8 +56,9 @@ const artist_dirs = artist_dirents
   .map((x) => x.name)
 
 for (const artist_dir of artist_dirs) {
+  const artist_id = Bun.hash(artist_dir).toString(16)
   const artist: Artist = {
-    id: Bun.hash(artist_dir).toString(16),
+    id: artist_id,
     name: artist_dir,
     albums: [],
   }
@@ -79,8 +81,9 @@ for (const artist_dir of artist_dirs) {
   for (const filename of artist_dir_files) {
     const file = Bun.file(path.join(music_root_path, artist_dir, filename))
     if (file.type.startsWith("image/")) {
-      artist.imageURL = `/public/${artist_dir}/${filename}`
-      console.log(artist.imageURL)
+      artist.imagePath = path.join(music_root_path, artist_dir, filename)
+      artist.imageURL = `/api/files/artistart/${artist_id}`
+      console.log(artist.id, artist.name, artist.imageURL)
     }
   }
 
@@ -88,8 +91,9 @@ for (const artist_dir of artist_dirs) {
   db.artists.push(artist)
 
   for (const album_filename of albums) {
+    const album_id = Bun.hash(album_filename).toString(16)
     const album: Album = {
-      id: Bun.hash(album_filename).toString(16),
+      id: album_id,
       name: album_filename,
       tracks: [],
     }
@@ -121,15 +125,15 @@ for (const artist_dir of artist_dirs) {
         filename
       )
       const file = Bun.file(track_path)
-
+      const track_id = Bun.hash(filename).toString(16)
       const track: Track = {
-        id: Bun.hash(filename).toString(16),
+        id: track_id,
         name: removeLeadingTrackNumber(
           removeExtension(filename).split(" - ").at(-1) ?? filename
         ),
         playtimeSeconds: 0,
         path: track_path,
-        URL: `/public/${artist_dir}/${album_filename}/${filename}`,
+        URL: `/api/files/track/${track_id}`,
       }
 
       if (file.type.startsWith("audio/")) {
@@ -137,7 +141,7 @@ for (const artist_dir of artist_dirs) {
         album.tracks.push(track)
       } else if (file.type.startsWith("image/")) {
         album.imagePath = track_path
-        album.imageURL = `/public/${artist_dir}/${album_filename}/${filename}`
+        album.imageURL = `/api/files/albumart/${album_id}`
         track.artURL = album.imageURL
       }
     }
@@ -172,9 +176,6 @@ const app = new Elysia()
       path: "/openapi",
       references: fromTypes(),
     })
-  )
-  .use(
-    staticPlugin({ prefix: "/public", assets: env.MUSIC_PATH, decodeURI: true })
   )
   .get("/", index)
   .get("/artists/*", index) // bug does not allow root wildcard, so requires you to declare all routes
@@ -218,6 +219,38 @@ const app = new Elysia()
   .get("/api/tracks", Response.json(db.tracks))
   .get("/api/tracks/:trackId", async ({ params: { trackId } }) => {
     return Response.json(db.tracks.find((track) => track.id == trackId))
+  })
+  .get(
+    "/api/files/artistart/:artistId",
+    async ({ params: { artistId }, status }) => {
+      const artist = db.artists.find((a) => a.id == artistId)
+      if (!artist) {
+        console.error("artist", artistId, "not found")
+        return status(404)
+      }
+      try {
+        return Bun.file(artist.imagePath ?? "")
+      } catch (err) {
+        console.error(artist?.imageURL)
+        throw new NotFoundError()
+      }
+    }
+  )
+  .get("/api/files/albumart/:albumId", async ({ params: { albumId } }) => {
+    try {
+      const album = db.albums.find((a) => a.id == albumId)
+      return Bun.file(album?.imagePath ?? "")
+    } catch (err) {
+      throw new NotFoundError()
+    }
+  })
+  .get("/api/files/track/:trackId", async ({ params: { trackId } }) => {
+    try {
+      const track = db.tracks.find((t) => t.id == trackId)
+      return Bun.file(track?.path ?? "")
+    } catch (err) {
+      throw new NotFoundError()
+    }
   })
   .listen(env.PORT)
 
