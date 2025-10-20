@@ -156,3 +156,16 @@
     transform: translateY(100%); /* End off-screen to the left */
   }
 }
+
+.font-battle {
+  font-family: "BBH Sans Bartle", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.font-inter-400 {
+  font-family: "Inter", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+}
