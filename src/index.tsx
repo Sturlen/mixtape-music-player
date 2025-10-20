@@ -56,7 +56,7 @@ const artist_dirs = artist_dirents
 
 for (const artist_dir of artist_dirs) {
   const artist: Artist = {
-    id: crypto.randomUUID(),
+    id: Bun.hash(artist_dir).toString(16),
     name: artist_dir,
     albums: [],
   }
@@ -87,10 +87,10 @@ for (const artist_dir of artist_dirs) {
   // console.log(artist_dir, albums)
   db.artists.push(artist)
 
-  for (const album_name of albums) {
+  for (const album_filename of albums) {
     const album: Album = {
-      id: crypto.randomUUID(),
-      name: album_name,
+      id: Bun.hash(album_filename).toString(16),
+      name: album_filename,
       tracks: [],
     }
 
@@ -100,7 +100,7 @@ for (const artist_dir of artist_dirs) {
     // console.log(album_name)
 
     const tracks = (
-      await readdir(path.join(music_root_path, artist_dir, album_name), {
+      await readdir(path.join(music_root_path, artist_dir, album_filename), {
         withFileTypes: true,
       })
     )
@@ -111,25 +111,25 @@ for (const artist_dir of artist_dirs) {
       const track_path = path.join(
         music_root_path,
         artist_dir,
-        album_name,
+        album_filename,
         filename
       )
       const track_url = path.join(
         music_root_path,
         artist_dir,
-        album_name,
+        album_filename,
         filename
       )
       const file = Bun.file(track_path)
 
       const track: Track = {
-        id: crypto.randomUUID(),
+        id: Bun.hash(filename).toString(16),
         name: removeLeadingTrackNumber(
           removeExtension(filename).split(" - ").at(-1) ?? filename
         ),
         playtimeSeconds: 0,
         path: track_path,
-        URL: `/public/${artist_dir}/${album_name}/${filename}`,
+        URL: `/public/${artist_dir}/${album_filename}/${filename}`,
       }
 
       if (file.type.startsWith("audio/")) {
@@ -137,7 +137,7 @@ for (const artist_dir of artist_dirs) {
         album.tracks.push(track)
       } else if (file.type.startsWith("image/")) {
         album.imagePath = track_path
-        album.imageURL = `/public/${artist_dir}/${album_name}/${filename}`
+        album.imageURL = `/public/${artist_dir}/${album_filename}/${filename}`
         track.artURL = album.imageURL
       }
     }
