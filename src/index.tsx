@@ -129,7 +129,7 @@ for (const artist_dir of artist_dirs) {
       const track: Track = {
         id: track_id,
         name: removeLeadingTrackNumber(
-          removeExtension(filename).split(" - ").at(-1) ?? filename
+          removeBandcampHeaders(removeExtension(filename))
         ),
         playtimeSeconds: 0,
         path: track_path,
@@ -148,6 +148,13 @@ for (const artist_dir of artist_dirs) {
 
     // TODO: too many loops, too many loops
   }
+}
+
+function removeBandcampHeaders(str: string) {
+  if (str.search(/\[/)) {
+    return str // skip for downloads
+  }
+  return str.split(" - ").at(-1) ?? str
 }
 
 function removeExtension(name: string): string {
