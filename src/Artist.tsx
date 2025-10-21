@@ -47,7 +47,7 @@ export function Artist({ id: artistId }: { id: string }) {
       <ol className="flex flex-wrap gap-2">
         {artist.albums.map((album) => (
           <li key={album.id} className="w-40">
-            <Link to="/album/$id" params={{ id: album.id }}>
+            <Link to="/albums/$id" params={{ id: album.id }}>
               <img
                 src={album.imageURL}
                 className="size-40 bg-[url(cassette.webp)] bg-cover"

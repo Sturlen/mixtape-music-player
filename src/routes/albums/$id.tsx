@@ -1,7 +1,7 @@
 import Album from "@/Album"
 import { createFileRoute, useParams } from "@tanstack/react-router"
 
-export const Route = createFileRoute("/album/$id")({
+export const Route = createFileRoute("/albums/$id")({
   component: RouteComponent,
 })
 

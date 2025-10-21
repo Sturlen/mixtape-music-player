@@ -12,7 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ArtistsIdRouteImport } from './routes/artists/$id'
-import { Route as AlbumIdRouteImport } from './routes/album/$id'
+import { Route as AlbumsIdRouteImport } from './routes/albums/$id'
 
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
@@ -29,43 +29,43 @@ const ArtistsIdRoute = ArtistsIdRouteImport.update({
   path: '/artists/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AlbumIdRoute = AlbumIdRouteImport.update({
-  id: '/album/$id',
-  path: '/album/$id',
+const AlbumsIdRoute = AlbumsIdRouteImport.update({
+  id: '/albums/$id',
+  path: '/albums/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/album/$id': typeof AlbumIdRoute
+  '/albums/$id': typeof AlbumsIdRoute
   '/artists/$id': typeof ArtistsIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/album/$id': typeof AlbumIdRoute
+  '/albums/$id': typeof AlbumsIdRoute
   '/artists/$id': typeof ArtistsIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/album/$id': typeof AlbumIdRoute
+  '/albums/$id': typeof AlbumsIdRoute
   '/artists/$id': typeof ArtistsIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/album/$id' | '/artists/$id'
+  fullPaths: '/' | '/about' | '/albums/$id' | '/artists/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/album/$id' | '/artists/$id'
-  id: '__root__' | '/' | '/about' | '/album/$id' | '/artists/$id'
+  to: '/' | '/about' | '/albums/$id' | '/artists/$id'
+  id: '__root__' | '/' | '/about' | '/albums/$id' | '/artists/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
-  AlbumIdRoute: typeof AlbumIdRoute
+  AlbumsIdRoute: typeof AlbumsIdRoute
   ArtistsIdRoute: typeof ArtistsIdRoute
 }
 
@@ -92,11 +92,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ArtistsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/album/$id': {
-      id: '/album/$id'
-      path: '/album/$id'
-      fullPath: '/album/$id'
-      preLoaderRoute: typeof AlbumIdRouteImport
+    '/albums/$id': {
+      id: '/albums/$id'
+      path: '/albums/$id'
+      fullPath: '/albums/$id'
+      preLoaderRoute: typeof AlbumsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -105,7 +105,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
-  AlbumIdRoute: AlbumIdRoute,
+  AlbumsIdRoute: AlbumsIdRoute,
   ArtistsIdRoute: ArtistsIdRoute,
 }
 export const routeTree = rootRouteImport
