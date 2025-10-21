@@ -58,59 +58,24 @@ export function PlaybackQueue() {
   }, [queueIndex])
 
   return (
-    <div className={cn("flex flex-col")}>
-      <div
-        className="absolute bg-background overflow-hidden w-8 h-full hidden"
-        style={{
-          writingMode: "vertical-lr",
-          textOrientation: "upright",
-        }}
-      >
-        <div
-          className="absolute top-[-100%] w-full h-full text-center animate-text-scroll-y left-[3px]"
-          style={{
-            writingMode: "vertical-lr",
-            textOrientation: "upright",
-          }}
-        >
-          NEXT UP
-        </div>
-        <div
-          className="absolute w-full h-full text-center animate-text-scroll-y left-[3px]"
-          style={{
-            writingMode: "vertical-lr",
-            textOrientation: "upright",
-          }}
-        >
-          NEXT UP
-        </div>
-        <div
-          className="absolute top-full w-full h-full text-center animate-text-scroll-y left-[3px]"
-          style={{
-            writingMode: "vertical-lr",
-            textOrientation: "upright",
-          }}
-        >
-          NEXT UP
-        </div>
-      </div>
+    <div className={cn("flex flex-col justify-stretch w-full")}>
       <ScrollArea
         id="playback-queue"
-        className="h-80 overflow-y-auto border rounded-md"
+        className="overflow-y-auto border rounded-md"
       >
-        <ol ref={container_ref} className="flex flex-col h-full">
+        <ol ref={container_ref} className="flex flex-col h-full w-full">
           {tracks ? (
             tracks.map((tr, i) => (
               <li key={tr.queueId} className="">
                 <div
                   ref={i === queueIndex ? active_el_ref : undefined}
                   data-active={i === queueIndex}
-                  className="flex gap-2 data-[active=true]:bg-accent"
+                  className="flex gap-2 data-[active=true]:bg-accent items-stretch"
                 >
-                  <div className="p-2 px-4 truncate h-10 w-100">{tr.name}</div>
+                  <div className="p-2 px-4 truncate h-10 grow">{tr.name}</div>
                   <button
                     onClick={() => queueRemove(i)}
-                    className="hover:bg-foreground text-foreground hover:text-background  p-2"
+                    className="hover:bg-foreground text-foreground hover:text-background p-2 justify-self-end"
                   >
                     <XIcon />
                   </button>
