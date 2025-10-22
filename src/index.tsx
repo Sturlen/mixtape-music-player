@@ -6,6 +6,7 @@ import path from "node:path"
 import Elysia, { NotFoundError } from "elysia"
 import { env } from "./env"
 import staticPlugin from "@elysiajs/static"
+import Fuse from "fuse.js"
 
 const music_exts = ["mp3", "flac"] as const
 const art_exts = ["jpeg", "png", "webp"] as const
@@ -172,6 +173,8 @@ function parseAndStripTrackNumber(input: string): {
   return { trackNumber: Number(num), title: rest ?? input }
 }
 
+const fuse_artists = new Fuse(db.artists, { keys: ["name", "albums.name"] })
+
 function removeLeadingTrackNumber(input: string): string {
   return input.replace(/^\s*\d{1,3}\s*-\s*/u, "")
 }
@@ -187,7 +190,15 @@ const app = new Elysia()
   .get("/", index)
   .get("/artists/*", index) // bug does not allow root wildcard, so requires you to declare all routes
   .get("/albums/*", index)
-  .get("/api/artists/", () => db.artists)
+  .get("/api/artists/", ({ query: { q } }) => {
+    if (q) {
+      console.log("q", q)
+      const out = fuse_artists.search(q).map((res) => res.item)
+      return out
+    }
+
+    return db.artists
+  })
   .get("/api/artists/:artistId", async ({ params: { artistId } }) => {
     const artist = db.artists.find((a) => a.id == artistId)
     return {
