@@ -59,9 +59,9 @@ export function PlaybackQueue() {
 
   return (
     <div className={cn("flex flex-col justify-stretch w-full")}>
-      <ScrollArea
+      <div
         id="playback-queue"
-        className="overflow-y-auto border rounded-md"
+        className="overflow-y-auto border rounded-md h-[300px]"
       >
         <ol ref={container_ref} className="flex flex-col h-full w-full">
           {tracks ? (
@@ -86,7 +86,7 @@ export function PlaybackQueue() {
             <p>No tracks in queue.</p>
           )}
         </ol>
-      </ScrollArea>
+      </div>
     </div>
   )
 }
