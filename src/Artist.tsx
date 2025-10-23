@@ -42,8 +42,10 @@ export function Artist({ id: artistId }: { id: string }) {
         alt={artist.name}
         className="size-40 bg-[url(cassette.webp)] bg-cover"
       />
-      <h1 className="text-8xl font-extrabold mb-10">{artist.name}</h1>
-      <h2>Albums</h2>
+      <h1 className="text-4xl md:text-6xl lg:text-8xl font-extrabold">
+        {artist.name}
+      </h1>
+      <h2>Albumsa</h2>
       <ol className="flex flex-wrap gap-2">
         {artist.albums.map((album) => (
           <li key={album.id} className="w-40">

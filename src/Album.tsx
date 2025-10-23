@@ -35,13 +35,15 @@ export function Album({ albumId }: { albumId: string }) {
   }
 
   return (
-    <div>
+    <div className="md:px-10 pt-10">
       <img
         src={album.imageURL}
         alt={album.name}
         className="size-40 bg-[url(cassette.webp)] bg-cover"
       />
-      <h1 className="text-8xl font-extrabold mb-10">{album.name}</h1>
+      <h1 className="text-4xl md:text-6xl lg:text-8xl font-extrabold">
+        {album.name}
+      </h1>
 
       <div>
         <button
@@ -57,7 +59,7 @@ export function Album({ albumId }: { albumId: string }) {
             )
           }
         >
-          Play Album
+          Play Albums
         </button>
       </div>
       <h2>TRACKS</h2>
