@@ -3,7 +3,7 @@ import index from "./index.html"
 import { openapi, fromTypes } from "@elysiajs/openapi"
 import { readdir } from "node:fs/promises"
 import path from "node:path"
-import Elysia, { NotFoundError } from "elysia"
+import Elysia, { NotFoundError, redirect, t } from "elysia"
 import { env } from "./env"
 import staticPlugin from "@elysiajs/static"
 import Fuse from "fuse.js"
@@ -187,18 +187,25 @@ const app = new Elysia()
       references: fromTypes(),
     })
   )
-  .get("/", index)
-  .get("/artists/*", index) // bug does not allow root wildcard, so requires you to declare all routes
-  .get("/albums/*", index)
-  .get("/api/artists/", ({ query: { q } }) => {
-    if (q) {
-      console.log("q", q)
-      const out = fuse_artists.search(q).map((res) => res.item)
-      return out
-    }
+  .get("/*", index, { detail: "hide" })
+  .get("/api/*", "418")
+  .get("/api", () => redirect("/openapi"))
+  .get(
+    "/api/artists",
+    ({ query: { q } }) => {
+      if (q) {
+        console.log("q", q)
+        const out = fuse_artists.search(q).map((res) => res.item)
+        return out
+      }
 
-    return db.artists
-  })
+      return db.artists
+    },
+    {
+      detail: "Get artists",
+      query: t.Object({ q: t.Optional(t.String()) }),
+    }
+  )
   .get("/api/artists/:artistId", async ({ params: { artistId } }) => {
     const artist = db.artists.find((a) => a.id == artistId)
     return {
