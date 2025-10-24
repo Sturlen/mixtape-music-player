@@ -11,14 +11,13 @@ import { UserIcon } from "lucide-react"
 const RootLayout = () => (
   <div className="h-full bg-gradient-to-b from-accent from-[200px] to-black to-[600px]">
     <header className="bg-black h-30 flex p-2 md:p-10 items-center justify-between fixed top-0 left-0 xl:left-[25rem] right-0">
-      <h1 className="text-2xl md:text-3xl italic font-serif font-battle whitespace-nowrap">
-        MIXTAPE
-      </h1>
+      <Link to="/">
+        <h1 className="text-2xl md:text-3xl italic font-serif font-battle whitespace-nowrap">
+          MIXTAPE
+        </h1>
+      </Link>
       {/* <div className="grow"></div> */}
       <nav className="md:flex justify-around items-center [&>*]:p-4 w-full hidden">
-        <Link to="/" className="[&.active]:font-bold [&.active]:bg-secondary">
-          Home
-        </Link>
         <Link
           to="/about"
           className="[&.active]:font-bold [&.active]:bg-secondary"
