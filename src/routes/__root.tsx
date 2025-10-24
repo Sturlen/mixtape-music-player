@@ -1,4 +1,4 @@
-import { ScrollArea } from "@/Components/ui/scroll-area"
+import MobileControls from "@/Components/mobile-controls"
 import Controls from "@/Controls"
 import { cn } from "@/lib/utils"
 import { MediaSessionSync } from "@/MediaSessionSync"
@@ -36,6 +36,8 @@ const RootLayout = () => (
         <Outlet />
       </div>
     </div>
+
+    <MobileControls className="xl:hidden" />
 
     <TanStackRouterDevtools position="top-right" />
     <MediaSessionSync />
