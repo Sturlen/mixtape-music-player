@@ -31,10 +31,8 @@ const RootLayout = () => (
       </div>
     </header>
     <Sidebar className="w-[25rem] hidden xl:flex" />
-    <div className="pt-30 xl:pl-[25rem]">
-      <div>
-        <Outlet />
-      </div>
+    <div className="pt-30 xl:pl-[25rem] pb-40">
+      <Outlet />
     </div>
 
     <MobileControls className="xl:hidden" />
