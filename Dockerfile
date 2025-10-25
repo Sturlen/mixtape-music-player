@@ -1,11 +1,11 @@
 # Multi-stage Bun build optimized for CI
-FROM oven/bun:1.3.0 AS deps
+FROM oven/bun:1.3-debian AS deps
 WORKDIR /app
 COPY package.json bun.lock /app/
 # install production dependencies only (used in final image)
 RUN bun install --frozen-lockfile --production
 
-FROM oven/bun:1.3.0 AS builder
+FROM oven/bun:1.3-debian  AS builder
 WORKDIR /app
 # install full deps for build
 COPY package.json bun.lock /app/
@@ -16,7 +16,7 @@ COPY . /app
 RUN bun test || true
 RUN bun run build
 
-FROM oven/bun:1.3.0 AS release
+FROM oven/bun:1.3-debian  AS release
 WORKDIR /app
 # copy only production node_modules and built assets
 COPY --from=deps /app/node_modules ./node_modules
