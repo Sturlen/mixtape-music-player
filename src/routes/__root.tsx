@@ -1,4 +1,5 @@
 import MobileControls from "@/Components/mobile-controls"
+import PlaybackDetails from "@/Components/PlaybackDetails"
 import Controls from "@/Controls"
 import { cn } from "@/lib/utils"
 import { MediaSessionSync } from "@/MediaSessionSync"
@@ -39,6 +40,7 @@ const RootLayout = () => (
 
     <TanStackRouterDevtools position="top-right" />
     <MediaSessionSync />
+    <PlaybackDetails />
   </div>
 )
 

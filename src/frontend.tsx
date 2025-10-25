@@ -11,6 +11,7 @@ import { App } from "./App"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { RouterProvider, createRouter } from "@tanstack/react-router"
 import { PlayerProvider } from "./Player"
+import { PlaybackDrawerProvider } from "./contexts/PlaybackDrawerContext"
 
 // Import the generated route tree
 import { routeTree } from "./routeTree.gen"
@@ -31,9 +32,11 @@ const elem = document.getElementById("root")!
 const app = (
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <PlayerProvider>
-        <RouterProvider router={router} />
-      </PlayerProvider>
+      <PlaybackDrawerProvider>
+        <PlayerProvider>
+          <RouterProvider router={router} />
+        </PlayerProvider>
+      </PlaybackDrawerProvider>
     </QueryClientProvider>
   </StrictMode>
 )

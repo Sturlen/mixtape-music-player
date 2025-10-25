@@ -3,6 +3,7 @@ import { Play, Pause, SkipForwardIcon } from "lucide-react"
 import { useAudioPlayer } from "@/Player"
 import { cn } from "@/lib/utils"
 import { useSwipeable } from "react-swipeable"
+import { usePlaybackDrawer } from "@/contexts/PlaybackDrawerContext"
 
 const MobileControls = ({ className }: { className?: string }) => {
   const {
@@ -15,10 +16,13 @@ const MobileControls = ({ className }: { className?: string }) => {
     queueSkip,
     queuePrev,
   } = useAudioPlayer()
+  const { openDrawer } = usePlaybackDrawer()
+  const openPlaybackDetails = () => openDrawer()
+
   const handlers = useSwipeable({
     onSwipedLeft: queueSkip,
     onSwipedRight: queuePrev,
-    onSwipedUp: () => console.log("Swiped up"),
+    onSwipedUp: openPlaybackDetails,
     onSwipedDown: () => console.log("Swiped down"),
     trackMouse: true, // Enable mouse swipes for testing
   })
@@ -38,18 +42,29 @@ const MobileControls = ({ className }: { className?: string }) => {
         className
       )}
     >
-      <button
-        className="p-2 rounded-full hover:bg-gray-800 transition"
-        style={{
-          backgroundImage: currentTrack?.artURL
-            ? `url(${currentTrack.artURL})`
-            : undefined,
-        }}
-        onClick={isPlaying ? pause : play}
-        aria-label={isPlaying ? "Pause" : "Play"}
-      >
-        {isPlaying ? <Pause size={32} /> : <Play size={32} />}
-      </button>
+      <div className="flex items-center gap-2">
+        <button
+          className="p-2 rounded-full hover:bg-gray-800 transition"
+          style={{
+            backgroundImage: currentTrack?.artURL
+              ? `url(${currentTrack.artURL})`
+              : undefined,
+          }}
+          onClick={isPlaying ? pause : play}
+          aria-label={isPlaying ? "Pause" : "Play"}
+        >
+          {isPlaying ? <Pause size={32} /> : <Play size={32} />}
+        </button>
+
+        {/* quick trigger to open playback details */}
+        <button
+          onClick={openPlaybackDetails}
+          aria-label="Open playback details"
+          className="px-2 py-1 rounded-md hover:bg-gray-800 transition text-sm hidden md:inline-block"
+        >
+          Now playing
+        </button>
+      </div>
       <div className="flex-1 w-1">
         <div className="font-bold block truncate line-clamp-1">
           {currentTrack?.name || "No track"}
