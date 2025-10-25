@@ -6,8 +6,8 @@ import { useAudioPlayer } from "./Player"
 export function MediaSessionSync() {
   const isPlaying = useAudioPlayer.use.isPlaying()
   const currentTrack = useAudioPlayer.use.currentTrack()
-  const queueSkip = useCallback(() => useAudioPlayer.use.queueSkip(), [])
-  const queuePrev = useCallback(() => useAudioPlayer.use.queuePrev(), [])
+  const queueSkip = useAudioPlayer.use.queueSkip()
+  const queuePrev = useAudioPlayer.use.queuePrev()
 
   const artwork = currentTrack?.artURL
     ? [{ src: currentTrack?.artURL, sizes: "512x512" }]
