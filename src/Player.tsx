@@ -8,6 +8,7 @@ import {
 } from "react"
 
 import { create, type StoreApi, type UseBoundStore } from "zustand"
+import { persist } from "zustand/middleware"
 import { randomUUIDFallback } from "@/lib/uuid"
 import { useMediaSession } from "./lib/mediasession"
 
@@ -71,163 +72,173 @@ export function clamp(value: number, min = 0, max = 1): number {
   return Math.min(Math.max(value, low), high)
 }
 
-export const useAudioPlayerBase = create<PlayerState>((set, get) => ({
-  isPlaying: false,
-  isLoading: false,
-  audio: undefined,
-  currentTime: 0,
-  volume: 0.1,
-  currentTrack: undefined,
-  duration: 0,
-  queueTracks: [],
-  queueIndex: 0,
-  setVolume: (newVolumeFraction) => {
-    set({ volume: clamp(newVolumeFraction) })
-
-    const el = get().audio
-    if (!el) {
-      return
-    }
-
-    el.volume = clamp(newVolumeFraction)
-  },
-  queuePush: (tr: Track) => {
-    const queueTracks = [...get().queueTracks]
-    queueTracks.push({ ...tr, queueId: randomUUIDFallback() })
-    set({ queueTracks })
-    if (!get().currentTrack) {
-      get().queueSkip()
-    }
-  },
-  queueSkip: () => {
-    const next_track = get().queueTracks[get().queueIndex + 1]
-    if (!next_track) {
-      return
-    }
-    set({ queueIndex: get().queueIndex + 1 })
-    get().setTrack(next_track)
-    return next_track
-  },
-  queuePrev: () => {
-    if (get().queueIndex <= 0) {
-      return
-    }
-    const prev_track = get().queueTracks[get().queueIndex - 1]
-    if (!prev_track) {
-      return
-    }
-    set({ queueIndex: get().queueIndex - 1 })
-    get().setTrack(prev_track)
-    return prev_track
-  },
-  queueRemove: (deleteIndex) => {
-    console.log("deleteindex", 0, get().queueTracks)
-    const exitsts = get().queueTracks[deleteIndex]
-    if (!exitsts) {
-      return
-    }
-    const queueTracks = [...get().queueTracks]
-    queueTracks.splice(deleteIndex, 1)
-
-    if (deleteIndex < get().queueIndex) {
-      set({ queueIndex: get().queueIndex - 1, queueTracks })
-    } else if (deleteIndex === get().queueIndex) {
-      if (deleteIndex === 0) {
-        // TODO: handle when user deletes last track
-      } else {
-        get().queueSkip()
-        set({ queueTracks })
-      }
-    } else {
-      set({ queueTracks })
-    }
-  },
-  queueSet: (tracks) => {
-    const player = get()
-    const first_track = tracks[0]
-
-    set({
-      queueIndex: 0,
-      queueTracks: tracks.map((tr) => ({
-        ...tr,
-        queueId: randomUUIDFallback(),
-      })),
-    })
-    if (!first_track) {
-      get().stop()
-      return
-    }
-    player.setTrack(first_track)
-  },
-  setCurrentTime: (currentTime) => set({ currentTime }),
-  setAudio: (audio) => set({ audio }),
-  setDuration: (duration) => set({ duration }),
-  setIsPlaying: (isPlaying) => set({ isPlaying }),
-  playTrack: (track) => {
-    const player = get()
-    set({
-      queueIndex: 0,
-      queueTracks: [{ ...track, queueId: randomUUIDFallback() }],
-    })
-    player.setTrack(track)
-  },
-  setTrack: (track) => {
-    const a = get().audio
-    console.log("setTrack", a, track)
-    if (!a) {
-      return
-    }
-    set({ currentTrack: track })
-    a.src = track.url
-    get().play()
-  },
-  play: async () => {
-    console.log("try play")
-    const a = get().audio
-    const isLoading = get().isLoading
-    if (!a) {
-      return
-    }
-
-    if (isLoading) {
-      console.log("player is already loading")
-      return
-    }
-    try {
-      set({ isLoading: true })
-      await a.play()
-    } catch (error) {
-      console.error(error)
-    } finally {
-      set({ isLoading: false })
-    }
-
-    set({ isPlaying: true, duration: a.duration })
-  },
-  stop: () => {
-    set({
+export const useAudioPlayerBase = create<PlayerState>()(
+  persist(
+    (set, get) => ({
       isPlaying: false,
+      isLoading: false,
+      audio: undefined,
       currentTime: 0,
-      duration: 0,
+      volume: 0.1,
       currentTrack: undefined,
-    })
-    const el = get().audio
-    if (!el) {
-      return
+      duration: 0,
+      queueTracks: [],
+      queueIndex: 0,
+      setVolume: (newVolumeFraction) => {
+        set({ volume: clamp(newVolumeFraction) })
+
+        const el = get().audio
+        if (!el) {
+          return
+        }
+
+        el.volume = clamp(newVolumeFraction)
+      },
+      queuePush: (tr: Track) => {
+        const queueTracks = [...get().queueTracks]
+        queueTracks.push({ ...tr, queueId: randomUUIDFallback() })
+        set({ queueTracks })
+        if (!get().currentTrack) {
+          get().queueSkip()
+        }
+      },
+      queueSkip: () => {
+        const next_track = get().queueTracks[get().queueIndex + 1]
+        if (!next_track) {
+          return
+        }
+        set({ queueIndex: get().queueIndex + 1 })
+        get().setTrack(next_track)
+        return next_track
+      },
+      queuePrev: () => {
+        if (get().queueIndex <= 0) {
+          return
+        }
+        const prev_track = get().queueTracks[get().queueIndex - 1]
+        if (!prev_track) {
+          return
+        }
+        set({ queueIndex: get().queueIndex - 1 })
+        get().setTrack(prev_track)
+        return prev_track
+      },
+      queueRemove: (deleteIndex) => {
+        console.log("deleteindex", 0, get().queueTracks)
+        const exitsts = get().queueTracks[deleteIndex]
+        if (!exitsts) {
+          return
+        }
+        const queueTracks = [...get().queueTracks]
+        queueTracks.splice(deleteIndex, 1)
+
+        if (deleteIndex < get().queueIndex) {
+          set({ queueIndex: get().queueIndex - 1, queueTracks })
+        } else if (deleteIndex === get().queueIndex) {
+          if (deleteIndex === 0) {
+            // TODO: handle when user deletes last track
+          } else {
+            get().queueSkip()
+            set({ queueTracks })
+          }
+        } else {
+          set({ queueTracks })
+        }
+      },
+      queueSet: (tracks) => {
+        const player = get()
+        const first_track = tracks[0]
+
+        set({
+          queueIndex: 0,
+          queueTracks: tracks.map((tr) => ({
+            ...tr,
+            queueId: randomUUIDFallback(),
+          })),
+        })
+        if (!first_track) {
+          get().stop()
+          return
+        }
+        player.setTrack(first_track)
+      },
+      setCurrentTime: (currentTime) => set({ currentTime }),
+      setAudio: (audio) => set({ audio }),
+      setDuration: (duration) => set({ duration }),
+      setIsPlaying: (isPlaying) => set({ isPlaying }),
+      playTrack: (track) => {
+        const player = get()
+        set({
+          queueIndex: 0,
+          queueTracks: [{ ...track, queueId: randomUUIDFallback() }],
+        })
+        player.setTrack(track)
+      },
+      setTrack: (track) => {
+        const a = get().audio
+        console.log("setTrack", a, track)
+        if (!a) {
+          return
+        }
+        set({ currentTrack: track })
+        a.src = track.url
+        get().play()
+      },
+      play: async () => {
+        console.log("try play")
+        const a = get().audio
+        const isLoading = get().isLoading
+        if (!a) {
+          return
+        }
+
+        if (isLoading) {
+          console.log("player is already loading")
+          return
+        }
+        try {
+          set({ isLoading: true })
+          await a.play()
+        } catch (error) {
+          console.error(error)
+        } finally {
+          set({ isLoading: false })
+        }
+
+        set({ isPlaying: true, duration: a.duration })
+      },
+      stop: () => {
+        set({
+          isPlaying: false,
+          currentTime: 0,
+          duration: 0,
+          currentTrack: undefined,
+        })
+        const el = get().audio
+        if (!el) {
+          return
+        }
+        el.src = ""
+        el.load()
+      },
+      pause: () => {
+        const a = get().audio
+        const playPromise = get().isLoading
+        if (!a || playPromise) {
+          return
+        }
+        a.pause()
+        set({ isPlaying: false })
+      },
+    }),
+    {
+      name: "audio-player-storage",
+      partialize: (state) => ({
+        volume: state.volume,
+      }),
     }
-    el.src = ""
-    el.load()
-  },
-  pause: () => {
-    const a = get().audio
-    const playPromise = get().isLoading
-    if (!a || playPromise) {
-      return
-    }
-    a.pause()
-    set({ isPlaying: false })
-  },
-}))
+  )
+)
 
 export const useAudioPlayer = createSelectors(useAudioPlayerBase)
 
