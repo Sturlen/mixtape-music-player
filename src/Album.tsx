@@ -39,7 +39,7 @@ export function Album({ albumId }: { albumId: string }) {
       <img
         src={album.imageURL}
         alt={album.name}
-        className="size-40 bg-[url(cassette.webp)] bg-cover"
+        className="size-40 bg-[url(cassette.webp)] bg-cover object-cover"
       />
       <h1 className="text-4xl md:text-6xl lg:text-8xl font-extrabold">
         {album.name}

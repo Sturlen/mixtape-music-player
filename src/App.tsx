@@ -38,7 +38,7 @@ export function App() {
               <Link to="/artists/$id" params={{ id: artist.id }}>
                 <img
                   src={artist.imageURL}
-                  className="size-40 bg-[url(cassette.webp)] bg-cover "
+                  className="size-40 bg-[url(cassette.webp)] bg-cover object-cover"
                 />
                 <h2>{artist.name}</h2>
               </Link>

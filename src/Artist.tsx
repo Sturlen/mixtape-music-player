@@ -40,7 +40,7 @@ export function Artist({ id: artistId }: { id: string }) {
       <img
         src={artist.imageURL}
         alt={artist.name}
-        className="size-40 bg-[url(cassette.webp)] bg-cover"
+        className="size-40 bg-[url(cassette.webp)] bg-cover object-cover"
       />
       <h1 className="text-4xl md:text-6xl lg:text-8xl font-extrabold">
         {artist.name}
@@ -52,7 +52,7 @@ export function Artist({ id: artistId }: { id: string }) {
             <Link to="/albums/$id" params={{ id: album.id }}>
               <img
                 src={album.imageURL}
-                className="size-40 bg-[url(cassette.webp)] bg-cover"
+                className="size-40 bg-[url(cassette.webp)] bg-cover object-cover"
               />
               <h2>{album.name}</h2>
             </Link>
