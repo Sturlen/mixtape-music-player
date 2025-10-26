@@ -100,7 +100,7 @@ async function parse() {
       const album_id = Bun.hash(album_filename).toString(16)
       const album: Album = {
         id: album_id,
-        name: album_filename,
+        name: removeBandcampHeaders(album_filename),
         tracks: [],
       }
 
@@ -132,11 +132,10 @@ async function parse() {
         )
         const file = Bun.file(track_path)
         const track_id = Bun.hash(filename).toString(16)
+        const { trackNumber, title } = extractSongInfo(filename)
         const track: Track = {
           id: track_id,
-          name: removeLeadingTrackNumber(
-            removeBandcampHeaders(removeExtension(filename))
-          ),
+          name: title,
           playtimeSeconds: 0,
           path: track_path,
           URL: `/api/files/track/${track_id}`,
@@ -160,29 +159,37 @@ async function parse() {
 }
 
 function removeBandcampHeaders(str: string) {
-  if (str.search(/\[/)) {
-    return str // skip for downloads
-  }
   return str.split(" - ").at(-1) ?? str
 }
 
-function removeExtension(name: string): string {
-  // Removes the last ".ext" if present and not at start (preserves ".env")
-  return name.replace(/(?<!^)\.[^./\\]+$/u, "")
-}
-
-function parseAndStripTrackNumber(input: string): {
-  trackNumber: number | null
+/** For Bandcamp-style track names */
+function extractSongInfo(filename: string): {
+  artist: string | null
+  album: string | null
+  trackNumber: string | null
   title: string
 } {
-  const m = input.match(/^\s*(\d{1,3})\s*[-.)_:]?\s*(.*)$/u)
-  if (!m) return { trackNumber: null, title: input }
-  const [, num, rest] = m
-  return { trackNumber: Number(num), title: rest ?? input }
-}
+  // Remove file extension
+  const baseName = filename.replace(/\.[^.]+$/, "")
 
-function removeLeadingTrackNumber(input: string): string {
-  return input.replace(/^\s*\d{1,3}\s*-\s*/u, "")
+  // Pattern: "Artist - Album - 01 Title" or "Artist - Album - Title"
+  const match = baseName.match(/^(.+?)\s-\s(.+?)\s-\s(?:(\d+)\s)?(.+)$/)
+
+  if (!match || !match[1] || !match[2] || !match[4]) {
+    return {
+      artist: null,
+      album: null,
+      trackNumber: null,
+      title: baseName,
+    }
+  }
+
+  return {
+    artist: match[1].trim(),
+    album: match[2].trim(),
+    trackNumber: match[3] ?? null,
+    title: match[4].trim(),
+  }
 }
 
 await parse()
