@@ -1,5 +1,6 @@
 import MobileControls from "@/Components/mobile-controls"
 import PlaybackDetails from "@/Components/PlaybackDetails"
+import ReloadButton from "@/Components/ReloadButton"
 import Controls from "@/Controls"
 import { cn } from "@/lib/utils"
 import { MediaSessionSync } from "@/MediaSessionSync"
@@ -7,7 +8,6 @@ import PlaybackQueue from "@/QueueList"
 import VolumeSlider from "@/VolumeControl"
 import { createRootRoute, Link, Outlet } from "@tanstack/react-router"
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools"
-import { UserIcon } from "lucide-react"
 
 const RootLayout = () => (
   <div className="h-full bg-gradient-to-b from-accent from-[200px] to-black to-[600px]">
@@ -36,7 +36,7 @@ const RootLayout = () => (
       </nav>
 
       <div title="WIP">
-        <UserIcon />
+        <ReloadButton />
       </div>
     </header>
     <Sidebar className="w-[25rem] hidden xl:flex" />
