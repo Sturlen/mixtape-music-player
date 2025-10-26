@@ -1,11 +1,110 @@
-import Album from "@/Album"
 import { createFileRoute, useParams } from "@tanstack/react-router"
+
+import { useQuery } from "@tanstack/react-query"
+import { useAudioPlayer } from "@/Player"
+import { EdenClient } from "@/lib/eden"
+import Page from "@/Components/Page"
 
 export const Route = createFileRoute("/albums/$id")({
   component: RouteComponent,
 })
 
+async function getAlbum(albumId: string) {
+  const { data, error } = await EdenClient.api.albums({ albumId }).get()
+  if (error) {
+    throw new Error("error")
+  }
+  return data
+}
+
+function useAlbum(albumId: string) {
+  return useQuery({
+    queryKey: ["albums", albumId],
+    queryFn: () => getAlbum(albumId),
+  })
+}
+
 function RouteComponent() {
   const { id } = Route.useParams()
-  return <Album albumId={id} />
+  const { data } = useAlbum(id)
+  const play = useAudioPlayer((s) => s.play)
+  const playTrack = useAudioPlayer.use.playTrack()
+  const queuePush = useAudioPlayer.use.queuePush()
+  const queueSet = useAudioPlayer.use.queueSet()
+
+  if (!data) {
+    return <div></div>
+  }
+
+  const album = data.album
+
+  if (!album) {
+    return <div>album not found</div>
+  }
+
+  return (
+    <Page>
+      <img
+        src={album.imageURL}
+        alt={album.name}
+        className="size-40 bg-[url(cassette.webp)] bg-cover object-cover"
+      />
+      <h1 className="text-4xl md:text-6xl lg:text-8xl font-extrabold">
+        {album.name}
+      </h1>
+
+      <div>
+        <button
+          className="hover:bg-accent p-4 border"
+          onClick={() =>
+            queueSet(
+              album.tracks.map((track) => ({
+                name: track.name,
+                url: track.URL,
+                duration: track.playtimeSeconds,
+                artURL: track.artURL,
+              }))
+            )
+          }
+        >
+          Play Albums
+        </button>
+      </div>
+      <h2>TRACKS</h2>
+      <div>
+        {album.tracks.map((track) => (
+          <div key={track.id} className="w-full">
+            <button
+              onClick={() => {
+                playTrack({
+                  name: track.name,
+                  url: track.URL,
+                  duration: track.playtimeSeconds,
+                  artURL: track.artURL,
+                })
+                play()
+              }}
+              className="border-2 p-2 hover:bg-accent"
+            >
+              <span>{track.name}</span>
+            </button>
+            <button
+              className="border-2 p-2 hover:bg-accent"
+              onClick={() => {
+                queuePush({
+                  name: track.name,
+                  url: track.URL,
+                  duration: track.playtimeSeconds,
+                  artURL: track.artURL,
+                })
+                play()
+              }}
+            >
+              <span>queue</span>
+            </button>
+          </div>
+        ))}
+      </div>
+    </Page>
+  )
 }

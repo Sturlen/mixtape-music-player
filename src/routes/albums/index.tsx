@@ -1,10 +1,8 @@
-import Page from "@/Components/Page"
 import { createFileRoute } from "@tanstack/react-router"
 import { useQuery } from "@tanstack/react-query"
 import { useAudioPlayer } from "@/Player"
 import { EdenClient } from "@/lib/eden"
 import { Link } from "@tanstack/react-router"
-import { Play } from "lucide-react"
 
 export const Route = createFileRoute("/albums/")({
   component: RouteComponent,
@@ -19,7 +17,6 @@ async function getAlbums() {
 }
 
 function useAlbums() {
-  // use a proper cache key for albums
   return useQuery({
     queryKey: ["albums"],
     queryFn: () => getAlbums(),
@@ -68,7 +65,6 @@ function RouteComponent() {
                   }
                   className="group-hover:cursor-pointer w-full block relative transform-gpu transition-transform group-hover:scale-[1.01]"
                 >
-                  {/* outer frame to mimic a CD sleeve (tilts in 3D on hover) */}
                   <div className="w-full aspect-square relative border border-[rgba(0,0,0,0.06)] shadow-[0_8px_20px_rgba(2,6,23,0.12)] transform-gpu transition-transform duration-200 will-change-transform origin-center group-hover:[transform:scale(1.03)]">
                     <img
                       src={album.imageURL}
@@ -90,7 +86,6 @@ function RouteComponent() {
                   {album.name}
                 </Link>
               </h2>
-              {/* show artist name when available (safe cast to any to avoid TS errors) */}
               <p className="text-xs text-muted-foreground truncate">Artist</p>
             </div>
           </li>
