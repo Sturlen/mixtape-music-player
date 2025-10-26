@@ -112,32 +112,23 @@ async function parse() {
       const tracks = (
         await readdir(path.join(music_root_path, artist_dir, album_filename), {
           withFileTypes: true,
+          recursive: true,
         })
       )
         .filter((x) => !x.isDirectory())
-        .map((x) => x.name)
+        .map(({ name, parentPath }) => ({ filename: name, parentPath }))
 
-      for (const filename of tracks) {
-        const track_path = path.join(
-          music_root_path,
-          artist_dir,
-          album_filename,
-          filename
-        )
-        const track_url = path.join(
-          music_root_path,
-          artist_dir,
-          album_filename,
-          filename
-        )
-        const file = Bun.file(track_path)
+      for (const { filename, parentPath } of tracks) {
+        const filepath = path.join(parentPath, filename)
+
+        const file = Bun.file(filepath)
         const track_id = Bun.hash(filename).toString(16)
         const { trackNumber, title } = extractSongInfo(filename)
         const track: Track = {
           id: track_id,
           name: title,
           playtimeSeconds: 0,
-          path: track_path,
+          path: filepath,
           URL: `/api/files/track/${track_id}`,
         }
 
@@ -145,7 +136,7 @@ async function parse() {
           db.tracks.push(track)
           album.tracks.push(track)
         } else if (file.type.startsWith("image/")) {
-          album.imagePath = track_path
+          album.imagePath = filepath
           album.imageURL = `/api/files/albumart/${album_id}`
           track.artURL = album.imageURL
         }
