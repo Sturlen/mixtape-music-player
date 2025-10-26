@@ -62,27 +62,29 @@ function RouteComponent() {
                 name: track.name,
                 url: track.URL,
                 duration: track.playtimeSeconds,
-                artURL: track.artURL,
+                artURL: album.imageURL,
               }))
             )
           }
         >
-          Play Albums
+          Play Album
         </button>
       </div>
       <h2>TRACKS</h2>
       <div>
-        {album.tracks.map((track) => (
+        {album.tracks.map((track, i) => (
           <div key={track.id} className="w-full">
             <button
               onClick={() => {
-                playTrack({
-                  name: track.name,
-                  url: track.URL,
-                  duration: track.playtimeSeconds,
-                  artURL: track.artURL,
-                })
-                play()
+                queueSet(
+                  album.tracks.map((track) => ({
+                    name: track.name,
+                    url: track.URL,
+                    duration: track.playtimeSeconds,
+                    artURL: album.imageURL,
+                  })),
+                  i
+                )
               }}
               className="border-2 p-2 hover:bg-accent"
             >

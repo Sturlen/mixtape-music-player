@@ -71,7 +71,7 @@ function ArtistPage() {
                     name: track.name,
                     url: track.URL,
                     duration: track.playtimeSeconds,
-                    artURL: track.artURL,
+                    artURL: album.imageURL,
                   }))
                 )
               }
