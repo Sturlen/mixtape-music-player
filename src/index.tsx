@@ -45,110 +45,118 @@ const db = {
   tracks: new Array<Track>(),
 }
 
-// parser
+const fuse_artists = new Fuse<Artist>([], { keys: ["name", "albums.name"] })
 
-// read all the files in the current directory
-const artist_dirents = await readdir(music_root_path, {
-  recursive: false,
-  withFileTypes: true,
-})
-const artist_dirs = artist_dirents
-  .filter((x) => x.isDirectory())
-  .map((x) => x.name)
+async function parse() {
+  db.artists.length = 0
+  db.albums.length = 0
+  db.tracks.length = 0
 
-for (const artist_dir of artist_dirs) {
-  const artist_id = Bun.hash(artist_dir).toString(16)
-  const artist: Artist = {
-    id: artist_id,
-    name: artist_dir,
-    albums: [],
-  }
-  const albums = (
-    await readdir(path.join(music_root_path, artist_dir), {
-      withFileTypes: true,
-    })
-  )
+  // read all the files in the current directory
+  const artist_dirents = await readdir(music_root_path, {
+    recursive: false,
+    withFileTypes: true,
+  })
+  const artist_dirs = artist_dirents
     .filter((x) => x.isDirectory())
     .map((x) => x.name)
 
-  const artist_dir_files = (
-    await readdir(path.join(music_root_path, artist_dir), {
-      withFileTypes: true,
-    })
-  )
-    .filter((x) => x.isFile())
-    .map((file) => file.name)
-
-  for (const filename of artist_dir_files) {
-    const file = Bun.file(path.join(music_root_path, artist_dir, filename))
-    if (file.type.startsWith("image/")) {
-      artist.imagePath = path.join(music_root_path, artist_dir, filename)
-      artist.imageURL = `/api/files/artistart/${artist_id}`
-      console.log(artist.id, artist.name, artist.imageURL)
+  for (const artist_dir of artist_dirs) {
+    const artist_id = Bun.hash(artist_dir).toString(16)
+    const artist: Artist = {
+      id: artist_id,
+      name: artist_dir,
+      albums: [],
     }
-  }
-
-  // console.log(artist_dir, albums)
-  db.artists.push(artist)
-
-  for (const album_filename of albums) {
-    const album_id = Bun.hash(album_filename).toString(16)
-    const album: Album = {
-      id: album_id,
-      name: album_filename,
-      tracks: [],
-    }
-
-    db.albums.push(album)
-    artist.albums.push(album)
-
-    // console.log(album_name)
-
-    const tracks = (
-      await readdir(path.join(music_root_path, artist_dir, album_filename), {
+    const albums = (
+      await readdir(path.join(music_root_path, artist_dir), {
         withFileTypes: true,
       })
     )
-      .filter((x) => !x.isDirectory())
+      .filter((x) => x.isDirectory())
       .map((x) => x.name)
 
-    for (const filename of tracks) {
-      const track_path = path.join(
-        music_root_path,
-        artist_dir,
-        album_filename,
-        filename
-      )
-      const track_url = path.join(
-        music_root_path,
-        artist_dir,
-        album_filename,
-        filename
-      )
-      const file = Bun.file(track_path)
-      const track_id = Bun.hash(filename).toString(16)
-      const track: Track = {
-        id: track_id,
-        name: removeLeadingTrackNumber(
-          removeBandcampHeaders(removeExtension(filename))
-        ),
-        playtimeSeconds: 0,
-        path: track_path,
-        URL: `/api/files/track/${track_id}`,
-      }
+    const artist_dir_files = (
+      await readdir(path.join(music_root_path, artist_dir), {
+        withFileTypes: true,
+      })
+    )
+      .filter((x) => x.isFile())
+      .map((file) => file.name)
 
-      if (file.type.startsWith("audio/")) {
-        db.tracks.push(track)
-        album.tracks.push(track)
-      } else if (file.type.startsWith("image/")) {
-        album.imagePath = track_path
-        album.imageURL = `/api/files/albumart/${album_id}`
-        track.artURL = album.imageURL
+    for (const filename of artist_dir_files) {
+      const file = Bun.file(path.join(music_root_path, artist_dir, filename))
+      if (file.type.startsWith("image/")) {
+        artist.imagePath = path.join(music_root_path, artist_dir, filename)
+        artist.imageURL = `/api/files/artistart/${artist_id}`
+        console.log(artist.id, artist.name, artist.imageURL)
       }
     }
 
-    // TODO: too many loops, too many loops
+    // console.log(artist_dir, albums)
+    db.artists.push(artist)
+
+    for (const album_filename of albums) {
+      const album_id = Bun.hash(album_filename).toString(16)
+      const album: Album = {
+        id: album_id,
+        name: album_filename,
+        tracks: [],
+      }
+
+      db.albums.push(album)
+      artist.albums.push(album)
+
+      // console.log(album_name)
+
+      const tracks = (
+        await readdir(path.join(music_root_path, artist_dir, album_filename), {
+          withFileTypes: true,
+        })
+      )
+        .filter((x) => !x.isDirectory())
+        .map((x) => x.name)
+
+      for (const filename of tracks) {
+        const track_path = path.join(
+          music_root_path,
+          artist_dir,
+          album_filename,
+          filename
+        )
+        const track_url = path.join(
+          music_root_path,
+          artist_dir,
+          album_filename,
+          filename
+        )
+        const file = Bun.file(track_path)
+        const track_id = Bun.hash(filename).toString(16)
+        const track: Track = {
+          id: track_id,
+          name: removeLeadingTrackNumber(
+            removeBandcampHeaders(removeExtension(filename))
+          ),
+          playtimeSeconds: 0,
+          path: track_path,
+          URL: `/api/files/track/${track_id}`,
+        }
+
+        if (file.type.startsWith("audio/")) {
+          db.tracks.push(track)
+          album.tracks.push(track)
+        } else if (file.type.startsWith("image/")) {
+          album.imagePath = track_path
+          album.imageURL = `/api/files/albumart/${album_id}`
+          track.artURL = album.imageURL
+        }
+      }
+
+      // TODO: too many loops, too many loops
+    }
   }
+
+  fuse_artists.setCollection(db.artists)
 }
 
 function removeBandcampHeaders(str: string) {
@@ -173,12 +181,11 @@ function parseAndStripTrackNumber(input: string): {
   return { trackNumber: Number(num), title: rest ?? input }
 }
 
-const fuse_artists = new Fuse(db.artists, { keys: ["name", "albums.name"] })
-
 function removeLeadingTrackNumber(input: string): string {
   return input.replace(/^\s*\d{1,3}\s*-\s*/u, "")
 }
-// console.log(db.tracks)
+
+await parse()
 
 const app = new Elysia()
   .use(
@@ -276,6 +283,11 @@ const app = new Elysia()
     } catch (err) {
       throw new NotFoundError()
     }
+  })
+  .post("/api/libary/reload", async () => await parse(), {
+    detail: {
+      description: "Reloads the internal db and parses all sources again",
+    },
   })
   .listen(env.PORT)
 
