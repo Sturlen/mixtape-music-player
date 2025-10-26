@@ -1,6 +1,6 @@
 import React from "react"
 import { Play, Pause, SkipForwardIcon } from "lucide-react"
-import { useAudioPlayer } from "@/Player"
+import { useAudioPlayer, useCurrentTrack } from "@/Player"
 import { cn } from "@/lib/utils"
 import { useSwipeable } from "react-swipeable"
 import { usePlaybackDrawer } from "@/contexts/PlaybackDrawerContext"
@@ -10,12 +10,12 @@ const MobileControls = ({ className }: { className?: string }) => {
     isPlaying,
     play,
     pause,
-    currentTrack,
     duration,
     currentTime,
     queueSkip,
     queuePrev,
   } = useAudioPlayer()
+  const currentTrack = useCurrentTrack()
   const { openDrawer } = usePlaybackDrawer()
   const openPlaybackDetails = () => openDrawer()
 

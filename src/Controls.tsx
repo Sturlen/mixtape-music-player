@@ -5,7 +5,7 @@ import {
   SkipBackIcon,
   SkipForwardIcon,
 } from "lucide-react"
-import { useAudioPlayer } from "./Player"
+import { useAudioPlayer, useCurrentTrack } from "./Player"
 import { cn } from "./lib/utils"
 import VolumeSlider from "./VolumeControl"
 
@@ -15,7 +15,7 @@ export function Controls() {
   const skip = useAudioPlayer.use.queueSkip()
   const prev = useAudioPlayer.use.queuePrev()
   const isPlaying = useAudioPlayer.use.isPlaying()
-  const track = useAudioPlayer.use.currentTrack()
+  const track = useCurrentTrack()
 
   const progress =
     useAudioPlayer.use.currentTime() / useAudioPlayer.use.duration()

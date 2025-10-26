@@ -27,7 +27,6 @@ type PlayerState = {
   // https://goo.gl/LdLk22
   // todo: fix AbortError
   isLoading: boolean
-  currentTrack: Track | undefined
   play: () => Promise<void>
   pause: () => void
   stop: () => void
@@ -80,7 +79,6 @@ export const useAudioPlayerBase = create<PlayerState>()(
       audio: undefined,
       currentTime: 0,
       volume: 0.1,
-      currentTrack: undefined,
       duration: 0,
       queueTracks: [],
       queueIndex: 0,
@@ -98,8 +96,8 @@ export const useAudioPlayerBase = create<PlayerState>()(
         const queueTracks = [...get().queueTracks]
         queueTracks.push({ ...tr, queueId: randomUUIDFallback() })
         set({ queueTracks })
-        if (!get().currentTrack) {
-          get().queueSkip()
+        if (!get().audio?.src) {
+          get().setTrack(tr)
         }
       },
       queueSkip: () => {
@@ -180,7 +178,6 @@ export const useAudioPlayerBase = create<PlayerState>()(
         if (!a) {
           return
         }
-        set({ currentTrack: track })
         a.src = track.url
         get().play()
       },
@@ -212,7 +209,8 @@ export const useAudioPlayerBase = create<PlayerState>()(
           isPlaying: false,
           currentTime: 0,
           duration: 0,
-          currentTrack: undefined,
+          queueIndex: 0,
+          queueTracks: [],
         })
         const el = get().audio
         if (!el) {
@@ -241,6 +239,12 @@ export const useAudioPlayerBase = create<PlayerState>()(
 )
 
 export const useAudioPlayer = createSelectors(useAudioPlayerBase)
+
+export const useCurrentTrack = () => {
+  const index = useAudioPlayer.use.queueIndex()
+  const tracks = useAudioPlayer.use.queueTracks()
+  return tracks[index]
+}
 
 export const PlayerProvider = ({ children }: PropsWithChildren) => {
   const setAudio = useAudioPlayer.use.setAudio()

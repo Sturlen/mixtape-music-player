@@ -1,9 +1,9 @@
 import { useEffect } from "react"
-import { useAudioPlayer } from "@/Player"
+import { useCurrentTrack } from "@/Player"
 
 /** Side-effect only component */
 export const TitleSetter = () => {
-  const currentTrack = useAudioPlayer.use.currentTrack()
+  const currentTrack = useCurrentTrack()
 
   useEffect(() => {
     if (currentTrack) {

@@ -6,7 +6,7 @@ import {
   SkipForward as SkipForwardIcon,
   X as XIcon,
 } from "lucide-react"
-import { useAudioPlayer } from "@/Player"
+import { useAudioPlayer, useCurrentTrack } from "@/Player"
 import {
   Drawer,
   DrawerContent,
@@ -28,7 +28,7 @@ export default function PlaybackDetails() {
   const isPlaying = useAudioPlayer.use.isPlaying()
   const play = useAudioPlayer.use.play()
   const pause = useAudioPlayer.use.pause()
-  const currentTrack = useAudioPlayer.use.currentTrack()
+  const currentTrack = useCurrentTrack()
   const duration = useAudioPlayer.use.duration()
   const currentTime = useAudioPlayer.use.currentTime()
   const queueSkip = useAudioPlayer.use.queueSkip()
