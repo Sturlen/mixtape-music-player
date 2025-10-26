@@ -14,7 +14,7 @@ async function getArtists() {
 }
 
 function useArtists() {
-  return useQuery({ queryKey: ["albums"], queryFn: getArtists })
+  return useQuery({ queryKey: ["artists"], queryFn: getArtists })
 }
 
 export function App() {
