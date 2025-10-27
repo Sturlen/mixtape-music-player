@@ -1,43 +1,10 @@
-import { serve } from "bun"
-import index from "./index.html"
-import { openapi, fromTypes } from "@elysiajs/openapi"
-import { readdir } from "node:fs/promises"
-import path from "node:path"
 import Elysia, { NotFoundError, redirect, t } from "elysia"
-import { env } from "./env"
-import staticPlugin from "@elysiajs/static"
+import { openapi, fromTypes } from "@elysiajs/openapi"
 import Fuse from "fuse.js"
-
-const music_exts = ["mp3", "flac"] as const
-const art_exts = ["jpeg", "png", "webp"] as const
-
-// TODO: make a config for this
-const music_root_path = env.MUSIC_PATH
-
-type Track = {
-  id: string
-  name: string
-  playtimeSeconds: number
-  path: string
-  URL: string
-  artURL?: string
-}
-
-type Album = {
-  id: string
-  name: string
-  tracks: Track[]
-  imagePath?: string
-  imageURL?: string
-}
-
-type Artist = {
-  id: string
-  name: string
-  albums: Album[]
-  imagePath?: string
-  imageURL?: string
-}
+import index from "./index.html"
+import { env } from "./env"
+import { parse } from "./parse"
+import type { Album, Artist, Source, Track } from "./lib/types"
 
 const db = {
   artists: new Array<Artist>(),
@@ -45,145 +12,30 @@ const db = {
   tracks: new Array<Track>(),
 }
 
-const fuse_artists = new Fuse<Artist>([], { keys: ["name", "albums.name"] })
+export const fuse_artists = new Fuse<Artist>([], {
+  keys: ["name", "albums.name"],
+})
 
-async function parse() {
+const default_source: Source = {
+  id: "source:main",
+  name: "Default Source",
+  rootPath: env.MUSIC_PATH,
+}
+
+async function reloadLibrary() {
+  const new_db = await parse(default_source)
   db.artists.length = 0
   db.albums.length = 0
   db.tracks.length = 0
 
-  // read all the files in the current directory
-  const artist_dirents = await readdir(music_root_path, {
-    recursive: false,
-    withFileTypes: true,
-  })
-  const artist_dirs = artist_dirents
-    .filter((x) => x.isDirectory())
-    .map((x) => x.name)
-
-  for (const artist_dir of artist_dirs) {
-    const artist_id = Bun.hash(artist_dir).toString(16)
-    const artist: Artist = {
-      id: artist_id,
-      name: artist_dir,
-      albums: [],
-    }
-    const albums = (
-      await readdir(path.join(music_root_path, artist_dir), {
-        withFileTypes: true,
-      })
-    )
-      .filter((x) => x.isDirectory())
-      .map((x) => x.name)
-
-    const artist_dir_files = (
-      await readdir(path.join(music_root_path, artist_dir), {
-        withFileTypes: true,
-      })
-    )
-      .filter((x) => x.isFile())
-      .map((file) => file.name)
-
-    for (const filename of artist_dir_files) {
-      const file = Bun.file(path.join(music_root_path, artist_dir, filename))
-      if (file.type.startsWith("image/")) {
-        artist.imagePath = path.join(music_root_path, artist_dir, filename)
-        artist.imageURL = `/api/files/artistart/${artist_id}`
-        console.log(artist.id, artist.name, artist.imageURL)
-      }
-    }
-
-    // console.log(artist_dir, albums)
-    db.artists.push(artist)
-
-    for (const album_filename of albums) {
-      const album_id = Bun.hash(album_filename).toString(16)
-      const album: Album = {
-        id: album_id,
-        name: removeBandcampHeaders(album_filename),
-        tracks: [],
-      }
-
-      db.albums.push(album)
-      artist.albums.push(album)
-
-      // console.log(album_name)
-
-      const tracks = (
-        await readdir(path.join(music_root_path, artist_dir, album_filename), {
-          withFileTypes: true,
-          recursive: true,
-        })
-      )
-        .filter((x) => !x.isDirectory())
-        .map(({ name, parentPath }) => ({ filename: name, parentPath }))
-
-      for (const { filename, parentPath } of tracks) {
-        const filepath = path.join(parentPath, filename)
-
-        const file = Bun.file(filepath)
-        const track_id = Bun.hash(filename).toString(16)
-        const { trackNumber, title } = extractSongInfo(filename)
-        const track: Track = {
-          id: track_id,
-          name: title,
-          playtimeSeconds: 0,
-          path: filepath,
-          URL: `/api/files/track/${track_id}`,
-        }
-
-        if (file.type.startsWith("audio/")) {
-          db.tracks.push(track)
-          album.tracks.push(track)
-        } else if (file.type.startsWith("image/")) {
-          album.imagePath = filepath
-          album.imageURL = `/api/files/albumart/${album_id}`
-          track.artURL = album.imageURL
-        }
-      }
-
-      // TODO: too many loops, too many loops
-    }
-  }
+  db.artists.push(...new_db.artists)
+  db.albums.push(...new_db.albums)
+  db.tracks.push(...new_db.tracks)
 
   fuse_artists.setCollection(db.artists)
 }
 
-function removeBandcampHeaders(str: string) {
-  return str.split(" - ").at(-1) ?? str
-}
-
-/** For Bandcamp-style track names */
-function extractSongInfo(filename: string): {
-  artist: string | null
-  album: string | null
-  trackNumber: string | null
-  title: string
-} {
-  // Remove file extension
-  const baseName = filename.replace(/\.[^.]+$/, "")
-
-  // Pattern: "Artist - Album - 01 Title" or "Artist - Album - Title"
-  const match = baseName.match(/^(.+?)\s-\s(.+?)\s-\s(?:(\d+)\s)?(.+)$/)
-
-  if (!match || !match[1] || !match[2] || !match[4]) {
-    return {
-      artist: null,
-      album: null,
-      trackNumber: null,
-      title: baseName,
-    }
-  }
-
-  return {
-    artist: match[1].trim(),
-    album: match[2].trim(),
-    trackNumber: match[3] ?? null,
-    title: match[4].trim(),
-  }
-}
-
-await parse()
+await reloadLibrary()
 
 const app = new Elysia()
   .use(
@@ -282,7 +134,7 @@ const app = new Elysia()
       throw new NotFoundError()
     }
   })
-  .post("/api/libary/reload", async () => await parse(), {
+  .post("/api/libary/reload", async () => await reloadLibrary(), {
     detail: {
       description: "Reloads the internal db and parses all sources again",
     },
