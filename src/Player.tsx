@@ -31,6 +31,7 @@ type PlayerState = {
   setCurrentTime: (currentTime: number) => void
   setDuration: (duration: number) => void
   setVolume: (newVolumeFraction: number) => void
+  seek: (time: number) => void
   duration: number
   queueTracks: (Track & { queueId: string })[]
   queueIndex: number
@@ -156,6 +157,15 @@ export const useAudioPlayerBase = create<PlayerState>()(
           player.setTrack(start_track)
         },
         setCurrentTime: (currentTime) => set({ currentTime }),
+        seek: (time) => {
+          const a = get().audio
+          if (!a) {
+            return
+          }
+          const clampedTime = clamp(time, 0, a.duration || 0)
+          a.currentTime = clampedTime
+          set({ currentTime: clampedTime })
+        },
         setAudio: (audio) => set({ audio }),
         setDuration: (duration) => set({ duration }),
         setIsPlaying: (isPlaying) => set({ isPlaying }),

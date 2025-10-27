@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react"
+import React, { useEffect } from "react"
 import {
   Play as PlayIcon,
   Pause as PauseIcon,
@@ -15,6 +15,7 @@ import {
   DrawerClose,
 } from "@/Components/ui/drawer"
 import PlaybackQueue from "@/QueueList"
+import SeekBar from "@/Components/SeekBar"
 import { usePlaybackDrawer } from "@/contexts/PlaybackDrawerContext"
 import VolumeSlider from "@/VolumeControl"
 
@@ -31,33 +32,15 @@ export default function PlaybackDetails() {
   const pause = useAudioPlayer.use.pause()
   const currentTrack = useCurrentTrack()
   const duration = useAudioPlayer.use.duration()
-  const currentTime = useAudioPlayer.use.currentTime()
   const queueSkip = useAudioPlayer.use.queueSkip()
   const queuePrev = useAudioPlayer.use.queuePrev()
-  const setCurrentTime = useAudioPlayer.use.setCurrentTime()
-  const volume = useAudioPlayer.use.volume()
-  const setVolume = useAudioPlayer.use.setVolume()
 
   const { open, setOpen } = usePlaybackDrawer()
-  const [seeking, setSeeking] = useState<number | null>(null)
-
-  // value displayed in the seek bar (seconds)
-  const seekValue = useMemo(
-    () => seeking ?? currentTime ?? 0,
-    [seeking, currentTime]
-  )
 
   useEffect(() => {
     // close drawer if there is no track
     if (!currentTrack) setOpen(false)
   }, [currentTrack])
-
-  const onSeekStart = () => setSeeking(currentTime ?? 0)
-  const onSeekChange = (val: number) => setSeeking(val)
-  const onSeekEnd = () => {
-    if (seeking != null) setCurrentTime(seeking)
-    setSeeking(null)
-  }
 
   return (
     <>
@@ -94,25 +77,7 @@ export default function PlaybackDetails() {
             </div>
 
             {/* seek bar */}
-            <div className="w-full">
-              <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                <span className="w-12 text-right">{formatTime(seekValue)}</span>
-                <input
-                  aria-label="Seek"
-                  type="range"
-                  min={0}
-                  max={duration ?? 0}
-                  value={seekValue}
-                  onMouseDown={onSeekStart}
-                  onTouchStart={onSeekStart}
-                  onChange={(e) => onSeekChange(Number(e.target.value))}
-                  onMouseUp={onSeekEnd}
-                  onTouchEnd={onSeekEnd}
-                  className="flex-1"
-                />
-                <span className="w-12">{formatTime(duration)}</span>
-              </div>
-            </div>
+            <SeekBar />
 
             {/* playback controls */}
             <div className="flex items-center justify-center gap-6 pt-2">

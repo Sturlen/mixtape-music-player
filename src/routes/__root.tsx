@@ -2,6 +2,7 @@ import MobileControls from "@/Components/mobile-controls"
 import PlaybackDetails from "@/Components/PlaybackDetails"
 import ReloadButton from "@/Components/ReloadButton"
 import { TitleSetter } from "@/Components/TitleSetter"
+import SeekBar from "@/Components/SeekBar"
 import Controls from "@/Controls"
 import { cn } from "@/lib/utils"
 import { MediaSessionSync } from "@/MediaSessionSync"
@@ -73,6 +74,7 @@ function Sidebar({ className }: { className?: string }) {
           <Controls />
           <VolumeSlider />
         </div>
+        <SeekBar />
       </div>
     </section>
   )
