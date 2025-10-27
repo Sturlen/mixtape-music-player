@@ -33,6 +33,12 @@ async function reloadLibrary() {
   db.tracks.push(...new_db.tracks)
 
   fuse_artists.setCollection(db.artists)
+
+  console.log("Library reloaded", {
+    artists: db.artists.length,
+    albums: db.albums.length,
+    tracks: db.tracks.length,
+  })
 }
 
 await reloadLibrary()

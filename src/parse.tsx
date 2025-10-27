@@ -52,11 +52,9 @@ export async function parse(source: Source) {
       if (file.type.startsWith("image/")) {
         artist.imagePath = path.join(music_root_path, artist_dir, filename)
         artist.imageURL = `/api/files/artistart/${artist_id}`
-        console.log(artist.id, artist.name, artist.imageURL)
       }
     }
 
-    // console.log(artist_dir, albums)
     db.artists.push(artist)
 
     for (const album_filename of albums) {
@@ -70,7 +68,6 @@ export async function parse(source: Source) {
       db.albums.push(album)
       artist.albums.push(album)
 
-      // console.log(album_name)
       const tracks = (
         await readdir(path.join(music_root_path, artist_dir, album_filename), {
           withFileTypes: true,
