@@ -58,7 +58,7 @@ export default function PlaybackDetails() {
                 }}
               />
               <div className="flex-1">
-                <div className="text-xl font-bold truncate">
+                <div className="text-xl font-bold line-clamp-2">
                   {currentTrack?.name ?? "No track"}
                 </div>
                 <div className="text-sm opacity-80">
