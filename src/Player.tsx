@@ -1,11 +1,4 @@
-import * as React from "react"
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  type PropsWithChildren,
-} from "react"
+import { createContext, useContext, useState } from "react"
 
 import { create, type StoreApi, type UseBoundStore } from "zustand"
 import { persist } from "zustand/middleware"
@@ -247,62 +240,6 @@ export const useCurrentTrack = () => {
   const index = useAudioPlayer.use.queueIndex()
   const tracks = useAudioPlayer.use.queueTracks()
   return tracks[index]
-}
-
-export const PlayerProvider = ({ children }: PropsWithChildren) => {
-  const setAudio = useAudioPlayer.use.setAudio()
-  const player_audio_el = useAudioPlayer.use.audio()
-  const setCurrentTime = useAudioPlayer.use.setCurrentTime()
-  const setIsPlaying = useAudioPlayer.use.setIsPlaying()
-  const queueSkip = useAudioPlayer.use.queueSkip()
-  const audio_el = React.useRef<HTMLAudioElement>(null)
-  const volume = useAudioPlayer.use.volume()
-
-  console.log(
-    "audio html el",
-    audio_el.current,
-    "player store audio",
-    player_audio_el
-  )
-
-  useEffect(() => {
-    const audio = audio_el.current
-    if (!audio) {
-      console.log("no audio el")
-      return
-    }
-    audio.volume = volume // volume is controlled by Player
-
-    const onTime = () => setCurrentTime(audio.currentTime)
-    const durationChange = () => setCurrentTime(audio.duration)
-    const onPlaying = () => setIsPlaying(true)
-    const onPause = () => setIsPlaying(false)
-    const onEnded = () => queueSkip()
-
-    audio.addEventListener("timeupdate", onTime)
-    audio.addEventListener("durationchange", durationChange)
-    audio.addEventListener("playing", onPlaying)
-    audio.addEventListener("pause", onPause)
-    audio.addEventListener("ended", onEnded)
-
-    setAudio(audio)
-    console.log("audio set")
-    return () => {
-      setAudio()
-      audio.removeEventListener("timeupdate", onTime)
-      audio.removeEventListener("durationchange", durationChange)
-      audio.removeEventListener("playing", onPlaying)
-      audio.removeEventListener("pause", onPause)
-      audio.removeEventListener("ended", onEnded)
-    }
-  }, [player_audio_el]) // rerun on hmr to avoid stale references
-
-  return (
-    <>
-      {children}
-      <audio ref={audio_el} />
-    </>
-  )
 }
 
 function raise(message: string): never {
