@@ -4,22 +4,41 @@ import { cn } from "@/lib/utils"
 import { ScrollArea } from "@/Components/ui/scroll-area"
 import { useEffect, useRef } from "react"
 
-// TODO: not working as expected. too aggressive. is the ref <li> patch that is the issue?
-function areElementsIntersecting<T extends HTMLElement, U extends HTMLElement>(
-  targetElement: T,
-  containerElement: U
+// Check if target element is fully visible within the container's scroll view
+function scrollIntoViewIfNeeded(
+  container: HTMLElement,
+  element: HTMLElement,
+  behavior: ScrollBehavior = "smooth"
 ) {
-  const rectElem = targetElement.getBoundingClientRect()
-  const rectContainer = containerElement.getBoundingClientRect()
+  const cRect = container.getBoundingClientRect()
+  const eRect = element.getBoundingClientRect()
 
-  // Consider element fully inside container only when all edges are within container's visible bounds.
-  const epsilon = 0.5
-  return (
-    rectElem.top >= rectContainer.top - epsilon &&
-    rectElem.left >= rectContainer.left - epsilon &&
-    rectElem.bottom <= rectContainer.bottom + epsilon &&
-    rectElem.right <= rectContainer.right + epsilon
-  )
+  const overTop = eRect.top < cRect.top
+  const overBottom = eRect.bottom > cRect.bottom
+
+  console.log("scrollIntoViewIfNeeded:", {
+    overTop,
+    overBottom,
+    eRect: { top: eRect.top, bottom: eRect.bottom },
+    cRect: { top: cRect.top, bottom: cRect.bottom },
+    scrollTop: container.scrollTop,
+  })
+
+  if (overTop) {
+    const newScroll = container.scrollTop + (eRect.top - cRect.top) - 8
+    console.log("Scrolling up to:", newScroll)
+    container.scrollTo({
+      top: newScroll,
+      behavior,
+    })
+  } else if (overBottom) {
+    const newScroll = container.scrollTop + (eRect.bottom - cRect.bottom) + 8
+    console.log("Scrolling down to:", newScroll)
+    container.scrollTo({
+      top: newScroll,
+      behavior,
+    })
+  }
 }
 
 export function PlaybackQueue() {
@@ -29,42 +48,28 @@ export function PlaybackQueue() {
   const queueRemove = useAudioPlayer.use.queueRemove()
   const queueJump = useAudioPlayer.use.queueJump()
   const active_el_ref = useRef<HTMLDivElement | null>(null)
-  const container_ref = useRef<HTMLOListElement | null>(null)
-  const prev_queue_index_ref = useRef(queueIndex)
+  const container_ref = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
-    const prev_index = prev_queue_index_ref.current
-    prev_queue_index_ref.current = queueIndex
-
-    const moving_down = queueIndex > prev_index
-
     if (!active_el_ref.current || !container_ref.current) {
       return
     }
 
-    if (areElementsIntersecting(container_ref.current, active_el_ref.current)) {
-      return
-    }
-
-    if (moving_down) {
-      active_el_ref.current.scrollIntoView({ behavior: "smooth", block: "end" })
-    } else {
-      active_el_ref.current.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      })
-    }
-
-    console.log("scroll")
+    scrollIntoViewIfNeeded(
+      container_ref.current,
+      active_el_ref.current,
+      "smooth"
+    )
   }, [queueIndex])
 
   return (
     <div className={cn("flex flex-col justify-stretch w-full")}>
       <div
         id="playback-queue"
+        ref={container_ref}
         className="overflow-y-auto border rounded-md h-[300px]"
       >
-        <ol ref={container_ref} className="flex flex-col h-full w-full">
+        <ol className="flex flex-col h-full w-full">
           {tracks ? (
             tracks.map((tr, i) => (
               <li key={tr.queueId} className="">
