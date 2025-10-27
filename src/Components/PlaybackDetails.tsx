@@ -16,6 +16,7 @@ import {
 } from "@/Components/ui/drawer"
 import PlaybackQueue from "@/QueueList"
 import { usePlaybackDrawer } from "@/contexts/PlaybackDrawerContext"
+import VolumeSlider from "@/VolumeControl"
 
 const formatTime = (s?: number) => {
   if (!s || !isFinite(s)) return "0:00"
@@ -34,6 +35,8 @@ export default function PlaybackDetails() {
   const queueSkip = useAudioPlayer.use.queueSkip()
   const queuePrev = useAudioPlayer.use.queuePrev()
   const setCurrentTime = useAudioPlayer.use.setCurrentTime()
+  const volume = useAudioPlayer.use.volume()
+  const setVolume = useAudioPlayer.use.setVolume()
 
   const { open, setOpen } = usePlaybackDrawer()
   const [seeking, setSeeking] = useState<number | null>(null)
@@ -83,9 +86,11 @@ export default function PlaybackDetails() {
                     : ""}
                 </div>
                 <div className="mt-3 text-sm opacity-80">
-                  Duration: {formatTime(currentTrack?.duration ?? duration)}
+                  Duration: {formatTime(duration)}
                 </div>
               </div>
+              {/* vertical volume slider */}
+              <VolumeSlider />
             </div>
 
             {/* seek bar */}
