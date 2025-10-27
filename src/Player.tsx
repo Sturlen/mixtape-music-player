@@ -40,6 +40,7 @@ type PlayerState = {
   queueSkip: () => Track | undefined
   queuePrev: () => Track | undefined
   queueSet: (tracks: Track[], startAtIndex?: number) => void
+  queueJump: (trackIndex: number) => Track | undefined
   setAudio: (el?: HTMLAudioElement) => void
 }
 
@@ -116,6 +117,15 @@ export const useAudioPlayerBase = create<PlayerState>()(
           set({ queueIndex: get().queueIndex - 1 })
           get().setTrack(prev_track)
           return prev_track
+        },
+        queueJump: (trackIndex) => {
+          const track = get().queueTracks[trackIndex]
+          if (!track) {
+            return
+          }
+          set({ queueIndex: trackIndex })
+          get().setTrack(track)
+          return track
         },
         queueRemove: (deleteIndex) => {
           console.log("deleteindex", 0, get().queueTracks)

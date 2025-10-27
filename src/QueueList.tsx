@@ -27,6 +27,7 @@ export function PlaybackQueue() {
   const has_queue = tracks.length > 0
   const queueIndex = useAudioPlayer.use.queueIndex()
   const queueRemove = useAudioPlayer.use.queueRemove()
+  const queueJump = useAudioPlayer.use.queueJump()
   const active_el_ref = useRef<HTMLDivElement | null>(null)
   const container_ref = useRef<HTMLOListElement | null>(null)
   const prev_queue_index_ref = useRef(queueIndex)
@@ -70,11 +71,15 @@ export function PlaybackQueue() {
                 <div
                   ref={i === queueIndex ? active_el_ref : undefined}
                   data-active={i === queueIndex}
-                  className="flex gap-2 data-[active=true]:bg-accent items-stretch"
+                  className="flex gap-2 data-[active=true]:bg-accent items-stretch cursor-pointer hover:bg-muted"
+                  onClick={() => queueJump(i)}
                 >
                   <div className="p-2 px-4 truncate h-10 grow">{tr.name}</div>
                   <button
-                    onClick={() => queueRemove(i)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      queueRemove(i)
+                    }}
                     className="hover:bg-foreground text-foreground hover:text-background p-2 justify-self-end"
                   >
                     <XIcon />
