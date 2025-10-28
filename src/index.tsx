@@ -7,9 +7,9 @@ import { parse } from "./parse"
 import type { Album, Artist, Source, Track } from "./lib/types"
 
 const db = {
-  artists: new Array<Artist>(),
-  albums: new Array<Album>(),
-  tracks: new Array<Track>(),
+  artists: new Map<string, Artist>(),
+  albums: new Map<string, Album>(),
+  tracks: new Map<string, Track>(),
 }
 
 export const fuse_artists = new Fuse<Artist>([], {
@@ -24,20 +24,26 @@ const default_source: Source = {
 
 async function reloadLibrary() {
   const new_db = await parse(default_source)
-  db.artists.length = 0
-  db.albums.length = 0
-  db.tracks.length = 0
+  db.artists.clear()
+  db.albums.clear()
+  db.tracks.clear()
 
-  db.artists.push(...new_db.artists)
-  db.albums.push(...new_db.albums)
-  db.tracks.push(...new_db.tracks)
+  for (const artist of new_db.artists.values()) {
+    db.artists.set(artist.id, artist)
+  }
+  for (const album of new_db.albums.values()) {
+    db.albums.set(album.id, album)
+  }
+  for (const track of new_db.tracks.values()) {
+    db.tracks.set(track.id, track)
+  }
 
-  fuse_artists.setCollection(db.artists)
+  fuse_artists.setCollection(Array.from(db.artists.values()))
 
   console.log("Library reloaded", {
-    artists: db.artists.length,
-    albums: db.albums.length,
-    tracks: db.tracks.length,
+    artists: db.artists.size,
+    albums: db.albums.size,
+    tracks: db.tracks.size,
   })
 }
 
@@ -59,10 +65,26 @@ const app = new Elysia()
       if (q) {
         console.log("q", q)
         const out = fuse_artists.search(q).map((res) => res.item)
-        return out
+        return out.map((artist) => {
+          const artistAlbums = Array.from(db.albums.values()).filter(
+            (a) => a.artistId === artist.id
+          )
+          return {
+            ...artist,
+            albums: artistAlbums,
+          }
+        })
       }
 
-      return db.artists
+      return Array.from(db.artists.values()).map((artist) => {
+        const artistAlbums = Array.from(db.albums.values()).filter(
+          (a) => a.artistId === artist.id
+        )
+        return {
+          ...artist,
+          albums: artistAlbums,
+        }
+      })
     },
     {
       detail: "Get artists",
@@ -70,48 +92,71 @@ const app = new Elysia()
     }
   )
   .get("/api/artists/:artistId", async ({ params: { artistId } }) => {
-    const artist = db.artists.find((a) => a.id == artistId)
+    const artist = db.artists.get(artistId)
+    if (!artist) {
+      return { artist: undefined }
+    }
+    const artistAlbums = Array.from(db.albums.values()).filter(
+      (a) => a.artistId === artistId
+    )
+    const artistAlbumsWithTracks = artistAlbums.map((album) => {
+      const albumTracks = Array.from(db.tracks.values()).filter(
+        (t) => t.albumId === album.id
+      )
+      return {
+        ...album,
+        tracks: albumTracks,
+      }
+    })
     return {
-      artist: artist
-        ? {
-            ...artist,
-            imagePath: undefined,
-            imageUrl: `/api/albumArt/${artistId}`,
-          }
-        : undefined,
+      artist: {
+        ...artist,
+        imagePath: undefined,
+        imageUrl: `/api/albumArt/${artistId}`,
+        albums: artistAlbumsWithTracks,
+      },
     }
   })
   .get("/api/albums", {
-    albums: db.albums.map((album) => ({
-      ...album,
-      imagePath: undefined,
-      tracks: album.tracks.map((tr) => ({ ...tr, artURL: album.imageURL })),
-    })),
+    albums: Array.from(db.albums.values()).map((album) => {
+      const albumTracks = Array.from(db.tracks.values()).filter(
+        (t) => t.albumId === album.id
+      )
+      return {
+        ...album,
+        imagePath: undefined,
+        tracks: albumTracks.map((tr) => ({ ...tr, artURL: album.imageURL })),
+      }
+    }),
   })
   .get("/api/albums/:albumId", async ({ params: { albumId } }) => {
-    const album = db.albums.find((a) => a.id == albumId)
+    const album = db.albums.get(albumId)
+    if (!album) {
+      return { album: undefined }
+    }
+    const albumTracks = Array.from(db.tracks.values()).filter(
+      (t) => t.albumId === albumId
+    )
     return {
-      album: album
-        ? {
-            ...album,
-            imagePath: undefined,
-            imageUrl: `/api/albumArt/${albumId}`,
-            tracks: album.tracks.map((tr) => ({
-              ...tr,
-              artURL: album.imageURL,
-            })),
-          }
-        : undefined,
+      album: {
+        ...album,
+        imagePath: undefined,
+        imageUrl: `/api/albumArt/${albumId}`,
+        tracks: albumTracks.map((tr) => ({
+          ...tr,
+          artURL: album.imageURL,
+        })),
+      },
     }
   })
-  .get("/api/tracks", Response.json(db.tracks))
+  .get("/api/tracks", Response.json(Array.from(db.tracks.values())))
   .get("/api/tracks/:trackId", async ({ params: { trackId } }) => {
-    return Response.json(db.tracks.find((track) => track.id == trackId))
+    return Response.json(db.tracks.get(trackId))
   })
   .get(
     "/api/files/artistart/:artistId",
     async ({ params: { artistId }, status }) => {
-      const artist = db.artists.find((a) => a.id == artistId)
+      const artist = db.artists.get(artistId)
       if (!artist) {
         console.error("artist", artistId, "not found")
         return status(404)
@@ -126,7 +171,7 @@ const app = new Elysia()
   )
   .get("/api/files/albumart/:albumId", async ({ params: { albumId } }) => {
     try {
-      const album = db.albums.find((a) => a.id == albumId)
+      const album = db.albums.get(albumId)
       return Bun.file(album?.imagePath ?? "")
     } catch (err) {
       throw new NotFoundError()
@@ -134,7 +179,7 @@ const app = new Elysia()
   })
   .get("/api/files/track/:trackId", async ({ params: { trackId } }) => {
     try {
-      const track = db.tracks.find((t) => t.id == trackId)
+      const track = db.tracks.get(trackId)
       return Bun.file(track?.path ?? "")
     } catch (err) {
       throw new NotFoundError()

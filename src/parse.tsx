@@ -5,15 +5,12 @@ import { type Source, type Artist, type Album, type Track } from "@/lib/types"
 
 export async function parse(source: Source) {
   const db = {
-    artists: new Array<Artist>(),
-    albums: new Array<Album>(),
-    tracks: new Array<Track>(),
+    artists: new Map<string, Artist>(),
+    albums: new Map<string, Album>(),
+    tracks: new Map<string, Track>(),
   }
 
   const music_root_path = source.rootPath
-  db.artists.length = 0
-  db.albums.length = 0
-  db.tracks.length = 0
 
   // read all the files in the current directory
   const artist_dirents = await readdir(music_root_path, {
@@ -29,7 +26,6 @@ export async function parse(source: Source) {
     const artist: Artist = {
       id: artist_id,
       name: artist_dir,
-      albums: [],
     }
     const albums = (
       await readdir(path.join(music_root_path, artist_dir), {
@@ -55,18 +51,17 @@ export async function parse(source: Source) {
       }
     }
 
-    db.artists.push(artist)
+    db.artists.set(artist.id, artist)
 
     for (const album_filename of albums) {
       const album_id = Bun.hash(album_filename).toString(16)
       const album: Album = {
         id: album_id,
         name: removeBandcampHeaders(album_filename),
-        tracks: [],
+        artistId: artist_id,
       }
 
-      db.albums.push(album)
-      artist.albums.push(album)
+      db.albums.set(album.id, album)
 
       const tracks = (
         await readdir(path.join(music_root_path, artist_dir, album_filename), {
@@ -86,14 +81,14 @@ export async function parse(source: Source) {
         const track: Track = {
           id: track_id,
           name: title,
+          albumId: album_id,
           playtimeSeconds: 0,
           path: filepath,
           URL: `/api/files/track/${track_id}`,
         }
 
         if (file.type.startsWith("audio/")) {
-          db.tracks.push(track)
-          album.tracks.push(track)
+          db.tracks.set(track.id, track)
         } else if (file.type.startsWith("image/")) {
           album.imagePath = filepath
           album.imageURL = `/api/files/albumart/${album_id}`

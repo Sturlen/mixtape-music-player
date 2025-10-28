@@ -7,6 +7,7 @@ export type Source = {
 export type Track = {
   id: string
   name: string
+  albumId: string
   playtimeSeconds: number
   path: string
   URL: string
@@ -16,7 +17,7 @@ export type Track = {
 export type Album = {
   id: string
   name: string
-  tracks: Track[]
+  artistId: string
   imagePath?: string
   imageURL?: string
 }
@@ -24,7 +25,6 @@ export type Album = {
 export type Artist = {
   id: string
   name: string
-  albums: Album[]
   imagePath?: string
   imageURL?: string
 }
