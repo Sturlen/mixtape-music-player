@@ -30,6 +30,14 @@ const RootLayout = () => (
       </nav>
       <nav className="md:flex justify-around items-center [&>*]:p-4 w-full hidden">
         <Link
+          to="/artists"
+          className="[&.active]:font-bold [&.active]:bg-secondary"
+        >
+          Artists
+        </Link>
+      </nav>
+      <nav className="md:flex justify-around items-center [&>*]:p-4 w-full hidden">
+        <Link
           to="/about"
           className="[&.active]:font-bold [&.active]:bg-secondary"
         >
