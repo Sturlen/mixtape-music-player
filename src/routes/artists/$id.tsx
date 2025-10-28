@@ -56,29 +56,49 @@ function ArtistPage() {
       <h2>Albums</h2>
       <GridLayout>
         {artist.albums.map((album) => (
-          <li key={album.id} className="w-40">
-            <Link to="/albums/$id" params={{ id: album.id }}>
-              <img
-                src={album.imageURL}
-                className="size-40 bg-[url(cassette.webp)] bg-cover object-cover"
-              />
-              <h2>{album.name}</h2>
-            </Link>
-            <button
-              className="hover:bg-accent p-4 border"
-              onClick={() =>
-                queueSet(
-                  album.tracks.map((track) => ({
-                    name: track.name,
-                    url: track.URL,
-                    duration: track.playtimeSeconds,
-                    artURL: album.imageURL,
-                  }))
-                )
-              }
-            >
-              Play Album
-            </button>
+          <li
+            key={album.id}
+            className="5bg-card text-card-foreground overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+          >
+            <div className="relative">
+              <div className="group  p-1 bg-gradient-to-br from-muted/10 to-transparent">
+                <button
+                  type="button"
+                  onClick={() =>
+                    queueSet(
+                      album.tracks.map((track) => ({
+                        name: track.name,
+                        url: track.URL,
+                        duration: track.playtimeSeconds,
+                        artURL: album.imageURL,
+                      }))
+                    )
+                  }
+                  className="group-hover:cursor-pointer w-full block relative transform-gpu transition-transform group-hover:scale-[1.01]"
+                >
+                  <div className="w-full aspect-square relative border border-[rgba(0,0,0,0.06)] shadow-[0_8px_20px_rgba(2,6,23,0.12)] transform-gpu transition-transform duration-200 will-change-transform origin-center group-hover:[transform:scale(1.03)]">
+                    <img
+                      src={album.imageURL}
+                      alt={album.name}
+                      className="w-full h-full object-contain rounded-none border-0 p-0 bg-muted"
+                    />
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <div className="p-3">
+              <h2 className="text-sm font-semibold truncate">
+                <Link
+                  to="/albums/$id"
+                  params={{ id: album.id }}
+                  className="block hover:underline"
+                >
+                  {album.name}
+                </Link>
+              </h2>
+              <p className="text-xs text-muted-foreground truncate">Artist</p>
+            </div>
           </li>
         ))}
       </GridLayout>

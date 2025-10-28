@@ -48,10 +48,10 @@ function RouteComponent() {
         {albums.map((album) => (
           <li
             key={album.id}
-            className="5bg-card text-card-foreground overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+            className="5bg-card text-card-foreground overflow-hidden w-full"
           >
             <div className="relative">
-              <div className="group  p-1 bg-gradient-to-br from-muted/10 to-transparent">
+              <div className="group p-1 bg-gradient-to-br from-muted/10 to-transparent">
                 <button
                   type="button"
                   onClick={() =>
@@ -77,17 +77,19 @@ function RouteComponent() {
               </div>
             </div>
 
-            <div className="p-3">
-              <h2 className="text-sm font-semibold truncate">
-                <Link
-                  to="/albums/$id"
-                  params={{ id: album.id }}
-                  className="block hover:underline"
-                >
+            <div className=" w-full">
+              <Link
+                to="/albums/$id"
+                params={{ id: album.id }}
+                className="block hover:underline w-full"
+              >
+                <h2 className="text-sm font-semibold truncate w-full px-1">
                   {album.name}
-                </Link>
-              </h2>
-              <p className="text-xs text-muted-foreground truncate">Artist</p>
+                </h2>
+              </Link>
+              <p className="text-xs text-muted-foreground truncate px-1">
+                Artist
+              </p>
             </div>
           </li>
         ))}
