@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query"
 import { useAudioPlayer } from "@/Player"
 import { EdenClient } from "@/lib/eden"
 import { Link } from "@tanstack/react-router"
+import { GridLayout } from "@/Components/ui/grid"
 
 export const Route = createFileRoute("/albums/")({
   component: RouteComponent,
@@ -43,7 +44,7 @@ function RouteComponent() {
         Albums
       </h1>
 
-      <ol className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 2xl:grid-cols-6 gap-4">
+      <GridLayout>
         {albums.map((album) => (
           <li
             key={album.id}
@@ -90,7 +91,7 @@ function RouteComponent() {
             </div>
           </li>
         ))}
-      </ol>
+      </GridLayout>
     </div>
   )
 }

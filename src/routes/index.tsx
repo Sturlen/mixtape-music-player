@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router"
 import { useQuery } from "@tanstack/react-query"
 import { EdenClient } from "@/lib/eden"
 import { Link } from "@tanstack/react-router"
+import { GridLayout } from "@/Components/ui/grid"
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -35,7 +36,7 @@ function Index() {
             <span className="text-amber-400">✨DESPAIR✨</span>
           </span>
         </div>
-        <ul className="flex flex-wrap gap-2">
+        <GridLayout>
           {artists?.map((artist) => (
             <li className="w-40">
               <Link to="/artists/$id" params={{ id: artist.id }}>
@@ -47,7 +48,7 @@ function Index() {
               </Link>
             </li>
           ))}
-        </ul>
+        </GridLayout>
       </article>
     </Page>
   )

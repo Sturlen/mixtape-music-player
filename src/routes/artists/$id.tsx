@@ -4,6 +4,7 @@ import { useAudioPlayer } from "@/Player"
 import { EdenClient } from "@/lib/eden"
 import { Link } from "@tanstack/react-router"
 import Page from "@/Components/Page"
+import { GridLayout } from "@/Components/ui/grid"
 
 export const Route = createFileRoute("/artists/$id")({
   component: ArtistPage,
@@ -53,7 +54,7 @@ function ArtistPage() {
         {artist.name}
       </h1>
       <h2>Albums</h2>
-      <ol className="flex flex-wrap gap-2">
+      <GridLayout>
         {artist.albums.map((album) => (
           <li key={album.id} className="w-40">
             <Link to="/albums/$id" params={{ id: album.id }}>
@@ -80,7 +81,7 @@ function ArtistPage() {
             </button>
           </li>
         ))}
-      </ol>
+      </GridLayout>
     </Page>
   )
 }
