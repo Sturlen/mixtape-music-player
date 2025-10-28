@@ -76,6 +76,11 @@ const app = new Elysia()
   .get("/*", index, { detail: "hide" })
   .get("/api/*", "418")
   .get("/api", () => redirect("/openapi"))
+  .get("/api/stats", {
+    artists: db.artists.size,
+    albums: db.albums.size,
+    tracks: db.tracks.size,
+  })
   .get(
     "/api/artists",
     ({ query: { q } }) => {
