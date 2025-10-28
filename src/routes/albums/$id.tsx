@@ -43,37 +43,43 @@ function RouteComponent() {
   }
 
   return (
-    <Page>
-      <img
-        src={album.imageURL}
-        alt={album.name}
-        className="size-40 bg-[url(cassette.webp)] bg-cover object-cover"
-      />
-      <h1 className="text-4xl md:text-6xl lg:text-8xl font-extrabold">
-        {album.name}
-      </h1>
+    <Page className="px-0">
+      <div className="px-2">
+        <img
+          src={album.imageURL}
+          alt={album.name}
+          className="size-40 bg-[url(cassette.webp)] bg-cover object-cover"
+        />
+        <h1 className="text-4xl md:text-6xl lg:text-8xl font-extrabold">
+          {album.name}
+        </h1>
 
-      <div>
-        <button
-          className="hover:bg-accent p-4 border"
-          onClick={() =>
-            queueSet(
-              album.tracks.map((track) => ({
-                name: track.name,
-                url: track.URL,
-                duration: track.playtimeSeconds,
-                artURL: album.imageURL,
-              }))
-            )
-          }
-        >
-          Play Album
-        </button>
+        <div>
+          <button
+            className="hover:bg-accent p-4 border bg-background rounded-md mb-4"
+            onClick={() =>
+              queueSet(
+                album.tracks.map((track) => ({
+                  name: track.name,
+                  url: track.URL,
+                  duration: track.playtimeSeconds,
+                  artURL: album.imageURL,
+                }))
+              )
+            }
+          >
+            Play Album
+          </button>
+        </div>
+        <h2 className="text-2xl font-bold mt-8 mb-4">TRACKS</h2>
       </div>
-      <h2>TRACKS</h2>
-      <div>
+
+      <ol className="w-full flex flex-col bg-background">
         {album.tracks.map((track, i) => (
-          <div key={track.id} className="w-full">
+          <li
+            key={track.id}
+            className="w-full grid grid-cols-[1fr_auto_auto] gap-2 items-center p-2 pl-8 border-t hover:bg-accent/50 transition-colors last:border-b"
+          >
             <button
               onClick={() => {
                 queueSet(
@@ -86,12 +92,12 @@ function RouteComponent() {
                   i
                 )
               }}
-              className="border-2 p-2 hover:bg-accent"
+              className="text-left font-medium text-sm md:text-base hover:underline truncate"
             >
               <span>{track.name}</span>
             </button>
             <button
-              className="border-2 p-2 hover:bg-accent"
+              className="px-4 py-2 border border-current rounded hover:bg-accent transition-colors whitespace-nowrap"
               onClick={() => {
                 queuePush({
                   name: track.name,
@@ -102,11 +108,11 @@ function RouteComponent() {
                 play()
               }}
             >
-              <span>queue</span>
+              <span>Queue</span>
             </button>
-          </div>
+          </li>
         ))}
-      </div>
+      </ol>
     </Page>
   )
 }
