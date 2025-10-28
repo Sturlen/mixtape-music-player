@@ -22,20 +22,37 @@ const default_source: Source = {
   rootPath: env.MUSIC_PATH,
 }
 
+const sources: Source[] = [default_source]
+
+if (env.MUSIC2_PATH) {
+  sources.push({
+    id: "source:2",
+    name: "Secondary Source",
+    rootPath: env.MUSIC2_PATH,
+  })
+}
+
 async function reloadLibrary() {
-  const new_db = await parse(default_source)
   db.artists.clear()
   db.albums.clear()
   db.tracks.clear()
 
-  for (const artist of new_db.artists.values()) {
-    db.artists.set(artist.id, artist)
-  }
-  for (const album of new_db.albums.values()) {
-    db.albums.set(album.id, album)
-  }
-  for (const track of new_db.tracks.values()) {
-    db.tracks.set(track.id, track)
+  for (const source of sources) {
+    try {
+      const new_db = await parse(source)
+
+      for (const artist of new_db.artists.values()) {
+        db.artists.set(artist.id, artist)
+      }
+      for (const album of new_db.albums.values()) {
+        db.albums.set(album.id, album)
+      }
+      for (const track of new_db.tracks.values()) {
+        db.tracks.set(track.id, track)
+      }
+    } catch (err) {
+      console.error(`Error parsing source ${source.id} (${source.name}):`, err)
+    }
   }
 
   fuse_artists.setCollection(Array.from(db.artists.values()))

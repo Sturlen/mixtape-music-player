@@ -8,6 +8,7 @@ export const env = createEnv({
   server: {
     // DATABASE_URL: z.string().url(),
     MUSIC_PATH: z.string().min(1).default("./demo-music/"),
+    MUSIC2_PATH: z.string().optional(),
     PORT: z.coerce.number().int().default(3000),
   },
 
