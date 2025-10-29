@@ -261,7 +261,3 @@ export const useCurrentTrack = () => {
   const tracks = useAudioPlayer.use.queueTracks()
   return tracks[index]
 }
-
-function raise(message: string): never {
-  throw new Error(message)
-}

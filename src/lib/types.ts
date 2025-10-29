@@ -32,19 +32,26 @@ export type Artist = {
   artAssetId?: string
 }
 
-export type Asset = {
+export type AssetBase = {
   id: string
   parentId: string
   path: string
   name: string
   filetype: "audio" | "image"
+  fileExt: string
 }
 
-export type ArtAsset = Asset & {
+export type ArtAsset = AssetBase & {
+  filetype: "audio"
   width: number
   height: number
+  // fileExt: "png" | "webp" | "jpeg" | "avif" | "bmp"
 }
 
-export type AudioAsset = Asset & {
+export type AudioAsset = AssetBase & {
+  filetype: "audio"
   duration: number
+  // fileExt: "mp3" | "flac" | "ogg"
 }
+
+export type Asset = ArtAsset | AudioAsset

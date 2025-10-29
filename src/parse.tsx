@@ -86,7 +86,9 @@ export async function parse(source: Source) {
         const filepath = path.join(parentPath, filename)
 
         const file = Bun.file(filepath)
-        const track_id = "track_" + Bun.hash(`track_${filename}`).toString(16)
+        const filenameWithoutExt = filename.replace(/\.[^/.]+$/, "")
+        const track_id =
+          "track_" + Bun.hash(`track_${filenameWithoutExt}`).toString(16)
         const { trackNumber, title } = extractSongInfo(filename)
         const track: Track = {
           id: track_id,
@@ -108,7 +110,7 @@ export async function parse(source: Source) {
             path: filepath,
             name: filename,
             filetype: "audio",
-          })
+          } as AudioAsset)
           track.audiAssetId = asset_hash
           // TODO: get duration
         } else if (file.type.startsWith("image/")) {
@@ -123,7 +125,7 @@ export async function parse(source: Source) {
             path: filepath,
             name: filename,
             filetype: "image",
-          })
+          } as ArtAsset)
           // TODO: get dimensions
         }
       }

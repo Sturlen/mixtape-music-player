@@ -6,6 +6,7 @@ import { env } from "./env"
 import { parse } from "./parse"
 import type { Album, Artist, Asset, Source, Track } from "./lib/types"
 import { processImage, getMimeType } from "./lib/imageHandler"
+import { raise } from "./lib/utils"
 
 const started_at = performance.now()
 
@@ -282,8 +283,32 @@ const app = new Elysia()
   )
   .get("/api/files/track/:trackId", async ({ params: { trackId } }) => {
     try {
-      const track = db.tracks.get(trackId)
-      return Bun.file(track?.path ?? "")
+      const track = db.tracks.get(trackId) ?? raise("Track not found in db") // TODO: actual error management
+
+      const assets = db.assets
+        .values()
+        .filter((a) => a.parentId === trackId && a.filetype === "audio")
+        .toArray()
+
+      console.log("assets", assets)
+
+      return Bun.file(track.path)
+    } catch (err) {
+      throw new NotFoundError()
+    }
+  })
+  .get("/api/assets", async () => {
+    try {
+      const assets = Array.from(db.assets.values())
+      return { assets }
+    } catch (err) {
+      throw new NotFoundError()
+    }
+  })
+  .get("/api/assets/:assetId", async ({ params: { assetId } }) => {
+    try {
+      const asset = db.assets.get(assetId)
+      return Bun.file(asset?.path ?? "")
     } catch (err) {
       throw new NotFoundError()
     }
