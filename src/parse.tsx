@@ -22,7 +22,7 @@ export async function parse(source: Source) {
     .map((x) => x.name)
 
   for (const artist_dir of artist_dirs) {
-    const artist_id = Bun.hash(artist_dir).toString(16)
+    const artist_id = "artist_" + Bun.hash(`artist_${artist_dir}`).toString(16)
     const artist: Artist = {
       id: artist_id,
       name: artist_dir,
@@ -54,7 +54,8 @@ export async function parse(source: Source) {
     db.artists.set(artist.id, artist)
 
     for (const album_filename of albums) {
-      const album_id = Bun.hash(album_filename).toString(16)
+      const album_id =
+        "album_" + Bun.hash(`album_${album_filename}`).toString(16)
       const album: Album = {
         id: album_id,
         name: removeBandcampHeaders(album_filename),
@@ -76,7 +77,7 @@ export async function parse(source: Source) {
         const filepath = path.join(parentPath, filename)
 
         const file = Bun.file(filepath)
-        const track_id = Bun.hash(filename).toString(16)
+        const track_id = "track_" + Bun.hash(`track_${filename}`).toString(16)
         const { trackNumber, title } = extractSongInfo(filename)
         const track: Track = {
           id: track_id,
