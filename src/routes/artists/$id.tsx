@@ -103,7 +103,7 @@ function ArtistPage() {
                       <source
                         srcSet={
                           album.imageURL
-                            ? `${album.imageURL}?w=150&h=150&q=75&f=avif 1x, ${album.imageURL}?w=300&h=300&q=75&f=avif 2x`
+                            ? `${album.imageURL}?w=300&h=300&q=75&f=avif 1x, ${album.imageURL}?w=300&h=300&q=75&f=avif 2x`
                             : "/cassette.webp"
                         }
                         type="image/avif"
@@ -111,7 +111,7 @@ function ArtistPage() {
                       <source
                         srcSet={
                           album.imageURL
-                            ? `${album.imageURL}?w=150&h=150&q=80&f=webp 1x, ${album.imageURL}?w=300&h=300&q=80&f=webp 2x`
+                            ? `${album.imageURL}?w=300&h=300&q=80&f=webp 1x, ${album.imageURL}?w=300&h=300&q=80&f=webp 2x`
                             : "/cassette.webp"
                         }
                         type="image/webp"
