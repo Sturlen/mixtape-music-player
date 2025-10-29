@@ -170,15 +170,23 @@ const app = new Elysia()
     const albumTracks = Array.from(db.tracks.values()).filter(
       (t) => t.albumId === albumId
     )
+
+    const tracks = albumTracks.map((tr) => {
+      const track = db.tracks.get(tr.id) ?? raise("Track not found in db") // TODO: actual error management
+
+      const assets = db.assets
+        .values()
+        .filter((a) => a.parentId === track.id && a.filetype === "audio")
+        .toArray()
+      return { ...tr, artURL: album.imageURL, assets }
+    })
+
     return {
       album: {
         ...album,
         imagePath: undefined,
         imageUrl: `/api/albumArt/${albumId}`,
-        tracks: albumTracks.map((tr) => ({
-          ...tr,
-          artURL: album.imageURL,
-        })),
+        tracks: tracks,
       },
     }
   })

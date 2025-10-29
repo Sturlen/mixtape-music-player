@@ -95,6 +95,16 @@ function RouteComponent() {
               className="text-left font-medium text-sm md:text-base hover:underline truncate"
             >
               <span>{track.name}</span>
+
+              {track.assets.length > 1 ? (
+                <span
+                  className="text-sm text-muted-foreground px-2"
+                  title={`Several files available`}
+                >
+                  {" "}
+                  ({track.assets.length} assets)
+                </span>
+              ) : null}
             </button>
             <button
               className="px-4 py-2 border border-current rounded hover:bg-accent transition-colors whitespace-nowrap"
