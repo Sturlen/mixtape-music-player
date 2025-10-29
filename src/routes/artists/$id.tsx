@@ -45,11 +45,33 @@ function ArtistPage() {
 
   return (
     <Page>
-      <img
-        src={artist.imageURL}
-        alt={artist.name}
-        className="size-40 bg-[url(cassette.webp)] bg-cover object-cover"
-      />
+      <picture>
+        <source
+          srcSet={
+            artist.imageURL
+              ? `${artist.imageURL}?w=300&h=300&q=75&f=avif 1x, ${artist.imageURL}?w=600&h=600&q=75&f=avif 2x`
+              : "/cassette.webp"
+          }
+          type="image/avif"
+        />
+        <source
+          srcSet={
+            artist.imageURL
+              ? `${artist.imageURL}?w=300&h=300&q=80&f=webp 1x, ${artist.imageURL}?w=600&h=600&q=80&f=webp 2x`
+              : "/cassette.webp"
+          }
+          type="image/webp"
+        />
+        <img
+          src={
+            artist.imageURL
+              ? artist.imageURL + "?w=400&h=400&q=85&f=jpeg"
+              : "/cassette.webp"
+          }
+          alt={artist.name}
+          className="size-40 bg-[url(cassette.webp)] bg-cover object-cover"
+        />
+      </picture>
       <h1 className="text-4xl md:text-6xl lg:text-8xl font-extrabold">
         {artist.name}
       </h1>
@@ -77,11 +99,33 @@ function ArtistPage() {
                   className="group-hover:cursor-pointer w-full block relative transform-gpu transition-transform group-hover:scale-[1.01]"
                 >
                   <div className="w-full aspect-square relative border border-[rgba(0,0,0,0.06)] shadow-[0_8px_20px_rgba(2,6,23,0.12)] transform-gpu transition-transform duration-200 will-change-transform origin-center group-hover:[transform:scale(1.03)]">
-                    <img
-                      src={album.imageURL}
-                      alt={album.name}
-                      className="w-full h-full object-contain rounded-none border-0 p-0 bg-muted"
-                    />
+                    <picture>
+                      <source
+                        srcSet={
+                          album.imageURL
+                            ? `${album.imageURL}?w=150&h=150&q=75&f=avif 1x, ${album.imageURL}?w=300&h=300&q=75&f=avif 2x`
+                            : "/cassette.webp"
+                        }
+                        type="image/avif"
+                      />
+                      <source
+                        srcSet={
+                          album.imageURL
+                            ? `${album.imageURL}?w=150&h=150&q=80&f=webp 1x, ${album.imageURL}?w=300&h=300&q=80&f=webp 2x`
+                            : "/cassette.webp"
+                        }
+                        type="image/webp"
+                      />
+                      <img
+                        src={
+                          album.imageURL
+                            ? album.imageURL + "?w=200&h=200&q=85&f=jpeg"
+                            : "/cassette.webp"
+                        }
+                        alt={album.name}
+                        className="w-full h-full object-contain rounded-none border-0 p-0 bg-muted"
+                      />
+                    </picture>
                   </div>
                 </button>
               </div>

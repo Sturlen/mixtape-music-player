@@ -5,6 +5,7 @@ import index from "./index.html"
 import { env } from "./env"
 import { parse } from "./parse"
 import type { Album, Artist, Source, Track } from "./lib/types"
+import { processImage, getMimeType } from "./lib/imageHandler"
 
 const db = {
   artists: new Map<string, Artist>(),
@@ -177,28 +178,99 @@ const app = new Elysia()
   })
   .get(
     "/api/files/artistart/:artistId",
-    async ({ params: { artistId }, status }) => {
+    async ({ params: { artistId }, query, set, status }) => {
       const artist = db.artists.get(artistId)
       if (!artist) {
         console.error("artist", artistId, "not found")
         return status(404)
       }
+
       try {
-        return Bun.file(artist.imagePath ?? "")
+        if (!artist.imagePath) {
+          throw new NotFoundError()
+        }
+
+        const width = query.w ? parseInt(query.w as string) : 256
+        const height = query.h ? parseInt(query.h as string) : 256
+        const quality = query.q ? parseInt(query.q as string) : 80
+        const format = (query.f as "jpeg" | "png" | "webp" | "avif") || "webp"
+
+        // If no sizing requested, return original file
+        if (!width && !height) {
+          return Bun.file(artist.imagePath)
+        }
+
+        // Process image with Sharp
+        const buffer = await processImage(artist.imagePath, {
+          width,
+          height,
+          quality,
+          format,
+        })
+
+        set.headers["Content-Type"] = getMimeType(format)
+        set.headers["Cache-Control"] = "public, max-age=86400"
+
+        return buffer
       } catch (err) {
-        console.error(artist?.imageURL)
+        console.error(`Error serving artist art for ${artistId}:`, err)
         throw new NotFoundError()
       }
+    },
+    {
+      query: t.Object({
+        w: t.Optional(t.String()),
+        h: t.Optional(t.String()),
+        q: t.Optional(t.String()),
+        f: t.Optional(t.String()),
+      }),
     }
   )
-  .get("/api/files/albumart/:albumId", async ({ params: { albumId } }) => {
-    try {
-      const album = db.albums.get(albumId)
-      return Bun.file(album?.imagePath ?? "")
-    } catch (err) {
-      throw new NotFoundError()
+  .get(
+    "/api/files/albumart/:albumId",
+    async ({ params: { albumId }, query, set }) => {
+      try {
+        const album = db.albums.get(albumId)
+        if (!album?.imagePath) {
+          throw new NotFoundError()
+        }
+
+        const width = query.w ? parseInt(query.w as string) : undefined
+        const height = query.h ? parseInt(query.h as string) : undefined
+        const quality = query.q ? parseInt(query.q as string) : 80
+        const format = (query.f as "jpeg" | "png" | "webp" | "avif") || "webp"
+
+        // If no sizing requested, return original file
+        if (!width && !height) {
+          return Bun.file(album.imagePath)
+        }
+
+        // Process image with Sharp
+        const buffer = await processImage(album.imagePath, {
+          width,
+          height,
+          quality,
+          format,
+        })
+
+        set.headers["Content-Type"] = getMimeType(format)
+        set.headers["Cache-Control"] = "public, max-age=86400"
+
+        return buffer
+      } catch (err) {
+        console.error(`Error serving album art for ${albumId}:`, err)
+        throw new NotFoundError()
+      }
+    },
+    {
+      query: t.Object({
+        w: t.Optional(t.String()),
+        h: t.Optional(t.String()),
+        q: t.Optional(t.String()),
+        f: t.Optional(t.String()),
+      }),
     }
-  })
+  )
   .get("/api/files/track/:trackId", async ({ params: { trackId } }) => {
     try {
       const track = db.tracks.get(trackId)
