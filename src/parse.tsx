@@ -1,13 +1,22 @@
 import * as Bun from "bun"
 import { readdir } from "fs/promises"
 import path from "path"
-import { type Source, type Artist, type Album, type Track } from "@/lib/types"
+import {
+  type Source,
+  type Artist,
+  type Album,
+  type Track,
+  type Asset,
+  type AudioAsset,
+  type ArtAsset,
+} from "@/lib/types"
 
 export async function parse(source: Source) {
   const db = {
     artists: new Map<string, Artist>(),
     albums: new Map<string, Album>(),
     tracks: new Map<string, Track>(),
+    assets: new Map<string, Asset>(),
   }
 
   const music_root_path = source.rootPath
@@ -88,12 +97,34 @@ export async function parse(source: Source) {
           URL: `/api/files/track/${track_id}`,
         }
 
+        // TODO: look into getting the actual file hash
+        const asset_hash = "asset" + Bun.hash(`asset_${filepath}`).toString(16)
+
         if (file.type.startsWith("audio/")) {
           db.tracks.set(track.id, track)
+          db.assets.set(asset_hash, {
+            id: asset_hash,
+            parentId: track_id,
+            path: filepath,
+            name: filename,
+            filetype: "audio",
+          })
+          track.audiAssetId = asset_hash
+          // TODO: get duration
         } else if (file.type.startsWith("image/")) {
           album.imagePath = filepath
           album.imageURL = `/api/files/albumart/${album_id}`
           track.artURL = album.imageURL
+          album.artAssetId = asset_hash
+
+          db.assets.set(asset_hash, {
+            id: asset_hash,
+            parentId: album_id,
+            path: filepath,
+            name: filename,
+            filetype: "image",
+          })
+          // TODO: get dimensions
         }
       }
 

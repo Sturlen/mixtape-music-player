@@ -12,6 +12,7 @@ export type Track = {
   path: string
   URL: string
   artURL?: string
+  audiAssetId?: string
 }
 
 export type Album = {
@@ -20,6 +21,7 @@ export type Album = {
   artistId: string
   imagePath?: string
   imageURL?: string
+  artAssetId?: string
 }
 
 export type Artist = {
@@ -27,4 +29,22 @@ export type Artist = {
   name: string
   imagePath?: string
   imageURL?: string
+  artAssetId?: string
+}
+
+export type Asset = {
+  id: string
+  parentId: string
+  path: string
+  name: string
+  filetype: "audio" | "image"
+}
+
+export type ArtAsset = Asset & {
+  width: number
+  height: number
+}
+
+export type AudioAsset = Asset & {
+  duration: number
 }
