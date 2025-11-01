@@ -94,6 +94,9 @@ function RouteComponent() {
               }}
               className="text-left font-medium text-sm md:text-base hover:underline truncate"
             >
+              <span className="font-mono text-muted-foreground w-10 inline-block">
+                {track.trackNumber?.toString().padStart(3, "0") || "--"}
+              </span>
               <span>{track.name}</span>
 
               {track.assets.length > 1 ? (
