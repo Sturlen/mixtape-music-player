@@ -63,7 +63,7 @@ export async function parse(source: Source) {
     db.artists.set(artist.id, artist)
 
     for (const album_filename of albums) {
-      const album_id = generateHash("album", album_filename)
+      const album_id = generateHash("album", `${artist.name}/${album_filename}`)
       const album: Album = {
         id: album_id,
         name: removeBandcampHeaders(album_filename),
@@ -86,7 +86,10 @@ export async function parse(source: Source) {
 
         const file = Bun.file(filepath)
         const filenameWithoutExt = filename.replace(/\.[^/.]+$/, "")
-        const track_id = generateHash("track", filenameWithoutExt)
+        const track_id = generateHash(
+          "track",
+          `${artist.name}/${album.name}/${filenameWithoutExt}`
+        )
         const { trackNumber, title } = extractSongInfo(filename)
         const track: Track = {
           id: track_id,
