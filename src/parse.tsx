@@ -31,7 +31,7 @@ export async function parse(source: Source) {
     .map((x) => x.name)
 
   for (const artist_dir of artist_dirs) {
-    const artist_id = "artist_" + Bun.hash(`artist_${artist_dir}`).toString(16)
+    const artist_id = generateHash("artist", artist_dir)
     const artist: Artist = {
       id: artist_id,
       name: artist_dir,
@@ -63,8 +63,7 @@ export async function parse(source: Source) {
     db.artists.set(artist.id, artist)
 
     for (const album_filename of albums) {
-      const album_id =
-        "album_" + Bun.hash(`album_${album_filename}`).toString(16)
+      const album_id = generateHash("album", album_filename)
       const album: Album = {
         id: album_id,
         name: removeBandcampHeaders(album_filename),
@@ -87,8 +86,7 @@ export async function parse(source: Source) {
 
         const file = Bun.file(filepath)
         const filenameWithoutExt = filename.replace(/\.[^/.]+$/, "")
-        const track_id =
-          "track_" + Bun.hash(`track_${filenameWithoutExt}`).toString(16)
+        const track_id = generateHash("track", filenameWithoutExt)
         const { trackNumber, title } = extractSongInfo(filename)
         const track: Track = {
           id: track_id,
@@ -100,7 +98,7 @@ export async function parse(source: Source) {
         }
 
         // TODO: look into getting the actual file hash
-        const asset_hash = "asset" + Bun.hash(`asset_${filepath}`).toString(16)
+        const asset_hash = generateHash("asset", filepath)
 
         if (file.type.startsWith("audio/")) {
           db.tracks.set(track.id, track)
@@ -134,6 +132,10 @@ export async function parse(source: Source) {
     }
   }
   return db
+}
+
+function generateHash(type: string, value: string): string {
+  return type + Bun.hash(`${type}_${value}`).toString(16)
 }
 
 export function removeBandcampHeaders(str: string) {
