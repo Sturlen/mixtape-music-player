@@ -8,6 +8,18 @@ import type { Album, Artist, Asset, Source, Track } from "./lib/types"
 import { processImage, getMimeType } from "./lib/imageHandler"
 import { raise } from "./lib/utils"
 
+function compareTracksByNumberName(a: Track, b: Track): number {
+  if (a.trackNumber !== undefined && b.trackNumber !== undefined) {
+    return a.trackNumber - b.trackNumber
+  } else if (a.trackNumber !== undefined) {
+    return -1
+  } else if (b.trackNumber !== undefined) {
+    return 1
+  } else {
+    return a.name.localeCompare(b.name)
+  }
+}
+
 const started_at = performance.now()
 
 const db = {
@@ -171,15 +183,17 @@ const app = new Elysia()
       (t) => t.albumId === albumId
     )
 
-    const tracks = albumTracks.map((tr) => {
-      const track = db.tracks.get(tr.id) ?? raise("Track not found in db") // TODO: actual error management
+    const tracks = albumTracks
+      .map((tr) => {
+        const track = db.tracks.get(tr.id) ?? raise("Track not found in db") // TODO: actual error management
 
-      const assets = db.assets
-        .values()
-        .filter((a) => a.parentId === track.id && a.filetype === "audio")
-        .toArray()
-      return { ...tr, artURL: album.imageURL, assets }
-    })
+        const assets = db.assets
+          .values()
+          .filter((a) => a.parentId === track.id && a.filetype === "audio")
+          .toArray()
+        return { ...tr, artURL: album.imageURL, assets }
+      })
+      .sort(compareTracksByNumberName)
 
     return {
       album: {
