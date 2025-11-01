@@ -42,7 +42,7 @@ export type AssetBase = {
 }
 
 export type ArtAsset = AssetBase & {
-  filetype: "audio"
+  filetype: "image"
   width: number
   height: number
   // fileExt: "png" | "webp" | "jpeg" | "avif" | "bmp"
