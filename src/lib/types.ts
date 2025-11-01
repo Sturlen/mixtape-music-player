@@ -9,6 +9,7 @@ export type Track = {
   name: string
   albumId: string
   playtimeSeconds: number
+  trackNumber?: number
   path: string
   URL: string
   artURL?: string

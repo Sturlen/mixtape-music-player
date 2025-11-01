@@ -95,6 +95,7 @@ export async function parse(source: Source) {
           id: track_id,
           name: title,
           albumId: album_id,
+          trackNumber: trackNumber,
           playtimeSeconds: 0,
           path: filepath,
           URL: `/api/files/track/${track_id}`,
@@ -147,9 +148,9 @@ export function removeBandcampHeaders(str: string) {
 
 /** For Bandcamp-style track names */
 export function extractSongInfo(filename: string): {
-  artist: string | null
-  album: string | null
-  trackNumber: string | null
+  artist?: string
+  album?: string
+  trackNumber?: number
   title: string
 } {
   // Remove file extension
@@ -160,9 +161,6 @@ export function extractSongInfo(filename: string): {
 
   if (!match || !match[1] || !match[2] || !match[4]) {
     return {
-      artist: null,
-      album: null,
-      trackNumber: null,
       title: baseName,
     }
   }
@@ -170,7 +168,7 @@ export function extractSongInfo(filename: string): {
   return {
     artist: match[1].trim(),
     album: match[2].trim(),
-    trackNumber: match[3] ?? null,
+    trackNumber: match[3] ? parseInt(match[3]) : undefined,
     title: match[4].trim(),
   }
 }
