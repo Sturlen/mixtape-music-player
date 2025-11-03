@@ -18,6 +18,7 @@ import PlaybackQueue from "@/QueueList"
 import SeekBar from "@/Components/SeekBar"
 import { usePlaybackDrawer } from "@/contexts/PlaybackDrawerContext"
 import VolumeSlider from "@/VolumeControl"
+import { Cassette } from "./Cassette"
 
 const formatTime = (s?: number) => {
   if (!s || !isFinite(s)) return "0:00"

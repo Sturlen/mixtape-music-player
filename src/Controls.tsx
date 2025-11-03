@@ -8,59 +8,29 @@ import {
 import { useAudioPlayer, useCurrentTrack } from "./Player"
 import { cn } from "./lib/utils"
 import VolumeSlider from "./VolumeControl"
+import { Cassette } from "./Components/Cassette"
 
 export function Controls() {
   const play = useAudioPlayer.use.play()
   const pause = useAudioPlayer.use.pause()
   const skip = useAudioPlayer.use.queueSkip()
   const prev = useAudioPlayer.use.queuePrev()
-  const isPlaying = useAudioPlayer.use.isPlaying()
-  const track = useCurrentTrack()
-
-  const progress =
-    useAudioPlayer.use.currentTime() / useAudioPlayer.use.duration()
-
-  const durationTakeUp = 0.93 + (3.0 - 0.93) * progress // s/rev
-  const durationSupply = 3.0 - (3.0 - 0.93) * progress // reverse relationship
 
   return (
-    <div className="relative bg-[url(cassette.webp)] bg-contain bg-center w-80 h-50 overflow-hidden bg-no-repeat flex flex-col">
-      <div className="absolute left-[25px] bottom-[55px] h-[130px] w-[268px] object-cover overflow-hidden">
-        <img className="absolute bottom-0 opacity-0" src={track?.artURL}></img>
-        {/* TODO: implement cassette images properly */}
+    <div className="flex flex-col w-full items-center">
+      <div className="w-70 bg-gray-400 pb-10 rounded-md">
+        <Cassette />
       </div>
-      <div className="relative">
-        <div className="bg-amber-50 text-background left-[28px] top-[20px] right-[28px] overflow-ellipsis text-nowrap overflow-hidden absolute h-[30px]">
-          <span>{track?.name ?? "None"}</span>
-        </div>
-        <div>
-          <CrosshairIcon
-            size={"40px"}
-            className={cn(
-              { reel: isPlaying },
-              "absolute left-[75px] top-[70px]"
-            )}
-            style={{ animationDuration: durationSupply.toFixed() + "s" }}
-          />
-          <CrosshairIcon
-            size={"40px"}
-            className={cn(
-              { reel: isPlaying },
-              "absolute left-[205px] top-[70px]"
-            )}
-            style={{ animationDuration: durationTakeUp.toFixed() + "s" }}
-          />
-        </div>
-
+      <div className="w-full">
         <div className="grow"></div>
 
-        <div className="absolute top-[120px]  left-[22px] right-[22px] flex justify-center">
+        <div className="h-6 flex justify-center items-center">
           <div className="backdrop-blur-sm px-2">
             <CurrentTime />
             <Duration />
           </div>
         </div>
-        <div className="absolute top-[170px] w-full left-0 right-0 flex justify-between px-4">
+        <div className="flex justify-center gap-6 pt-4">
           <button onClick={() => prev()}>
             <SkipBackIcon />
           </button>

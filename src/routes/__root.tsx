@@ -80,9 +80,11 @@ function Sidebar({ className }: { className?: string }) {
       <div className="self-end bg-accent rounded-2xl w-full p-4 flex-col items-center justify-items-center">
         <div className="flex justify-items-center items-center">
           <Controls />
-          <VolumeSlider />
         </div>
+        <div>SEEK</div>
         <SeekBar />
+        <div>VOLUME CONTROLS</div>
+        <VolumeSlider className="w-full grow" direction="horizontal" />
       </div>
     </section>
   )
