@@ -221,41 +221,15 @@ const app = new Elysia()
         if (!artist.imagePath) {
           throw new NotFoundError()
         }
-
-        const width = query.w ? parseInt(query.w as string) : 256
-        const height = query.h ? parseInt(query.h as string) : 256
-        const quality = query.q ? parseInt(query.q as string) : 80
-        const format = (query.f as "jpeg" | "png" | "webp" | "avif") || "webp"
-
-        // If no sizing requested, return original file
-        if (!width && !height) {
-          return Bun.file(artist.imagePath)
-        }
-
-        // Process image with Sharp
-        const buffer = await processImage(artist.imagePath, {
-          width,
-          height,
-          quality,
-          format,
-        })
-
-        set.headers["Content-Type"] = getMimeType(format)
+        const file = Bun.file(artist.imagePath)
+        set.headers["Content-Type"] = file.type
         set.headers["Cache-Control"] = "public, max-age=86400"
 
-        return buffer
+        return file
       } catch (err) {
         console.error(`Error serving artist art for ${artistId}:`, err)
         throw new NotFoundError()
       }
-    },
-    {
-      query: t.Object({
-        w: t.Optional(t.String()),
-        h: t.Optional(t.String()),
-        q: t.Optional(t.String()),
-        f: t.Optional(t.String()),
-      }),
     }
   )
   .get(
@@ -267,40 +241,15 @@ const app = new Elysia()
           throw new NotFoundError()
         }
 
-        const width = query.w ? parseInt(query.w as string) : undefined
-        const height = query.h ? parseInt(query.h as string) : undefined
-        const quality = query.q ? parseInt(query.q as string) : 80
-        const format = (query.f as "jpeg" | "png" | "webp" | "avif") || "webp"
-
-        // If no sizing requested, return original file
-        if (!width && !height) {
-          return Bun.file(album.imagePath)
-        }
-
-        // Process image with Sharp
-        const buffer = await processImage(album.imagePath, {
-          width,
-          height,
-          quality,
-          format,
-        })
-
-        set.headers["Content-Type"] = getMimeType(format)
+        const file = Bun.file(album.imagePath)
+        set.headers["Content-Type"] = file.type
         set.headers["Cache-Control"] = "public, max-age=86400"
 
-        return buffer
+        return file
       } catch (err) {
         console.error(`Error serving album art for ${albumId}:`, err)
         throw new NotFoundError()
       }
-    },
-    {
-      query: t.Object({
-        w: t.Optional(t.String()),
-        h: t.Optional(t.String()),
-        q: t.Optional(t.String()),
-        f: t.Optional(t.String()),
-      }),
     }
   )
   .get("/api/files/track/:trackId", async ({ params: { trackId } }) => {
