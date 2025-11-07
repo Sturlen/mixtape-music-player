@@ -89,8 +89,8 @@ function ArtistPage() {
                   onClick={() =>
                     queueSet(
                       album.tracks.map((track) => ({
+                        id: track.id,
                         name: track.name,
-                        url: track.URL,
                         duration: track.playtimeSeconds,
                         artURL: album.imageURL,
                       }))
