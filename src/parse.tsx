@@ -98,7 +98,6 @@ export async function parse(source: Source) {
           trackNumber: trackNumber,
           playtimeSeconds: 0,
           path: filepath,
-          URL: `/api/files/track/${track_id}`,
         }
 
         // TODO: look into getting the actual file hash
@@ -113,7 +112,6 @@ export async function parse(source: Source) {
             name: filename,
             filetype: "audio",
           } as AudioAsset)
-          track.audiAssetId = asset_hash
           // TODO: get duration
         } else if (file.type.startsWith("image/")) {
           album.imagePath = filepath

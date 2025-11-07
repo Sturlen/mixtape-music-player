@@ -11,9 +11,7 @@ export type Track = {
   playtimeSeconds: number
   trackNumber?: number
   path: string
-  URL: string
   artURL?: string
-  audiAssetId?: string
 }
 
 export type Album = {

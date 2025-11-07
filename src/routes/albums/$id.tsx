@@ -60,8 +60,9 @@ function RouteComponent() {
             onClick={() =>
               queueSet(
                 album.tracks.map((track) => ({
+                  id: track.id,
                   name: track.name,
-                  url: track.URL,
+                  url: "track.URL",
                   duration: track.playtimeSeconds,
                   artURL: album.imageURL,
                 }))
@@ -84,8 +85,8 @@ function RouteComponent() {
               onClick={() => {
                 queueSet(
                   album.tracks.map((track) => ({
+                    id: track.id,
                     name: track.name,
-                    url: track.URL,
                     duration: track.playtimeSeconds,
                     artURL: album.imageURL,
                   })),
@@ -113,8 +114,8 @@ function RouteComponent() {
               className="px-4 py-2 border border-current rounded hover:bg-accent transition-colors whitespace-nowrap"
               onClick={() => {
                 queuePush({
+                  id: track.id,
                   name: track.name,
-                  url: track.URL,
                   duration: track.playtimeSeconds,
                   artURL: track.artURL,
                 })

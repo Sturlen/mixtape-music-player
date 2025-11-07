@@ -3,12 +3,21 @@ import { createContext, useContext, useState } from "react"
 import { create, type StoreApi, type UseBoundStore } from "zustand"
 import { persist } from "zustand/middleware"
 import { randomUUIDFallback } from "@/lib/uuid"
-import { useMediaSession } from "./lib/mediasession"
+import { EdenClient } from "./lib/eden"
+
+async function startPlaybackAPI(trackId: string) {
+  const { data, error } = await EdenClient.api.player.post({ trackId })
+  if (error) {
+    console.error("Playback error") // TODO: error handling.
+    throw new Error("error")
+  }
+  return data
+}
 
 export type Track = {
+  id: string
   name: string
   duration: number
-  url: string
   artURL?: string
 }
 
@@ -187,14 +196,17 @@ export const useAudioPlayerBase = create<PlayerState>()(
           })
           player.setTrack(track)
         },
-        setTrack: (track) => {
+        setTrack: async (track) => {
           const a = get().audio
           console.log("setTrack", a, track)
           if (!a) {
             return
           }
-          a.src = track.url
-          get().play()
+
+          const { url } = await startPlaybackAPI(track.id)
+
+          a.src = url
+          await get().play()
         },
         play: async () => {
           console.log("try plays")

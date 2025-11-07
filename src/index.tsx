@@ -289,6 +289,44 @@ const app = new Elysia()
       description: "Reloads the internal db and parses all sources again",
     },
   })
+  .post(
+    "/api/player",
+    async ({ body: { trackId }, status }) => {
+      if (!trackId) {
+        return status("Bad Request")
+      }
+
+      const track = db.tracks.get(trackId)
+
+      if (!track) {
+        return status("Not Found")
+      }
+
+      // TODO: ACCEPTS or codec check
+
+      const audio_assets = [...db.assets.values()].filter(
+        (asset) => asset.parentId == trackId && asset.filetype === "audio"
+      )
+
+      console.log("audio assets found: ", audio_assets)
+
+      // TODO: auth check
+
+      const main_asset = audio_assets[0]
+
+      if (!main_asset) {
+        console.log("No audio asset found")
+        return status(404)
+      }
+
+      console.log("playback started ", track.id)
+
+      return {
+        url: `/api/assets/${main_asset.id}`, //TODO: adapt to s3 or similar later
+      }
+    },
+    { body: t.Object({ trackId: t.String() }) }
+  )
   .listen(env.PORT, () => {
     console.log(`started in ${(performance.now() - started_at).toFixed(2)} ms`)
   })
