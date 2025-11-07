@@ -4,7 +4,6 @@ import { create, type StoreApi, type UseBoundStore } from "zustand"
 import { persist } from "zustand/middleware"
 import { randomUUIDFallback } from "@/lib/uuid"
 import { EdenClient } from "./lib/eden"
-import { tr } from "zod/v4/locales"
 
 async function startPlaybackAPI(trackId: string) {
   const { data, error } = await EdenClient.api.player.post({ trackId })
@@ -191,13 +190,13 @@ export const useAudioPlayerBase = create<PlayerState>()(
         setAudio: (audio) => set({ audio }),
         setDuration: (duration) => set({ duration }),
         setIsPlaying: (isPlaying) => set({ isPlaying }),
-        playTrack: (track) => {
+        playTrack: async (track) => {
           const player = get()
           set({
             queueIndex: 0,
             queueTracks: [{ ...track, queueId: randomUUIDFallback() }],
           })
-          player.setTrack(track)
+          await player.setTrack(track)
         },
         setTrack: async (track) => {
           const a = get().audio
@@ -217,28 +216,17 @@ export const useAudioPlayerBase = create<PlayerState>()(
           }
 
           a.src = data.url
+          a.load()
           await get().play()
         },
         play: async () => {
           console.log("try plays")
           const a = get().audio
-          const isLoading = get().isLoading
           if (!a) {
             return
           }
 
-          if (isLoading) {
-            console.log("player is already loading")
-            return
-          }
-          try {
-            set({ isLoading: true })
-            await a.play()
-          } catch (error) {
-            console.error(error)
-          } finally {
-            set({ isLoading: false })
-          }
+          await a.play()
 
           set({ isPlaying: true, duration: a.duration })
         },
@@ -259,8 +247,7 @@ export const useAudioPlayerBase = create<PlayerState>()(
         },
         pause: () => {
           const a = get().audio
-          const playPromise = get().isLoading
-          if (!a || playPromise) {
+          if (!a) {
             return
           }
           a.pause()
