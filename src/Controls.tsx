@@ -30,25 +30,31 @@ export function Controls() {
             <Duration />
           </div>
         </div>
-        <div className="flex justify-center gap-6 pt-4">
-          <button onClick={() => prev()}>
+        <div className="flex justify-stretch gap-2 pt-4 h-20">
+          <button
+            className="grow flex justify-center items-center bg-primary text-primary-foreground hover:bg-primary/90"
+            onClick={() => prev()}
+          >
             <SkipBackIcon />
           </button>
           <button
+            className="grow flex justify-center items-center bg-primary text-primary-foreground hover:bg-primary/90"
             onClick={() => play()}
-            style={{ background: "black", border: "white" }}
           >
             <PlayIcon />
           </button>
 
           <button
+            className="grow flex justify-center items-center bg-primary text-primary-foreground hover:bg-primary/90"
             onClick={() => pause()}
-            style={{ background: "black", border: "white" }}
           >
             <PauseIcon />
           </button>
 
-          <button onClick={() => skip()}>
+          <button
+            className="grow flex justify-center items-center bg-primary text-primary-foreground hover:bg-primary/90"
+            onClick={() => skip()}
+          >
             <SkipForwardIcon />
           </button>
         </div>
