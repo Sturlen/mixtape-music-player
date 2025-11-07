@@ -33,7 +33,7 @@ type PlayerState = {
   pause: () => void
   stop: () => void
   setIsPlaying: (isPlaying: boolean) => void
-  setTrack: (trackId: Track) => void
+  setTrack: (trackId: Track) => Promise<void>
   /** The public api for starting a new track. */
   playTrack: (track: Track) => void
   currentTime: number
