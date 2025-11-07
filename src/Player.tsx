@@ -4,14 +4,15 @@ import { create, type StoreApi, type UseBoundStore } from "zustand"
 import { persist } from "zustand/middleware"
 import { randomUUIDFallback } from "@/lib/uuid"
 import { EdenClient } from "./lib/eden"
+import { tr } from "zod/v4/locales"
 
 async function startPlaybackAPI(trackId: string) {
   const { data, error } = await EdenClient.api.player.post({ trackId })
   if (error) {
-    console.error("Playback error") // TODO: error handling.
-    throw new Error("error")
+    return { data, error }
   }
-  return data
+
+  return { data, error }
 }
 
 export type Track = {
@@ -29,6 +30,7 @@ type PlayerState = {
   // https://goo.gl/LdLk22
   // todo: fix AbortError
   isLoading: boolean
+  isError: boolean
   play: () => Promise<void>
   pause: () => void
   stop: () => void
@@ -82,6 +84,7 @@ export const useAudioPlayerBase = create<PlayerState>()(
       return {
         isPlaying: false,
         isLoading: false,
+        isError: false,
         audio: undefined,
         currentTime: 0,
         volume: 0.1,
@@ -203,9 +206,17 @@ export const useAudioPlayerBase = create<PlayerState>()(
             return
           }
 
-          const { url } = await startPlaybackAPI(track.id)
+          set({ isError: false, isLoading: true })
 
-          a.src = url
+          const { data, error } = await startPlaybackAPI(track.id)
+
+          if (error) {
+            console.error("Error starting playback", { cause: error })
+            set({ isError: true, isLoading: false })
+            return
+          }
+
+          a.src = data.url
           await get().play()
         },
         play: async () => {
