@@ -30,7 +30,11 @@ const db = {
 }
 
 export const fuse_artists = new Fuse<Artist>([], {
-  keys: ["name", "albums.name"],
+  keys: ["name"],
+})
+
+export const fuse_albums = new Fuse<Album>([], {
+  keys: ["name"],
 })
 
 const default_source: Source = {
@@ -77,6 +81,7 @@ async function reloadLibrary() {
   }
 
   fuse_artists.setCollection(Array.from(db.artists.values()))
+  fuse_albums.setCollection(Array.from(db.albums.values()))
 
   console.log("Library reloaded", {
     artists: db.artists.size,
@@ -166,20 +171,34 @@ const app = new Elysia()
       },
     }
   })
-  .get("/api/albums", {
-    albums: Array.from(db.albums.values())
-      .map((album) => {
-        const albumTracks = Array.from(db.tracks.values()).filter(
-          (t) => t.albumId === album.id
-        )
-        return {
-          ...album,
-          imagePath: undefined,
-          tracks: albumTracks.map((tr) => ({ ...tr, artURL: album.imageURL })),
-        }
-      })
-      .sort((a, b) => a.name.localeCompare(b.name)),
-  })
+  .get(
+    "/api/albums",
+    async ({ query: { q } }) => {
+      let albums: Album[] = []
+      if (q) {
+        console.log("q", q)
+        albums = fuse_albums.search(q).map((res) => res.item)
+      } else {
+        albums = Array.from(db.albums.values())
+      }
+      return albums
+        .map((album) => {
+          const albumTracks = Array.from(db.tracks.values()).filter(
+            (t) => t.albumId === album.id
+          )
+          return {
+            ...album,
+            imagePath: undefined,
+            tracks: albumTracks.map((tr) => ({
+              ...tr,
+              artURL: album.imageURL,
+            })),
+          }
+        })
+        .sort((a, b) => a.name.localeCompare(b.name))
+    },
+    { detail: "Get albums", query: t.Object({ q: t.Optional(t.String()) }) }
+  )
   .get("/api/albums/:albumId", async ({ params: { albumId } }) => {
     const album = db.albums.get(albumId)
     if (!album) {
