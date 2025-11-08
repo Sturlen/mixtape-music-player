@@ -180,21 +180,23 @@ const app = new Elysia()
       } else {
         albums = Array.from(db.albums.values())
       }
-      return albums
-        .map((album) => {
-          const albumTracks = Array.from(db.tracks.values()).filter(
-            (t) => t.albumId === album.id
-          )
-          return {
-            ...album,
-            imagePath: undefined,
-            tracks: albumTracks.map((tr) => ({
-              ...tr,
-              artURL: album.imageURL,
-            })),
-          }
-        })
-        .sort((a, b) => a.name.localeCompare(b.name))
+      return {
+        albums: albums
+          .map((album) => {
+            const albumTracks = Array.from(db.tracks.values()).filter(
+              (t) => t.albumId === album.id
+            )
+            return {
+              ...album,
+              imagePath: undefined,
+              tracks: albumTracks.map((tr) => ({
+                ...tr,
+                artURL: album.imageURL,
+              })),
+            }
+          })
+          .sort((a, b) => a.name.localeCompare(b.name)),
+      }
     },
     { detail: "Get albums", query: t.Object({ q: t.Optional(t.String()) }) }
   )
