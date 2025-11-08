@@ -10,10 +10,6 @@ export const env = createEnv({
     MUSIC_PATH: z.string().min(1).default("./demo-music/"),
     MUSIC2_PATH: z.string().optional(),
     PORT: z.coerce.number().int().default(3000),
-    ENABLE_INSTRUMENTATION: z.coerce.boolean().default(false),
-    AXIOM_API_TOKEN: z.string().optional(),
-    AXIOM_DATASET: z.string().optional(),
-    AXIOM_DOMAIN: z.string().optional(),
   },
 
   client: {
