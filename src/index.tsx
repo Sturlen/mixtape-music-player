@@ -112,21 +112,15 @@ const app = new Elysia()
   .get(
     "/api/artists",
     ({ query: { q } }) => {
+      let artists: Artist[] = []
       if (q) {
         console.log("q", q)
-        const out = fuse_artists.search(q).map((res) => res.item)
-        return out.map((artist) => {
-          const artistAlbums = Array.from(db.albums.values()).filter(
-            (a) => a.artistId === artist.id
-          )
-          return {
-            ...artist,
-            albums: artistAlbums,
-          }
-        })
+        artists = fuse_artists.search(q).map((res) => res.item)
+      } else {
+        artists = Array.from(db.artists.values())
       }
 
-      return Array.from(db.artists.values())
+      return artists
         .map((artist) => {
           const artistAlbums = Array.from(db.albums.values()).filter(
             (a) => a.artistId === artist.id
