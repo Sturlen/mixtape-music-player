@@ -1,7 +1,7 @@
 import { createFileRoute, useParams } from "@tanstack/react-router"
 
 import { useQuery } from "@tanstack/react-query"
-import { useAudioPlayer } from "@/Player"
+import { useAudioPlayer } from "@/client/Player"
 import { EdenClient } from "@/client/lib/eden"
 import Page from "@/client/Components/Page"
 import { usePlayAlbum } from "@/client/lib/api"

@@ -7,9 +7,9 @@
   },
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"bun watch-routes\"  \"bun --hot src/index.tsx\"",
-    "build": "bun generate-routes && bun build ./src/index.html --outdir=dist --sourcemap --target=browser --minify --define:process.env.NODE_ENV='\"production\"' --env='BUN_PUBLIC_*'",
-    "start": "NODE_ENV=production bun src/index.tsx",
+    "dev": "concurrently \"bun watch-routes\"  \"bun --hot src/server/index.tsx\"",
+    "build": "bun generate-routes && bun build ./src/client/index.html --outdir=dist --sourcemap --target=browser --minify --define:process.env.NODE_ENV='\"production\"' --env='BUN_PUBLIC_*'",
+    "start": "NODE_ENV=production bun src/server/index.tsx",
     "generate-routes": "tsr generate",
     "watch-routes": "tsr watch"
   },

@@ -1,6 +1,6 @@
 import * as React from "react"
 import { type PropsWithChildren, useEffect } from "react"
-import { useAudioPlayer } from "@/Player"
+import { useAudioPlayer } from "@/client/Player"
 
 export const PlayerProvider = ({ children }: PropsWithChildren) => {
   const setAudio = useAudioPlayer.use.setAudio()

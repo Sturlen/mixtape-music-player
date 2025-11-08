@@ -1,6 +1,6 @@
 import React from "react"
 import { Play, Pause, SkipForwardIcon } from "lucide-react"
-import { useAudioPlayer, useCurrentTrack } from "@/Player"
+import { useAudioPlayer, useCurrentTrack } from "@/client/Player"
 import { cn } from "@/client/lib/utils"
 import { useSwipeable } from "react-swipeable"
 import { usePlaybackDrawer } from "@/client/contexts/PlaybackDrawerContext"

@@ -5,7 +5,7 @@ import {
   SkipBackIcon,
   SkipForwardIcon,
 } from "lucide-react"
-import { useAudioPlayer, useCurrentTrack } from "@/Player"
+import { useAudioPlayer, useCurrentTrack } from "@/client/Player"
 import { Cassette } from "@/client/Components/Cassette"
 
 export function Controls() {

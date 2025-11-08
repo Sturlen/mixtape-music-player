@@ -1,6 +1,6 @@
 import CasseteImage from "@/assets/cassette.svg"
 import CasseteSpool from "@/assets/cassette_spool.svg"
-import { useAudioPlayer, useCurrentTrack } from "@/Player"
+import { useAudioPlayer, useCurrentTrack } from "@/client/Player"
 import { cn } from "@/client/lib/utils"
 
 export function Cassette({ className }: { className?: string }) {

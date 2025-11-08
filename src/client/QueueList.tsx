@@ -1,7 +1,6 @@
 import { XIcon } from "lucide-react"
-import { useAudioPlayer } from "@/Player"
+import { useAudioPlayer } from "@/client/Player"
 import { cn } from "@/client/lib/utils"
-import { ScrollArea } from "@/Components/ui/scroll-area"
 import { useEffect, useRef } from "react"
 
 // Check if target element is fully visible within the container's scroll view

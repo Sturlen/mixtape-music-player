@@ -1,5 +1,5 @@
 import { useState, useMemo, useDeferredValue } from "react"
-import { useAudioPlayer } from "@/Player"
+import { useAudioPlayer } from "@/client/Player"
 
 const formatTime = (s?: number) => {
   if (!s || !isFinite(s)) return "0:00"

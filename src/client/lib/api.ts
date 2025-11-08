@@ -1,6 +1,6 @@
 import { EdenClient } from "@/client/lib/eden"
 import type { Album, Track } from "@/shared/types"
-import { useAudioPlayer } from "@/Player"
+import { useAudioPlayer } from "@/client/Player"
 import { useMutation } from "@tanstack/react-query"
 
 export async function getArtist(artistId: string) {

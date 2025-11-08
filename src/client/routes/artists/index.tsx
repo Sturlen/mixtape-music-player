@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { useQuery } from "@tanstack/react-query"
-import { useAudioPlayer } from "@/Player"
+import { useAudioPlayer } from "@/client/Player"
 import { EdenClient } from "@/client/lib/eden"
 import { Link } from "@tanstack/react-router"
 import { GridLayout } from "@/client/Components/ui/grid"

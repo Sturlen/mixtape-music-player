@@ -1,5 +1,5 @@
 import { createRouter } from "@tanstack/react-router"
-import { routeTree } from "./routeTree.gen"
+import { routeTree } from "@/client/routeTree.gen"
 
 // Create and export the router instance
 // This is a separate file to avoid circular dependencies

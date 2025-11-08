@@ -11,7 +11,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { RouterProvider } from "@tanstack/react-router"
 import { PlayerProvider } from "@/client/Components/PlayerProvider"
 import { PlaybackDrawerProvider } from "@/client/contexts/PlaybackDrawerContext"
-import { router } from "./router"
+import { router } from "@/client/router"
 
 const queryClient = new QueryClient()
 

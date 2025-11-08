@@ -1,10 +1,10 @@
 import Elysia, { NotFoundError, redirect, t } from "elysia"
 import { openapi, fromTypes } from "@elysiajs/openapi"
 import Fuse from "fuse.js"
-import index from "./index.html"
-import { env } from "./env"
-import { parse } from "./parse"
-import type { Album, Artist, Asset, Source, Track } from "./shared/types"
+import index from "@/client/index.html"
+import { env } from "@/shared/env"
+import { parse } from "@/server/parse"
+import type { Album, Artist, Asset, Source, Track } from "@/shared/types"
 
 function raise(message: string): never {
   throw new Error(message)

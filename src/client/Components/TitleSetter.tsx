@@ -1,5 +1,5 @@
 import { useEffect } from "react"
-import { useCurrentTrack } from "@/Player"
+import { useCurrentTrack } from "@/client/Player"
 
 /** Side-effect only component */
 export const TitleSetter = () => {

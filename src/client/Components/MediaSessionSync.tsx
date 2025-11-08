@@ -1,6 +1,6 @@
 import { useCallback } from "react"
 import { useMediaSession } from "@/client/lib/mediasession"
-import { useAudioPlayer, useCurrentTrack } from "@/Player"
+import { useAudioPlayer, useCurrentTrack } from "@/client/Player"
 
 /** Connects the player state machine to browser mediasessions API */
 export function MediaSessionSync() {

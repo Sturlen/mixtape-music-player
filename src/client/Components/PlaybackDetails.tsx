@@ -6,7 +6,7 @@ import {
   SkipForward as SkipForwardIcon,
   X as XIcon,
 } from "lucide-react"
-import { useAudioPlayer, useCurrentTrack } from "@/Player"
+import { useAudioPlayer, useCurrentTrack } from "@/client/Player"
 import {
   Drawer,
   DrawerContent,
@@ -14,10 +14,10 @@ import {
   DrawerTitle,
   DrawerClose,
 } from "@/client/Components/ui/drawer"
-import PlaybackQueue from "@/QueueList"
+import PlaybackQueue from "@/client/QueueList"
 import SeekBar from "@/client/Components/SeekBar"
 import { usePlaybackDrawer } from "@/client/contexts/PlaybackDrawerContext"
-import VolumeSlider from "@/VolumeControl"
+import VolumeSlider from "@/client/VolumeControl"
 import { Cassette } from "./Cassette"
 
 const formatTime = (s?: number) => {
