@@ -1,9 +1,9 @@
 import React from "react"
 import { Play, Pause, SkipForwardIcon } from "lucide-react"
 import { useAudioPlayer, useCurrentTrack } from "@/Player"
-import { cn } from "@/lib/utils"
+import { cn } from "@/client/lib/utils"
 import { useSwipeable } from "react-swipeable"
-import { usePlaybackDrawer } from "@/contexts/PlaybackDrawerContext"
+import { usePlaybackDrawer } from "@/client/contexts/PlaybackDrawerContext"
 
 const MobileControls = ({ className }: { className?: string }) => {
   const {

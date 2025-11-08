@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { useQuery } from "@tanstack/react-query"
 import { useAudioPlayer } from "@/Player"
-import { EdenClient } from "@/lib/eden"
+import { EdenClient } from "@/client/lib/eden"
 import { Link } from "@tanstack/react-router"
-import { GridLayout } from "@/Components/ui/grid"
-import Page from "@/Components/Page"
-import { Input } from "@/Components/ui/input"
+import { GridLayout } from "@/client/Components/ui/grid"
+import Page from "@/client/Components/Page"
+import { Input } from "@/client/Components/ui/input"
 import { useState, useDeferredValue } from "react"
 
 export const Route = createFileRoute("/artists/")({

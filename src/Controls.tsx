@@ -5,10 +5,8 @@ import {
   SkipBackIcon,
   SkipForwardIcon,
 } from "lucide-react"
-import { useAudioPlayer, useCurrentTrack } from "./Player"
-import { cn } from "./lib/utils"
-import VolumeSlider from "./VolumeControl"
-import { Cassette } from "./Components/Cassette"
+import { useAudioPlayer, useCurrentTrack } from "@/Player"
+import { Cassette } from "@/client/Components/Cassette"
 
 export function Controls() {
   const play = useAudioPlayer.use.play()

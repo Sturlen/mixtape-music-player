@@ -1,5 +1,5 @@
-import { EdenClient } from "@/lib/eden"
-import type { Album, Track } from "@/lib/types"
+import { EdenClient } from "@/client/lib/eden"
+import type { Album, Track } from "@/shared/types"
 import { useAudioPlayer } from "@/Player"
 import { useMutation } from "@tanstack/react-query"
 

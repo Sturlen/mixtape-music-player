@@ -2,9 +2,9 @@ import { createFileRoute, useParams } from "@tanstack/react-router"
 
 import { useQuery } from "@tanstack/react-query"
 import { useAudioPlayer } from "@/Player"
-import { EdenClient } from "@/lib/eden"
-import Page from "@/Components/Page"
-import { usePlayAlbum } from "@/lib/api"
+import { EdenClient } from "@/client/lib/eden"
+import Page from "@/client/Components/Page"
+import { usePlayAlbum } from "@/client/lib/api"
 
 export const Route = createFileRoute("/albums/$id")({
   component: RouteComponent,

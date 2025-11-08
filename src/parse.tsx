@@ -9,7 +9,7 @@ import {
   type Asset,
   type AudioAsset,
   type ArtAsset,
-} from "@/lib/types"
+} from "@/shared/types"
 
 export async function parse(source: Source) {
   const db = {

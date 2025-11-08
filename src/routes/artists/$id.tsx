@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { useQuery } from "@tanstack/react-query"
-import { getArtist, usePlayAlbum } from "@/lib/api"
+import { getArtist, usePlayAlbum } from "@/client/lib/api"
 import { Link } from "@tanstack/react-router"
-import Page from "@/Components/Page"
-import { GridLayout } from "@/Components/ui/grid"
+import Page from "@/client/Components/Page"
+import { GridLayout } from "@/client/Components/ui/grid"
 
 export const Route = createFileRoute("/artists/$id")({
   component: ArtistPage,

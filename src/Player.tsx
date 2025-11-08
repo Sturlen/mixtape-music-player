@@ -2,8 +2,8 @@ import { createContext, useContext, useState } from "react"
 
 import { create, type StoreApi, type UseBoundStore } from "zustand"
 import { persist } from "zustand/middleware"
-import { randomUUIDFallback } from "@/lib/uuid"
-import { EdenClient } from "./lib/eden"
+import { randomUUIDFallback } from "@/client/lib/uuid"
+import { EdenClient } from "@/client/lib/eden"
 
 async function startPlaybackAPI(trackId: string) {
   const { data, error } = await EdenClient.api.player.post({ trackId })

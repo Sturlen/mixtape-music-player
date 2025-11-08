@@ -1,7 +1,7 @@
-import Page from "@/Components/Page"
+import Page from "@/client/Components/Page"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { useQuery } from "@tanstack/react-query"
-import { EdenClient } from "@/lib/eden"
+import { EdenClient } from "@/client/lib/eden"
 import { Mic2, Disc3, Music } from "lucide-react"
 
 export const Route = createFileRoute("/")({

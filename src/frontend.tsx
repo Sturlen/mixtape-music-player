@@ -9,8 +9,8 @@ import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { RouterProvider } from "@tanstack/react-router"
-import { PlayerProvider } from "@/Components/PlayerProvider"
-import { PlaybackDrawerProvider } from "./contexts/PlaybackDrawerContext"
+import { PlayerProvider } from "@/client/Components/PlayerProvider"
+import { PlaybackDrawerProvider } from "@/client/contexts/PlaybackDrawerContext"
 import { router } from "./router"
 
 const queryClient = new QueryClient()

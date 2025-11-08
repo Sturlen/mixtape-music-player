@@ -1,4 +1,4 @@
-import { EdenClient } from "@/lib/eden"
+import { EdenClient } from "@/client/lib/eden"
 import { UserIcon } from "lucide-react"
 
 /** Workaround for testing, since the is not yet a file watcher auto reload function. */

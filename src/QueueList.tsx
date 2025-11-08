@@ -1,6 +1,6 @@
 import { XIcon } from "lucide-react"
 import { useAudioPlayer } from "@/Player"
-import { cn } from "@/lib/utils"
+import { cn } from "@/client/lib/utils"
 import { ScrollArea } from "@/Components/ui/scroll-area"
 import { useEffect, useRef } from "react"
 

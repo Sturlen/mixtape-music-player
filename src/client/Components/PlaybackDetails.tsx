@@ -13,10 +13,10 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerClose,
-} from "@/Components/ui/drawer"
+} from "@/client/Components/ui/drawer"
 import PlaybackQueue from "@/QueueList"
-import SeekBar from "@/Components/SeekBar"
-import { usePlaybackDrawer } from "@/contexts/PlaybackDrawerContext"
+import SeekBar from "@/client/Components/SeekBar"
+import { usePlaybackDrawer } from "@/client/contexts/PlaybackDrawerContext"
 import VolumeSlider from "@/VolumeControl"
 import { Cassette } from "./Cassette"
 
@@ -62,13 +62,7 @@ export default function PlaybackDetails() {
                 <div className="text-xl font-bold line-clamp-2">
                   {currentTrack?.name ?? "No track"}
                 </div>
-                <div className="text-sm opacity-80">
-                  {currentTrack?.url
-                    ? new URL(currentTrack.url, location.href).pathname
-                        .split("/")
-                        .pop()
-                    : ""}
-                </div>
+                <div className="text-sm opacity-80"></div>
                 <div className="mt-3 text-sm opacity-80">
                   Duration: {formatTime(duration)}
                 </div>
