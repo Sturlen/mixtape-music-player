@@ -121,15 +121,17 @@ const app = new Elysia()
         })
       }
 
-      return Array.from(db.artists.values()).map((artist) => {
-        const artistAlbums = Array.from(db.albums.values()).filter(
-          (a) => a.artistId === artist.id
-        )
-        return {
-          ...artist,
-          albums: artistAlbums,
-        }
-      })
+      return Array.from(db.artists.values())
+        .map((artist) => {
+          const artistAlbums = Array.from(db.albums.values()).filter(
+            (a) => a.artistId === artist.id
+          )
+          return {
+            ...artist,
+            albums: artistAlbums,
+          }
+        })
+        .sort((a, b) => a.name.localeCompare(b.name))
     },
     {
       detail: "Get artists",
@@ -144,15 +146,17 @@ const app = new Elysia()
     const artistAlbums = Array.from(db.albums.values()).filter(
       (a) => a.artistId === artistId
     )
-    const artistAlbumsWithTracks = artistAlbums.map((album) => {
-      const albumTracks = Array.from(db.tracks.values()).filter(
-        (t) => t.albumId === album.id
-      )
-      return {
-        ...album,
-        tracks: albumTracks,
-      }
-    })
+    const artistAlbumsWithTracks = artistAlbums
+      .map((album) => {
+        const albumTracks = Array.from(db.tracks.values()).filter(
+          (t) => t.albumId === album.id
+        )
+        return {
+          ...album,
+          tracks: albumTracks,
+        }
+      })
+      .sort((a, b) => a.name.localeCompare(b.name))
     return {
       artist: {
         ...artist,
@@ -163,16 +167,18 @@ const app = new Elysia()
     }
   })
   .get("/api/albums", {
-    albums: Array.from(db.albums.values()).map((album) => {
-      const albumTracks = Array.from(db.tracks.values()).filter(
-        (t) => t.albumId === album.id
-      )
-      return {
-        ...album,
-        imagePath: undefined,
-        tracks: albumTracks.map((tr) => ({ ...tr, artURL: album.imageURL })),
-      }
-    }),
+    albums: Array.from(db.albums.values())
+      .map((album) => {
+        const albumTracks = Array.from(db.tracks.values()).filter(
+          (t) => t.albumId === album.id
+        )
+        return {
+          ...album,
+          imagePath: undefined,
+          tracks: albumTracks.map((tr) => ({ ...tr, artURL: album.imageURL })),
+        }
+      })
+      .sort((a, b) => a.name.localeCompare(b.name)),
   })
   .get("/api/albums/:albumId", async ({ params: { albumId } }) => {
     const album = db.albums.get(albumId)
