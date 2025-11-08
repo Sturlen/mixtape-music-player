@@ -210,9 +210,9 @@ const app = new Elysia()
       },
     }
   })
-  .get("/api/tracks", Response.json(Array.from(db.tracks.values())))
+  .get("/api/tracks", () => Array.from(db.tracks.values()))
   .get("/api/tracks/:trackId", async ({ params: { trackId } }) => {
-    return Response.json(db.tracks.get(trackId))
+    return db.tracks.get(trackId)
   })
   .get(
     "/api/files/artistart/:artistId",
