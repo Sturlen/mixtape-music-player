@@ -1,5 +1,5 @@
-import CasseteImage from "@/assets/cassette.svg"
-import CasseteSpool from "@/assets/cassette_spool.svg"
+import CasseteImage from "@/client/assets/cassette.svg"
+import CasseteSpool from "@/client/assets/cassette_spool.svg"
 import { useAudioPlayer, useCurrentTrack } from "@/client/Player"
 import { cn } from "@/client/lib/utils"
 
