@@ -76,7 +76,7 @@ function Content({ searchTerm }: { searchTerm: string }) {
             <div className="group p-1 bg-gradient-to-br from-muted/10 to-transparent">
               <button
                 type="button"
-                onClick={() => playAlbum.mutate({ albumId: album.id })}
+                onClick={() => playAlbum({ albumId: album.id })}
                 className="group-hover:cursor-pointer w-full block relative transform-gpu transition-transform group-hover:scale-[1.01]"
               >
                 <div className="w-full aspect-square relative border border-[rgba(0,0,0,0.06)] shadow-[0_8px_20px_rgba(2,6,23,0.12)] transform-gpu transition-transform duration-200 will-change-transform origin-center group-hover:[transform:scale(1.03)]">

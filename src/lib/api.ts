@@ -24,7 +24,7 @@ async function playAlbum(albumId: string) {
 
 export function usePlayAlbum() {
   const queueSet = useAudioPlayer.use.queueSet()
-  return useMutation<
+  const { mutate } = useMutation<
     {
       album: Album
       tracks: Track[] // TODO: improve type. rely on inferred types from EdenClient
@@ -44,4 +44,5 @@ export function usePlayAlbum() {
       )
     },
   })
+  return mutate
 }

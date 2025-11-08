@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query"
 import { useAudioPlayer } from "@/Player"
 import { EdenClient } from "@/lib/eden"
 import Page from "@/Components/Page"
+import { usePlayAlbum } from "@/lib/api"
 
 export const Route = createFileRoute("/albums/$id")({
   component: RouteComponent,
@@ -28,9 +29,9 @@ function RouteComponent() {
   const { id } = Route.useParams()
   const { data } = useAlbum(id)
   const play = useAudioPlayer((s) => s.play)
-  const playTrack = useAudioPlayer.use.playTrack()
   const queuePush = useAudioPlayer.use.queuePush()
   const queueSet = useAudioPlayer.use.queueSet()
+  const playAlbum = usePlayAlbum()
 
   if (!data) {
     return <div></div>
@@ -57,17 +58,7 @@ function RouteComponent() {
         <div>
           <button
             className="hover:bg-accent p-4 border bg-background rounded-md mb-4"
-            onClick={() =>
-              queueSet(
-                album.tracks.map((track) => ({
-                  id: track.id,
-                  name: track.name,
-                  url: "track.URL",
-                  duration: track.playtimeSeconds,
-                  artURL: album.imageURL,
-                }))
-              )
-            }
+            onClick={() => playAlbum({ albumId: album.id })}
           >
             Play Album
           </button>
