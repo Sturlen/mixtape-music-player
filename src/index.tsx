@@ -120,17 +120,7 @@ const app = new Elysia()
         artists = Array.from(db.artists.values())
       }
 
-      return artists
-        .map((artist) => {
-          const artistAlbums = Array.from(db.albums.values()).filter(
-            (a) => a.artistId === artist.id
-          )
-          return {
-            ...artist,
-            albums: artistAlbums,
-          }
-        })
-        .sort((a, b) => a.name.localeCompare(b.name))
+      return artists.sort((a, b) => a.name.localeCompare(b.name))
     },
     {
       detail: "Get artists",
@@ -145,23 +135,13 @@ const app = new Elysia()
     const artistAlbums = Array.from(db.albums.values()).filter(
       (a) => a.artistId === artistId
     )
-    const artistAlbumsWithTracks = artistAlbums
-      .map((album) => {
-        const albumTracks = Array.from(db.tracks.values()).filter(
-          (t) => t.albumId === album.id
-        )
-        return {
-          ...album,
-          tracks: albumTracks,
-        }
-      })
-      .sort((a, b) => a.name.localeCompare(b.name))
+
     return {
       artist: {
         ...artist,
         imagePath: undefined,
         imageUrl: `/api/albumArt/${artistId}`,
-        albums: artistAlbumsWithTracks,
+        albums: artistAlbums,
       },
     }
   })
@@ -178,16 +158,9 @@ const app = new Elysia()
       return {
         albums: albums
           .map((album) => {
-            const albumTracks = Array.from(db.tracks.values()).filter(
-              (t) => t.albumId === album.id
-            )
             return {
               ...album,
               imagePath: undefined,
-              tracks: albumTracks.map((tr) => ({
-                ...tr,
-                artURL: album.imageURL,
-              })),
             }
           })
           .sort((a, b) => a.name.localeCompare(b.name)),
@@ -348,6 +321,24 @@ const app = new Elysia()
     },
     { body: t.Object({ trackId: t.String() }) }
   )
+  .post("/api/playAlbum/:albumId", async ({ params: { albumId }, status }) => {
+    const album = db.albums.get(albumId)
+    if (!album) {
+      return status(404)
+    }
+    const albumTracks = Array.from(db.tracks.values())
+      .filter((t) => t.albumId === albumId)
+      .sort(compareTracksByNumberName)
+
+    console.log(
+      "playAlbum requested for album",
+      albumId,
+      "tracks:",
+      albumTracks.length
+    )
+
+    return { album, tracks: albumTracks }
+  })
   .listen(env.PORT, () => {
     console.log(`started in ${(performance.now() - started_at).toFixed(2)} ms`)
   })

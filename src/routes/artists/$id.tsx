@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { useQuery } from "@tanstack/react-query"
-import { useAudioPlayer } from "@/Player"
-import { EdenClient } from "@/lib/eden"
+import { getArtist, usePlayAlbum } from "@/lib/api"
 import { Link } from "@tanstack/react-router"
 import Page from "@/Components/Page"
 import { GridLayout } from "@/Components/ui/grid"
@@ -9,14 +8,6 @@ import { GridLayout } from "@/Components/ui/grid"
 export const Route = createFileRoute("/artists/$id")({
   component: ArtistPage,
 })
-
-async function getArtist(artistId: string) {
-  const { data, error } = await EdenClient.api.artists({ artistId }).get()
-  if (error) {
-    throw new Error("error")
-  }
-  return data
-}
 
 function useArtist(artistId: string) {
   return useQuery({
@@ -28,10 +19,8 @@ function useArtist(artistId: string) {
 function ArtistPage() {
   const { id } = Route.useParams()
   const { data } = useArtist(id)
-  const play = useAudioPlayer((s) => s.play)
-  const playTrack = useAudioPlayer.use.playTrack()
-  const queuePush = useAudioPlayer.use.queuePush()
-  const queueSet = useAudioPlayer.use.queueSet()
+
+  const playAlbum = usePlayAlbum()
 
   if (!data) {
     return <div></div>
@@ -86,16 +75,7 @@ function ArtistPage() {
               <div className="group  p-1 bg-gradient-to-br from-muted/10 to-transparent">
                 <button
                   type="button"
-                  onClick={() =>
-                    queueSet(
-                      album.tracks.map((track) => ({
-                        id: track.id,
-                        name: track.name,
-                        duration: track.playtimeSeconds,
-                        artURL: album.imageURL,
-                      }))
-                    )
-                  }
+                  onClick={() => playAlbum.mutate({ albumId: album.id })}
                   className="group-hover:cursor-pointer w-full block relative transform-gpu transition-transform group-hover:scale-[1.01]"
                 >
                   <div className="w-full aspect-square relative border border-[rgba(0,0,0,0.06)] shadow-[0_8px_20px_rgba(2,6,23,0.12)] transform-gpu transition-transform duration-200 will-change-transform origin-center group-hover:[transform:scale(1.03)]">

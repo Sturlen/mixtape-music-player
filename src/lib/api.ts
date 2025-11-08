@@ -1,0 +1,47 @@
+import { EdenClient } from "@/lib/eden"
+import type { Album, Track } from "@/lib/types"
+import { useAudioPlayer } from "@/Player"
+import { useMutation } from "@tanstack/react-query"
+
+export async function getArtist(artistId: string) {
+  const { data, error } = await EdenClient.api.artists({ artistId }).get()
+  if (error) {
+    throw new Error("error")
+  }
+  return data
+}
+
+async function playAlbum(albumId: string) {
+  const { data, error } = await EdenClient.api.playAlbum({ albumId }).post()
+  if (error) {
+    throw new Error("error")
+  }
+  return data as {
+    album: Album
+    tracks: Track[]
+  }
+}
+
+export function usePlayAlbum() {
+  const queueSet = useAudioPlayer.use.queueSet()
+  return useMutation<
+    {
+      album: Album
+      tracks: Track[] // TODO: improve type. rely on inferred types from EdenClient
+    },
+    Error,
+    { albumId: string }
+  >({
+    mutationFn: ({ albumId }) => playAlbum(albumId),
+    onSuccess: ({ album, tracks }) => {
+      queueSet(
+        tracks.map((track) => ({
+          id: track.id,
+          name: track.name,
+          duration: track.playtimeSeconds,
+          artURL: album.imageURL,
+        }))
+      )
+    },
+  })
+}
