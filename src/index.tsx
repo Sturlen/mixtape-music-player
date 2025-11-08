@@ -7,6 +7,10 @@ import { parse } from "./parse"
 import type { Album, Artist, Asset, Source, Track } from "./lib/types"
 import { processImage, getMimeType } from "./lib/imageHandler"
 import { raise } from "./lib/utils"
+import { opentelemetry } from "@elysiajs/opentelemetry"
+
+import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-node"
+import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-proto"
 
 function compareTracksByNumberName(a: Track, b: Track): number {
   if (a.trackNumber !== undefined && b.trackNumber !== undefined) {
@@ -100,6 +104,7 @@ const app = new Elysia()
       references: fromTypes(),
     })
   )
+
   .get("/*", index, { detail: "hide" })
   .get("/api/*", "418")
   .get("/api", () => redirect("/openapi"))
@@ -346,9 +351,28 @@ const app = new Elysia()
     },
     { body: t.Object({ trackId: t.String() }) }
   )
-  .listen(env.PORT, () => {
-    console.log(`started in ${(performance.now() - started_at).toFixed(2)} ms`)
+
+app.use(
+  opentelemetry({
+    serviceName: "mixtape-dev",
+    traceExporter: new OTLPTraceExporter(),
+    spanProcessors: [
+      new BatchSpanProcessor(
+        new OTLPTraceExporter({
+          url: `https://${env.AXIOM_DOMAIN}/v1/traces`,
+          headers: {
+            Authorization: `Bearer ${env.AXIOM_API_TOKEN}`,
+            "X-Axiom-Dataset": `${env.AXIOM_DATASET}`,
+          },
+        })
+      ),
+    ],
   })
+)
+
+app.listen(env.PORT, () => {
+  console.log(`started in ${(performance.now() - started_at).toFixed(2)} ms`)
+})
 
 export type App = typeof app
 
