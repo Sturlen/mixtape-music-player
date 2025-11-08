@@ -102,7 +102,7 @@ const app = new Elysia()
       references: fromTypes(),
     })
   )
-  .get("/*", index, { detail: "hide" })
+  .get("/*", index, { detail: { hide: true } })
   .get("/api/*", "418")
   .get("/api", () => redirect("/openapi"))
   .get("/api/stats", {
