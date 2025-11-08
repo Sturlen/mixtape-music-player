@@ -30,17 +30,18 @@ export function usePlayAlbum() {
       tracks: Track[] // TODO: improve type. rely on inferred types from EdenClient
     },
     Error,
-    { albumId: string }
+    { albumId: string; trackIndex?: number }
   >({
-    mutationFn: ({ albumId }) => playAlbum(albumId),
-    onSuccess: ({ album, tracks }) => {
+    mutationFn: ({ albumId, trackIndex }) => playAlbum(albumId),
+    onSuccess: ({ album, tracks }, { trackIndex = 0 }) => {
       queueSet(
         tracks.map((track) => ({
           id: track.id,
           name: track.name,
           duration: track.playtimeSeconds,
           artURL: album.imageURL,
-        }))
+        })),
+        trackIndex
       )
     },
   })

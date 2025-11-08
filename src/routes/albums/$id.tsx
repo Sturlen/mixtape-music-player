@@ -30,7 +30,6 @@ function RouteComponent() {
   const { data } = useAlbum(id)
   const play = useAudioPlayer((s) => s.play)
   const queuePush = useAudioPlayer.use.queuePush()
-  const queueSet = useAudioPlayer.use.queueSet()
   const playAlbum = usePlayAlbum()
 
   if (!data) {
@@ -74,15 +73,7 @@ function RouteComponent() {
           >
             <button
               onClick={() => {
-                queueSet(
-                  album.tracks.map((track) => ({
-                    id: track.id,
-                    name: track.name,
-                    duration: track.playtimeSeconds,
-                    artURL: album.imageURL,
-                  })),
-                  i
-                )
+                playAlbum({ albumId: album.id, trackIndex: i })
               }}
               className="text-left font-medium text-sm md:text-base hover:underline truncate"
             >
