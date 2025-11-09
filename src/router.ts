@@ -1,5 +1,5 @@
 import { createRouter } from "@tanstack/react-router"
-import { routeTree } from "./routeTree.gen"
+import { routeTree } from "@/routeTree.gen"
 
 // Create and export the router instance
 // This is a separate file to avoid circular dependencies
@@ -14,7 +14,7 @@ declare module "@tanstack/react-router" {
 
 // Handle HMR for route tree updates
 if (import.meta.hot) {
-  import.meta.hot.accept("./routeTree.gen", (module) => {
+  import.meta.hot.accept("@/routeTree.gen", (module) => {
     if (module) {
       // Recreate the router with the updated route tree
       router = createRouter({ routeTree: module.routeTree })

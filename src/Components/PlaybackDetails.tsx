@@ -18,7 +18,7 @@ import PlaybackQueue from "@/QueueList"
 import SeekBar from "@/Components/SeekBar"
 import { usePlaybackDrawer } from "@/contexts/PlaybackDrawerContext"
 import VolumeSlider from "@/VolumeControl"
-import { Cassette } from "./Cassette"
+import { Cassette } from "@/Components/Cassette"
 
 const formatTime = (s?: number) => {
   if (!s || !isFinite(s)) return "0:00"
@@ -62,13 +62,7 @@ export default function PlaybackDetails() {
                 <div className="text-xl font-bold line-clamp-2">
                   {currentTrack?.name ?? "No track"}
                 </div>
-                <div className="text-sm opacity-80">
-                  {currentTrack?.url
-                    ? new URL(currentTrack.url, location.href).pathname
-                        .split("/")
-                        .pop()
-                    : ""}
-                </div>
+                <div className="text-sm opacity-80">TODO</div>
                 <div className="mt-3 text-sm opacity-80">
                   Duration: {formatTime(duration)}
                 </div>

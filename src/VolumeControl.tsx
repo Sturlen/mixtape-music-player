@@ -1,4 +1,4 @@
-import { useAudioPlayer } from "./Player"
+import { useAudioPlayer } from "@/Player"
 
 export function VolumeSlider({
   className,

@@ -10,8 +10,8 @@ import { createRoot } from "react-dom/client"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { RouterProvider } from "@tanstack/react-router"
 import { PlayerProvider } from "@/Components/PlayerProvider"
-import { PlaybackDrawerProvider } from "./contexts/PlaybackDrawerContext"
-import { router } from "./router"
+import { PlaybackDrawerProvider } from "@/contexts/PlaybackDrawerContext"
+import { router } from "@/router"
 
 const queryClient = new QueryClient()
 
@@ -44,7 +44,7 @@ renderApp()
 
 if (import.meta.hot) {
   // Accept updates from router module to trigger re-render
-  import.meta.hot.accept("./router", () => {
+  import.meta.hot.accept("@/router", () => {
     renderApp()
   })
 }

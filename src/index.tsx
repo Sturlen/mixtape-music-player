@@ -1,12 +1,12 @@
 import Elysia, { NotFoundError, redirect, t } from "elysia"
 import { openapi, fromTypes } from "@elysiajs/openapi"
 import Fuse from "fuse.js"
-import index from "./index.html"
-import { env } from "./env"
-import { parse } from "./parse"
-import type { Album, Artist, Asset, Source, Track } from "./lib/types"
-import { processImage, getMimeType } from "./lib/imageHandler"
-import { raise } from "./lib/utils"
+import index from "@/index.html"
+import { env } from "@/env"
+import { parse } from "@/parse"
+import type { Album, Artist, Asset, Source, Track } from "@/lib/types"
+import { processImage, getMimeType } from "@/lib/imageHandler"
+import { raise } from "@/lib/utils"
 
 function compareTracksByNumberName(a: Track, b: Track): number {
   if (a.trackNumber !== undefined && b.trackNumber !== undefined) {
