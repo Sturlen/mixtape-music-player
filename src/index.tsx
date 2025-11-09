@@ -299,39 +299,48 @@ const app = new Elysia()
       throw new NotFoundError()
     }
   })
-  .get("/api/assets/:assetId", async ({ params: { assetId } }) => {
+  .get("/api/assets/:assetId", ({ params: { assetId } }) => {
     try {
       const asset = db.assets.get(assetId)
       if (!asset?.path) throw new NotFoundError()
 
       const file = Bun.file(asset.path)
-      const chunks: (ArrayBuffer | Uint8Array)[] = []
-      let error: Error | null = null
+      let fileStream: ReturnType<typeof file.stream> | null = null
 
-      const stream = new ReadableStream<
-        ArrayBuffer | Uint8Array<ArrayBufferLike>
-      >({
+      const stream = new ReadableStream<ArrayBuffer | Uint8Array>({
         start(controller) {
-          audioWithStreamInputAndOut(
-            file.stream(),
-            {
-              onProcessDataEnd: (data) => {
-                controller.close()
+          try {
+            fileStream = file.stream()
+            audioWithStreamInputAndOut(
+              fileStream,
+              {
+                onProcessDataEnd: () => {
+                  fileStream?.close?.()
+                  controller.close()
+                },
+                onProcessDataFlushed: (data) => {
+                  if (data) controller.enqueue(data)
+                },
+                onError: (err) => {
+                  fileStream?.close?.()
+                  controller.error(err)
+                },
               },
-              onProcessDataFlushed: (data) => {
-                if (data) controller.enqueue(data)
-              },
-            },
-            {
-              codec: "mp3",
-              bitrate: "192k",
-              channels: 2,
-              sampleRate: 44100,
-              onError: (err) => {
-                throw new Error("FFmpeg processing error", { cause: err })
-              },
-            }
-          )
+
+              {
+                codec: "mp3",
+                bitrate: "192k",
+                channels: 2,
+                sampleRate: 44100,
+              }
+            )
+          } catch (err) {
+            fileStream?.close?.()
+            controller.error(err)
+          }
+        },
+        cancel() {
+          fileStream?.close?.()
         },
       })
 
