@@ -1,4 +1,4 @@
-import Elysia, { NotFoundError, redirect, t } from "elysia"
+import Elysia, { NotFoundError, redirect, status, t } from "elysia"
 import { openapi, fromTypes } from "@elysiajs/openapi"
 import Fuse from "fuse.js"
 import index from "@/index.html"
@@ -7,6 +7,28 @@ import { parse } from "@/parse"
 import type { Album, Artist, Asset, Source, Track } from "@/lib/types"
 import { processImage, getMimeType } from "@/lib/imageHandler"
 import { raise } from "@/lib/utils"
+import {
+  Input,
+  Output,
+  WebMOutputFormat,
+  BufferTarget,
+  Conversion,
+  ALL_FORMATS,
+  BlobSource,
+  Mp3OutputFormat,
+  canEncodeAudio,
+  QUALITY_VERY_LOW,
+  FlacOutputFormat,
+} from "mediabunny"
+
+import { registerMp3Encoder } from "@mediabunny/mp3-encoder"
+
+if (!(await canEncodeAudio("mp3"))) {
+  registerMp3Encoder()
+}
+
+console.log("Can Encode FLAC", await canEncodeAudio("flac"))
+console.log("Can Encode Mp3", await canEncodeAudio("mp3"))
 
 function compareTracksByNumberName(a: Track, b: Track): number {
   if (a.trackNumber !== undefined && b.trackNumber !== undefined) {
@@ -273,7 +295,34 @@ const app = new Elysia()
   .get("/api/assets/:assetId", async ({ params: { assetId } }) => {
     try {
       const asset = db.assets.get(assetId)
-      return Bun.file(asset?.path ?? "")
+      const file = Bun.file(asset?.path ?? "")
+
+      using input = new Input({
+        formats: ALL_FORMATS,
+        source: new BlobSource(file),
+      })
+
+      const output = new Output({
+        format: new FlacOutputFormat(),
+        target: new BufferTarget(),
+      })
+
+      const conversion = await Conversion.init({
+        input,
+        output,
+        audio: { bitrate: QUALITY_VERY_LOW },
+      })
+      if (!conversion.isValid) {
+        // Conversion is invalid and cannot be executed without error.
+        // This field gives reasons for why tracks were discarded:
+        conversion.discardedTracks // => DiscardedTrack[]
+
+        return status(415)
+      }
+
+      await conversion.execute()
+
+      return output.target.buffer
     } catch (err) {
       throw new NotFoundError()
     }
