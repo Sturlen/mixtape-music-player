@@ -30,6 +30,12 @@ if (!(await canEncodeAudio("mp3"))) {
 console.log("Can Encode FLAC", await canEncodeAudio("flac"))
 console.log("Can Encode Mp3", await canEncodeAudio("mp3"))
 
+import {
+  audio,
+  audioWithStreamInputAndOut,
+  type FfmpegAudioOptions,
+} from "bun-ffmpeg"
+
 function compareTracksByNumberName(a: Track, b: Track): number {
   if (a.trackNumber !== undefined && b.trackNumber !== undefined) {
     return a.trackNumber - b.trackNumber
@@ -297,32 +303,43 @@ const app = new Elysia()
       const asset = db.assets.get(assetId)
       const file = Bun.file(asset?.path ?? "")
 
-      using input = new Input({
-        formats: ALL_FORMATS,
-        source: new BlobSource(file),
+      const options = {
+        codec: "mp3",
+        bitrate: "192k",
+        channels: 2,
+        sampleRate: 44100,
+        onError: (error) => console.error("Error processing audio:", error),
+      } satisfies FfmpegAudioOptions
+
+      const outStream = new WritableStream()
+      let outData: ArrayBuffer | Uint8Array<ArrayBufferLike> | undefined =
+        undefined
+
+      const conversionPromise = new Promise<
+        ArrayBuffer | Uint8Array<ArrayBufferLike>
+      >((resolve, reject) => {
+        audioWithStreamInputAndOut(
+          file.stream(),
+          {
+            onProcessDataEnd: (data) => {
+              if (!data) {
+                reject("No data received from audio processing")
+              } else {
+                resolve(data)
+              }
+            },
+          },
+          {
+            codec: "mp3",
+            bitrate: "192k",
+            channels: 2,
+            sampleRate: 44100,
+            onError: (error) => reject(error),
+          }
+        )
       })
 
-      const output = new Output({
-        format: new FlacOutputFormat(),
-        target: new BufferTarget(),
-      })
-
-      const conversion = await Conversion.init({
-        input,
-        output,
-        audio: { bitrate: QUALITY_VERY_LOW },
-      })
-      if (!conversion.isValid) {
-        // Conversion is invalid and cannot be executed without error.
-        // This field gives reasons for why tracks were discarded:
-        conversion.discardedTracks // => DiscardedTrack[]
-
-        return status(415)
-      }
-
-      await conversion.execute()
-
-      return output.target.buffer
+      return await conversionPromise
     } catch (err) {
       throw new NotFoundError()
     }
