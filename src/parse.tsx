@@ -106,19 +106,6 @@ export async function parse(source: Source) {
         const asset_hash = generateHash("asset", filepath)
 
         if (file.type.startsWith("audio/")) {
-          if (album_name === "Sounds Of Tokyo-To Future") {
-            console.log(`Processing track: ${track.name}`)
-            using input = new Input({
-              formats: ALL_FORMATS,
-              source: new FilePathSource(track.path),
-            })
-
-            const duration = await input.computeDuration()
-            track.playtimeSeconds = Math.round(duration)
-            console.log(
-              `Parsed track: ${track.name}, duration: ${track.playtimeSeconds}s`
-            )
-          }
           db.tracks.set(track.id, track)
           db.assets.set(asset_hash, {
             id: asset_hash,

@@ -298,48 +298,52 @@ const app = new Elysia()
       throw new NotFoundError()
     }
   })
-  .get("/api/assets/:assetId", async ({ params: { assetId } }) => {
+  .get("/api/assets/:assetId", async function* ({ params: { assetId }, set }) {
     try {
       const asset = db.assets.get(assetId)
-      const file = Bun.file(asset?.path ?? "")
+      if (!asset?.path) throw new NotFoundError()
 
-      const options = {
-        codec: "mp3",
-        bitrate: "192k",
-        channels: 2,
-        sampleRate: 44100,
-        onError: (error) => console.error("Error processing audio:", error),
-      } satisfies FfmpegAudioOptions
+      const file = Bun.file(asset.path)
+      const chunks: (ArrayBuffer | Uint8Array)[] = []
+      let done = false
+      let chunkCount = 0
 
-      const outStream = new WritableStream()
-      let outData: ArrayBuffer | Uint8Array<ArrayBufferLike> | undefined =
-        undefined
+      set.headers["content-type"] = "audio/mpeg"
+      set.headers["accept-ranges"] = "bytes"
 
-      const conversionPromise = new Promise<
-        ArrayBuffer | Uint8Array<ArrayBufferLike>
-      >((resolve, reject) => {
-        audioWithStreamInputAndOut(
-          file.stream(),
-          {
-            onProcessDataEnd: (data) => {
-              if (!data) {
-                reject("No data received from audio processing")
-              } else {
-                resolve(data)
-              }
-            },
+      audioWithStreamInputAndOut(
+        file.stream(),
+        {
+          onProcessDataEnd: (data) => {
+            if (data) chunks.push(data)
+            done = true
           },
-          {
-            codec: "mp3",
-            bitrate: "192k",
-            channels: 2,
-            sampleRate: 44100,
-            onError: (error) => reject(error),
-          }
-        )
-      })
+          onProcessDataFlushed: (data) => {
+            if (data) {
+              chunkCount++
+              console.log(
+                `Chunk ${chunkCount}:`,
+                bufferToHex(data, 32) // First 32 bytes
+              )
+              chunks.push(data)
+            }
+          },
+        },
+        {
+          codec: "mp3",
+          bitrate: "192k",
+          channels: 2,
+          sampleRate: 44100,
+          onError: (error) => console.error("Error:", error),
+        }
+      )
 
-      return await conversionPromise
+      // Yield as chunks become available
+      while (!done || chunks.length > 0) {
+        const chunk = chunks.shift()
+        if (chunk) yield chunk
+        else await new Promise((r) => setTimeout(r, 10))
+      }
     } catch (err) {
       throw new NotFoundError()
     }
@@ -412,3 +416,11 @@ const app = new Elysia()
 export type App = typeof app
 
 console.log("Spelemann running on port", env.PORT)
+
+function bufferToHex(data: ArrayBuffer | Uint8Array, length = 16): string {
+  const bytes = data instanceof ArrayBuffer ? new Uint8Array(data) : data
+  const hex = Array.from(bytes.slice(0, length))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join(" ")
+  return hex
+}
