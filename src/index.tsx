@@ -35,6 +35,7 @@ import {
   audioWithStreamInputAndOut,
   type FfmpegAudioOptions,
 } from "bun-ffmpeg"
+import { th } from "zod/v4/locales"
 
 function compareTracksByNumberName(a: Track, b: Track): number {
   if (a.trackNumber !== undefined && b.trackNumber !== undefined) {
@@ -298,56 +299,53 @@ const app = new Elysia()
       throw new NotFoundError()
     }
   })
-  .get("/api/assets/:assetId", async function* ({ params: { assetId }, set }) {
+  .get("/api/assets/:assetId", async ({ params: { assetId } }) => {
     try {
       const asset = db.assets.get(assetId)
       if (!asset?.path) throw new NotFoundError()
 
       const file = Bun.file(asset.path)
       const chunks: (ArrayBuffer | Uint8Array)[] = []
-      let done = false
-      let chunkCount = 0
+      let error: Error | null = null
 
-      set.headers["content-type"] = "audio/mpeg"
-      set.headers["accept-ranges"] = "bytes"
-
-      audioWithStreamInputAndOut(
-        file.stream(),
-        {
-          onProcessDataEnd: (data) => {
-            if (data) chunks.push(data)
-            done = true
-          },
-          onProcessDataFlushed: (data) => {
-            if (data) {
-              chunkCount++
-              console.log(
-                `Chunk ${chunkCount}:`,
-                bufferToHex(data, 32) // First 32 bytes
-              )
-              chunks.push(data)
+      const stream = new ReadableStream<
+        ArrayBuffer | Uint8Array<ArrayBufferLike>
+      >({
+        start(controller) {
+          audioWithStreamInputAndOut(
+            file.stream(),
+            {
+              onProcessDataEnd: (data) => {
+                controller.close()
+              },
+              onProcessDataFlushed: (data) => {
+                if (data) controller.enqueue(data)
+              },
+            },
+            {
+              codec: "mp3",
+              bitrate: "192k",
+              channels: 2,
+              sampleRate: 44100,
+              onError: (err) => {
+                throw new Error("FFmpeg processing error", { cause: err })
+              },
             }
-          },
+          )
         },
-        {
-          codec: "mp3",
-          bitrate: "192k",
-          channels: 2,
-          sampleRate: 44100,
-          onError: (error) => console.error("Error:", error),
-        }
-      )
+      })
 
-      // Yield as chunks become available
-      while (!done || chunks.length > 0) {
-        const chunk = chunks.shift()
-        if (chunk) yield chunk
-        else await new Promise((r) => setTimeout(r, 10))
-      }
+      return new Response(stream, {
+        headers: {
+          "Content-Type": "audio/mpeg",
+          "Transfer-Encoding": "chunked",
+        },
+      })
     } catch (err) {
       throw new NotFoundError()
     }
   })
+
   .post("/api/libary/reload", async () => await reloadLibrary(), {
     detail: {
       description: "Reloads the internal db and parses all sources again",
