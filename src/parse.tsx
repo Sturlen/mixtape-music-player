@@ -1,6 +1,7 @@
 import * as Bun from "bun"
 import { readdir } from "fs/promises"
 import path from "path"
+import { Input, ALL_FORMATS, BlobSource, FilePathSource } from "mediabunny"
 import {
   type Source,
   type Artist,
@@ -64,9 +65,10 @@ export async function parse(source: Source) {
 
     for (const album_filename of albums) {
       const album_id = generateHash("album", `${artist.name}/${album_filename}`)
+      const album_name = removeBandcampHeaders(album_filename)
       const album: Album = {
         id: album_id,
-        name: removeBandcampHeaders(album_filename),
+        name: album_name,
         artistId: artist_id,
       }
 
@@ -104,6 +106,19 @@ export async function parse(source: Source) {
         const asset_hash = generateHash("asset", filepath)
 
         if (file.type.startsWith("audio/")) {
+          if (album_name === "Sounds Of Tokyo-To Future") {
+            console.log(`Processing track: ${track.name}`)
+            using input = new Input({
+              formats: ALL_FORMATS,
+              source: new FilePathSource(track.path),
+            })
+
+            const duration = await input.computeDuration()
+            track.playtimeSeconds = Math.round(duration)
+            console.log(
+              `Parsed track: ${track.name}, duration: ${track.playtimeSeconds}s`
+            )
+          }
           db.tracks.set(track.id, track)
           db.assets.set(asset_hash, {
             id: asset_hash,
@@ -134,6 +149,14 @@ export async function parse(source: Source) {
     }
   }
   return db
+}
+
+const sample = function () {
+  return Math.random() > 0.9
+}
+let count = 0
+function pick() {
+  return count++ < 10
 }
 
 function generateHash(type: string, value: string): string {
