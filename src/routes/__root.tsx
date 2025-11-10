@@ -10,9 +10,11 @@ import PlaybackQueue from "@/QueueList"
 import VolumeSlider from "@/VolumeControl"
 import { createRootRoute, Link, Outlet } from "@tanstack/react-router"
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools"
+import { TextScroller } from "@/Components/ui/TextScroller"
+import { CurrentTrackScroller } from "@/Components/CurrentTrackScroller"
 
 const RootLayout = () => (
-  <div className="bg-gradient-to-b from-amber-800 from-[20vh] to-background to-[100vh]">
+  <div className="bg-gradient-to-b from-amber-800 from-[20vh] to-background to-[100vh]  min-h-full">
     <header className="bg-black h-30 z-10 flex p-2 md:p-10 items-center justify-between fixed top-0 left-0 xl:left-[25rem] right-0">
       <Link to="/">
         <h1 className="text-2xl md:text-3xl italic font-serif font-battle whitespace-nowrap">
@@ -77,6 +79,7 @@ function Sidebar({ className }: { className?: string }) {
       <h2 className="text-2xl text-center pb-2 font-inter-400">
         PLAYBACK CONTROLS
       </h2>
+      <CurrentTrackScroller />
       <div className="self-end bg-accent rounded-2xl w-full p-4 flex-col items-center justify-items-center">
         <div className="flex justify-items-center items-center">
           <Controls />
