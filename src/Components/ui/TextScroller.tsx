@@ -25,33 +25,39 @@ export function TextScroller({
     // Create looping text by duplicating it
     const loopingText = text + " " + text
     let currentIndex = 0
+    let interval: Timer
+    setDisplayText(text.substring(0, displayWidth))
 
-    const interval = setInterval(
-      () => {
-        if (text.length <= displayWidth) {
-          setDisplayText(text.padEnd(displayWidth, " "))
-        } else {
-          currentIndex = (currentIndex + 1) % text.length
-          setDisplayText(
-            loopingText
-              .substring(currentIndex, currentIndex + displayWidth)
-              .padEnd(displayWidth, " ")
-          )
-        }
-      },
-      speed,
-      text,
-      displayWidth
-    ) // reset when text changes
+    const timeout = setTimeout(() => {
+      setDisplayText(text.substring(0, displayWidth))
+      interval = setInterval(
+        () => {
+          if (text.length <= displayWidth) {
+            setDisplayText(text.padEnd(displayWidth, " "))
+          } else {
+            currentIndex = (currentIndex + 1) % text.length
+            setDisplayText(
+              loopingText.substring(currentIndex, currentIndex + displayWidth)
+            )
+          }
+        },
+        speed,
+        text,
+        displayWidth
+      ) // reset when text changes
+    }, 1000)
 
-    return () => clearInterval(interval)
+    return () => {
+      clearTimeout(timeout)
+      clearInterval(interval)
+    }
   }, [text, displayWidth, speed])
 
   return (
     <div
       className={cn("font-mono whitespace-nowrap overflow-hidden", className)}
     >
-      {displayText}
+      {displayText.padEnd(displayWidth, " ")}
     </div>
   )
 }
