@@ -9,6 +9,8 @@ import { useAudioPlayer, useCurrentTrack } from "@/Player"
 import { cn } from "@/lib/utils"
 import VolumeSlider from "@/VolumeControl"
 import { Cassette } from "@/Components/Cassette"
+import { CurrentTrackScroller } from "./Components/CurrentTrackScroller"
+import SeekBar from "./Components/SeekBar"
 
 export function Controls() {
   const play = useAudioPlayer.use.play()
@@ -21,6 +23,11 @@ export function Controls() {
       <div className="w-70 bg-gray-400 pb-10 rounded-md">
         <Cassette />
       </div>
+      <div className="h-4"></div>
+      <SeekBar />
+      <CurrentTrackScroller />
+      <div>VOLUME CONTROLS</div>
+      <VolumeSlider className="w-full mt-4 mb-4" direction="horizontal" />
       <div className="w-full">
         <div className="grow"></div>
 

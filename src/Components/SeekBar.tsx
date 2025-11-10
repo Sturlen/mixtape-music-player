@@ -31,7 +31,7 @@ export default function SeekBar() {
   }
 
   return (
-    <div className="w-full mt-4">
+    <div className="w-full mt-4 mb-4">
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <span className="w-10 text-right">{formatTime(seekValue[0])}</span>
         <Slider
