@@ -103,7 +103,6 @@ export function useMediaSession(options?: UseMediaSessionOptions) {
       // Clear all first, then set provided
       actions.forEach((a) => navigator.mediaSession!.setActionHandler(a, null))
       if (!map) return
-
       ;(Object.keys(map) as (keyof ActionHandlerMap)[]).forEach((k) => {
         const handler = map[k]
         if (handler) {
@@ -111,7 +110,7 @@ export function useMediaSession(options?: UseMediaSessionOptions) {
             k as MediaSessionAction,
             (details?: MediaSessionActionDetails) => {
               // Ensure async exceptions don’t leak
-              Promise.resolve(handler(details as any)).catch(() => void 0)
+              Promise.resolve(handler(details as never)).catch(() => void 0)
             }
           )
         }
@@ -141,7 +140,6 @@ export function useMediaSession(options?: UseMediaSessionOptions) {
         navigator.mediaSession.playbackState = "none"
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supported]) // run once when support is known
 
   // Keep handlers reactive if options.handlers changes

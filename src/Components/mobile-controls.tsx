@@ -47,7 +47,11 @@ const MobileControls = ({ className }: { className?: string }) => {
           className="p-2 flex items-center justify-center"
           onClick={(e) => {
             e.stopPropagation()
-            isPlaying ? pause() : play()
+            if (isPlaying) {
+              pause()
+            } else {
+              play()
+            }
           }}
           aria-label={isPlaying ? "Pause" : "Play"}
         >

@@ -7,10 +7,10 @@ export function randomUUIDFallback(): string {
   }
 
   // Per RFC 4122, set version to 4 -> xxxx xxxx xxxx 4xxx ....
-  // @ts-expect-error
+  // @ts-expect-error we know bytes is Uint8Array and exists
   bytes[6] = (bytes[6] & 0x0f) | 0x40
   // Per RFC 4122, set variant to 10xx -> 8, 9, a, or b
-  // @ts-expect-error
+  // @ts-expect-error we know bytes is Uint8Array and exists
   bytes[8] = (bytes[8] & 0x3f) | 0x80
 
   const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("")
