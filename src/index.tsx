@@ -36,6 +36,7 @@ import {
   type FfmpegAudioOptions,
 } from "bun-ffmpeg"
 import { th } from "zod/v4/locales"
+import { streamToMp3 } from "./encode"
 
 function compareTracksByNumberName(a: Track, b: Track): number {
   if (a.trackNumber !== undefined && b.trackNumber !== undefined) {
@@ -300,59 +301,21 @@ const app = new Elysia()
     }
   })
   .get("/api/assets/:assetId", ({ params: { assetId } }) => {
-    try {
-      const asset = db.assets.get(assetId)
-      if (!asset?.path) throw new NotFoundError()
+    const asset = db.assets.get(assetId)
+    if (!asset?.path) throw new NotFoundError()
 
-      const file = Bun.file(asset.path)
-      let fileStream: ReturnType<typeof file.stream> | null = null
+    const file = Bun.file(asset.path)
 
-      const stream = new ReadableStream<ArrayBuffer | Uint8Array>({
-        start(controller) {
-          try {
-            fileStream = file.stream()
-            audioWithStreamInputAndOut(
-              fileStream,
-              {
-                onProcessDataEnd: () => {
-                  fileStream?.close?.()
-                  controller.close()
-                },
-                onProcessDataFlushed: (data) => {
-                  if (data) controller.enqueue(data)
-                },
-                onError: (err) => {
-                  fileStream?.close?.()
-                  controller.error(err)
-                },
-              },
-
-              {
-                codec: "mp3",
-                bitrate: "192k",
-                channels: 2,
-                sampleRate: 44100,
-              }
-            )
-          } catch (err) {
-            fileStream?.close?.()
-            controller.error(err)
-          }
-        },
-        cancel() {
-          fileStream?.close?.()
-        },
-      })
-
-      return new Response(stream, {
-        headers: {
-          "Content-Type": "audio/mpeg",
-          "Transfer-Encoding": "chunked",
-        },
-      })
-    } catch (err) {
-      throw new NotFoundError()
-    }
+    const stream = streamToMp3({
+      args: [],
+      input: file.stream(),
+    })
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "audio/mpeg",
+        "Transfer-Encoding": "chunked",
+      },
+    })
   })
 
   .post("/api/libary/reload", async () => await reloadLibrary(), {
