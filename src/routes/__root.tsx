@@ -12,7 +12,7 @@ import { createRootRoute, Link, Outlet } from "@tanstack/react-router"
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools"
 
 const RootLayout = () => (
-  <div className="h-full bg-gradient-to-b from-amber-800 from-[20vh] to-black to-[100vh]">
+  <div className="bg-gradient-to-b from-amber-800 from-[20vh] to-background to-[100vh]">
     <header className="bg-black h-30 z-10 flex p-2 md:p-10 items-center justify-between fixed top-0 left-0 xl:left-[25rem] right-0">
       <Link to="/">
         <h1 className="text-2xl md:text-3xl italic font-serif font-battle whitespace-nowrap">
