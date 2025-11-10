@@ -40,6 +40,10 @@ export function usePlayAlbum() {
           name: track.name,
           duration: track.playtimeSeconds,
           artURL: album.imageURL,
+          album: {
+            id: album.id,
+            name: album.name,
+          },
         })),
         trackIndex
       )

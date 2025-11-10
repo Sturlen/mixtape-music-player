@@ -12,7 +12,11 @@ export function Cassette({ className }: { className?: string }) {
   const progress =
     useAudioPlayer.use.currentTime() / useAudioPlayer.use.duration()
 
-  const currentTrackName = useCurrentTrack()?.name ?? "MIXTAPE"
+  const current_track = useCurrentTrack()
+
+  const currentTrackName = current_track
+    ? (current_track?.album?.name ?? current_track.name)
+    : "MIXTAPE"
 
   const durationTakeUp = 0.93 + (3.0 - 0.93) * progress // s/rev
   const durationSupply = 3.0 - (3.0 - 0.93) * progress // reverse relationship
