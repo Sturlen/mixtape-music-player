@@ -32,6 +32,7 @@ export default function PlaybackDetails() {
   const play = useAudioPlayer.use.play()
   const pause = useAudioPlayer.use.pause()
   const currentTrack = useCurrentTrack()
+  const album_name = currentTrack?.album?.name
   const duration = useAudioPlayer.use.duration()
   const queueSkip = useAudioPlayer.use.queueSkip()
   const queuePrev = useAudioPlayer.use.queuePrev()
@@ -62,7 +63,7 @@ export default function PlaybackDetails() {
                 <div className="text-xl font-bold line-clamp-2">
                   {currentTrack?.name ?? "No track"}
                 </div>
-                <div className="text-sm opacity-80">TODO</div>
+                <div className="text-sm opacity-80">{album_name}</div>
                 <div className="mt-3 text-sm opacity-80">
                   Duration: {formatTime(duration)}
                 </div>
