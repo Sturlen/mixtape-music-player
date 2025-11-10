@@ -309,6 +309,7 @@ const app = new Elysia()
     const stream = streamToMp3({
       args: [],
       input: file.stream(),
+      duration: 6000,
     })
     return new Response(stream, {
       headers: {
