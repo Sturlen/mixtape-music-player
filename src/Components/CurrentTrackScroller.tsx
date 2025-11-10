@@ -1,9 +1,11 @@
-import { useCurrentTrack } from "@/Player"
+import { useAudioPlayer, useCurrentTrack } from "@/Player"
 import { TextScroller } from "./ui/TextScroller"
 
 export function CurrentTrackScroller() {
   const track = useCurrentTrack()
-  const title = track?.name || "No Track Playing"
+  const isLoading = useAudioPlayer.use.isLoading()
+
+  const title = isLoading ? "Loading..." : track?.name || "No Track Playing"
 
   return (
     <TextScroller
