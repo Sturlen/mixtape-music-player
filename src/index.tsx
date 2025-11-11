@@ -280,19 +280,26 @@ const app = new Elysia()
       throw new NotFoundError()
     }
   })
-  .get("/api/assets/:assetId", async ({ params: { assetId }, set, status }) => {
-    const asset = db.audioAssets.get(assetId)
-    if (!asset) {
-      return status(404, "Asset not found")
-    }
+  .get(
+    "/api/assets/:assetId",
+    async function* ({ params: { assetId }, set, status, request }) {
+      const asset = db.audioAssets.get(assetId)
+      if (!asset) {
+        return status(404, "Asset not found")
+      }
 
-    const file = Bun.file(asset?.path ?? "")
-    const proc =
-      await $`ffmpeg -i ${asset?.path ?? ""} -f mp3 -vn -q:a 1 pipe:1`.quiet()
-    console.error(proc.stderr.toString())
-    set.headers["content-type"] = "audio/mpeg"
-    return proc.stdout
-  })
+      set.headers["content-type"] = "audio/mpeg"
+
+      const mp3_blob =
+        await $`ffmpeg -i ${asset.path} -f mp3 -vn -q:a 1 pipe:1`.blob()
+
+      for await (const chunk of mp3_blob.stream()) {
+        yield chunk
+      }
+
+      return
+    }
+  )
   .post("/api/libary/reload", async () => await reloadLibrary(), {
     detail: {
       description: "Reloads the internal db and parses all sources again",
