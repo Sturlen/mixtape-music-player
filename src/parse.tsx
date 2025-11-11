@@ -6,7 +6,6 @@ import {
   type Artist,
   type Album,
   type Track,
-  type Asset,
   type AudioAsset,
   type ArtAsset,
 } from "@/lib/types"
@@ -16,7 +15,8 @@ export async function parse(source: Source) {
     artists: new Map<string, Artist>(),
     albums: new Map<string, Album>(),
     tracks: new Map<string, Track>(),
-    assets: new Map<string, Asset>(),
+    artAssets: new Map<string, ArtAsset>(),
+    audioAssets: new Map<string, AudioAsset>(),
   }
 
   const music_root_path = source.rootPath
@@ -105,7 +105,7 @@ export async function parse(source: Source) {
 
         if (file.type.startsWith("audio/")) {
           db.tracks.set(track.id, track)
-          db.assets.set(asset_hash, {
+          db.audioAssets.set(asset_hash, {
             id: asset_hash,
             parentId: track_id,
             path: filepath,
@@ -119,7 +119,7 @@ export async function parse(source: Source) {
           track.artURL = album.imageURL
           album.artAssetId = asset_hash
 
-          db.assets.set(asset_hash, {
+          db.artAssets.set(asset_hash, {
             id: asset_hash,
             parentId: album_id,
             path: filepath,

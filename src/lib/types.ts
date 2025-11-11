@@ -52,5 +52,3 @@ export type AudioAsset = AssetBase & {
   duration: number
   // fileExt: "mp3" | "flac" | "ogg"
 }
-
-export type Asset = ArtAsset | AudioAsset

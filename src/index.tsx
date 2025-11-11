@@ -4,7 +4,14 @@ import Fuse from "fuse.js"
 import index from "@/index.html"
 import { env } from "@/env"
 import { parse } from "@/parse"
-import type { Album, Artist, Asset, Source, Track } from "@/lib/types"
+import type {
+  Album,
+  ArtAsset,
+  Artist,
+  AudioAsset,
+  Source,
+  Track,
+} from "@/lib/types"
 import { processImage, getMimeType } from "@/lib/imageHandler"
 import { raise } from "@/lib/utils"
 
@@ -26,7 +33,8 @@ const db = {
   artists: new Map<string, Artist>(),
   albums: new Map<string, Album>(),
   tracks: new Map<string, Track>(),
-  assets: new Map<string, Asset>(),
+  artAssets: new Map<string, ArtAsset>(),
+  audioAssets: new Map<string, AudioAsset>(),
 }
 
 export const fuse_artists = new Fuse<Artist>([], {
@@ -57,7 +65,8 @@ async function reloadLibrary() {
   db.artists.clear()
   db.albums.clear()
   db.tracks.clear()
-  db.assets.clear()
+  db.artAssets.clear()
+  db.audioAssets.clear()
 
   for (const source of sources) {
     try {
@@ -72,8 +81,11 @@ async function reloadLibrary() {
       for (const track of new_db.tracks.values()) {
         db.tracks.set(track.id, track)
       }
-      for (const asset of new_db.assets.values()) {
-        db.assets.set(asset.id, asset)
+      for (const asset of new_db.artAssets.values()) {
+        db.artAssets.set(asset.id, asset)
+      }
+      for (const asset of new_db.audioAssets.values()) {
+        db.audioAssets.set(asset.id, asset)
       }
     } catch (err) {
       console.error(`Error parsing source ${source.id} (${source.name}):`, err)
@@ -87,7 +99,8 @@ async function reloadLibrary() {
     artists: db.artists.size,
     albums: db.albums.size,
     tracks: db.tracks.size,
-    assets: db.assets.size,
+    artAssets: db.artAssets.size,
+    audioAssets: db.audioAssets.size,
   })
 }
 
@@ -107,7 +120,8 @@ const app = new Elysia()
     artists: db.artists.size,
     albums: db.albums.size,
     tracks: db.tracks.size,
-    assets: db.assets.size,
+    artAssets: db.artAssets.size,
+    audioAssets: db.audioAssets.size,
   })
   .get(
     "/api/artists",
@@ -181,10 +195,7 @@ const app = new Elysia()
       .map((tr) => {
         const track = db.tracks.get(tr.id) ?? raise("Track not found in db") // TODO: actual error management
 
-        const assets = db.assets
-          .values()
-          .filter((a) => a.parentId === track.id && a.filetype === "audio")
-          .toArray()
+        const assets = db.audioAssets.values().toArray()
         return { ...tr, artURL: album.imageURL, assets }
       })
       .sort(compareTracksByNumberName)
@@ -250,10 +261,7 @@ const app = new Elysia()
     try {
       const track = db.tracks.get(trackId) ?? raise("Track not found in db") // TODO: actual error management
 
-      const assets = db.assets
-        .values()
-        .filter((a) => a.parentId === trackId && a.filetype === "audio")
-        .toArray()
+      const assets = db.audioAssets.values().toArray()
 
       console.log("assets", assets)
 
@@ -264,7 +272,8 @@ const app = new Elysia()
   })
   .get("/api/assets", async () => {
     try {
-      const assets = Array.from(db.assets.values())
+      /** TODO: audio assets */
+      const assets = Array.from(db.audioAssets.values())
       return { assets }
     } catch (err) {
       throw new NotFoundError()
@@ -272,7 +281,7 @@ const app = new Elysia()
   })
   .get("/api/assets/:assetId", async ({ params: { assetId } }) => {
     try {
-      const asset = db.assets.get(assetId)
+      const asset = db.audioAssets.get(assetId)
       return Bun.file(asset?.path ?? "")
     } catch (err) {
       throw new NotFoundError()
@@ -298,8 +307,8 @@ const app = new Elysia()
 
       // TODO: ACCEPTS or codec check
 
-      const audio_assets = [...db.assets.values()].filter(
-        (asset) => asset.parentId == trackId && asset.filetype === "audio"
+      const audio_assets = [...db.audioAssets.values()].filter(
+        (asset) => asset.parentId == trackId
       )
 
       console.log("audio assets found: ", audio_assets)
