@@ -13,7 +13,9 @@
     "generate-routes": "tsr generate",
     "watch-routes": "tsr watch",
     "lint": "eslint . --ext .ts,.tsx",
-    "lint:fix": "eslint . --ext .ts,.tsx --fix"
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "format": "prettier .",
+    "format:fix": "prettier . --write"
   },
   "dependencies": {
     "@elysiajs/eden": "^1.4.3",
