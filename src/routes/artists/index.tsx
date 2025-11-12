@@ -35,13 +35,13 @@ function RouteComponent() {
 
   return (
     <Page>
-      <div className="flex items-center gap-4 flex-col md:flex-row md:justify-between mb-8">
-        <h1 className="text-3xl md:text-5xl lg:text-6xl font-extrabold mb-6">
+      <div className="mb-8 flex flex-col items-center gap-4 md:flex-row md:justify-between">
+        <h1 className="mb-6 text-3xl font-extrabold md:text-5xl lg:text-6xl">
           Artists
         </h1>
         <Input
           placeholder="🔍 Search for Rick Astley..."
-          className="md:w-1/2 rounded-none"
+          className="rounded-none md:w-1/2"
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
         />
@@ -73,16 +73,16 @@ function Content({ searchTerm }: { searchTerm: string }) {
       {artists.map((artist) => (
         <li
           key={artist.id}
-          className="5bg-card text-card-foreground overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+          className="5bg-card text-card-foreground overflow-hidden shadow-sm transition-shadow hover:shadow-md"
         >
           <div className="relative">
-            <div className="group  p-1 bg-gradient-to-br from-muted/10 to-transparent">
+            <div className="group from-muted/10 bg-gradient-to-br to-transparent p-1">
               <Link
                 to={"/artists/$id"}
                 params={{ id: artist.id }}
-                className="group-hover:cursor-pointer w-full block relative transform-gpu transition-transform group-hover:scale-[1.01]"
+                className="relative block w-full transform-gpu transition-transform group-hover:scale-[1.01] group-hover:cursor-pointer"
               >
-                <div className="w-full aspect-square relative border border-[rgba(0,0,0,0.06)] shadow-[0_8px_20px_rgba(2,6,23,0.12)] transform-gpu transition-transform duration-200 will-change-transform origin-center group-hover:[transform:scale(1.03)]">
+                <div className="relative aspect-square w-full origin-center transform-gpu border border-[rgba(0,0,0,0.06)] shadow-[0_8px_20px_rgba(2,6,23,0.12)] transition-transform duration-200 will-change-transform group-hover:[transform:scale(1.03)]">
                   <picture>
                     <source
                       srcSet={
@@ -108,7 +108,7 @@ function Content({ searchTerm }: { searchTerm: string }) {
                           : "/cassette.webp"
                       }
                       alt={artist.name}
-                      className="w-full h-full object-contain rounded-none border-0 p-0 bg-muted"
+                      className="bg-muted h-full w-full rounded-none border-0 object-contain p-0"
                     />
                   </picture>
                 </div>
@@ -118,7 +118,7 @@ function Content({ searchTerm }: { searchTerm: string }) {
           <Link
             to={"/artists/$id"}
             params={{ id: artist.id }}
-            className="p-4 block hover:underline"
+            className="block p-4 hover:underline"
           >
             {artist.name}
           </Link>

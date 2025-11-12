@@ -21,7 +21,7 @@ type ActionHandlerMap = Partial<{
   seekbackward: (details?: MediaSessionActionDetails) => void | Promise<void>
   seekforward: (details?: MediaSessionActionDetails) => void | Promise<void>
   seekto: (
-    details: MediaSessionActionDetails & { seekTime?: number }
+    details: MediaSessionActionDetails & { seekTime?: number },
   ) => void | Promise<void>
   stop: () => void | Promise<void>
   skipad: () => void | Promise<void>
@@ -56,7 +56,7 @@ export function useMediaSession(options?: UseMediaSessionOptions) {
         artwork: meta.artwork,
       })
     },
-    [supported]
+    [supported],
   )
 
   // Update only artwork (convenience)
@@ -71,7 +71,7 @@ export function useMediaSession(options?: UseMediaSessionOptions) {
         artwork,
       })
     },
-    [supported]
+    [supported],
   )
 
   // Update playback state
@@ -80,7 +80,7 @@ export function useMediaSession(options?: UseMediaSessionOptions) {
       if (!supported || !navigator.mediaSession) return
       navigator.mediaSession.playbackState = state
     },
-    [supported]
+    [supported],
   )
 
   // Register action handlers with cleanup
@@ -111,12 +111,12 @@ export function useMediaSession(options?: UseMediaSessionOptions) {
             (details?: MediaSessionActionDetails) => {
               // Ensure async exceptions don’t leak
               Promise.resolve(handler(details as never)).catch(() => void 0)
-            }
+            },
           )
         }
       })
     },
-    [supported]
+    [supported],
   )
 
   // Initialize from options and keep in sync
@@ -167,6 +167,6 @@ export function useMediaSession(options?: UseMediaSessionOptions) {
       setPlaybackState,
       setHandlers,
     }),
-    [supported, setMetadata, setArtwork, setPlaybackState, setHandlers]
+    [supported, setMetadata, setArtwork, setPlaybackState, setHandlers],
   )
 }

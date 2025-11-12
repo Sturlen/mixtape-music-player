@@ -14,34 +14,34 @@ import { TextScroller } from "@/Components/ui/TextScroller"
 import { CurrentTrackScroller } from "@/Components/CurrentTrackScroller"
 
 const RootLayout = () => (
-  <div className="bg-gradient-to-b from-amber-800 from-[20vh] to-background to-[100vh]  min-h-full">
-    <header className="bg-black h-30 z-10 flex p-2 md:p-10 items-center justify-between fixed top-0 left-0 xl:left-[25rem] right-0">
+  <div className="to-background min-h-full bg-gradient-to-b from-amber-800 from-[20vh] to-[100vh]">
+    <header className="fixed top-0 right-0 left-0 z-10 flex h-30 items-center justify-between bg-black p-2 md:p-10 xl:left-[25rem]">
       <Link to="/">
-        <h1 className="text-2xl md:text-3xl italic font-serif font-battle whitespace-nowrap">
+        <h1 className="font-battle font-serif text-2xl whitespace-nowrap italic md:text-3xl">
           MIXTAPE
         </h1>
       </Link>
       {/* <div className="grow"></div> */}
-      <nav className="md:flex justify-around items-center [&>*]:p-4 w-full hidden">
+      <nav className="hidden w-full items-center justify-around md:flex [&>*]:p-4">
         <Link
           to="/albums"
-          className="[&.active]:font-bold [&.active]:bg-secondary"
+          className="[&.active]:bg-secondary [&.active]:font-bold"
         >
           Albums
         </Link>
       </nav>
-      <nav className="md:flex justify-around items-center [&>*]:p-4 w-full hidden">
+      <nav className="hidden w-full items-center justify-around md:flex [&>*]:p-4">
         <Link
           to="/artists"
-          className="[&.active]:font-bold [&.active]:bg-secondary"
+          className="[&.active]:bg-secondary [&.active]:font-bold"
         >
           Artists
         </Link>
       </nav>
-      <nav className="md:flex justify-around items-center [&>*]:p-4 w-full hidden">
+      <nav className="hidden w-full items-center justify-around md:flex [&>*]:p-4">
         <Link
           to="/about"
-          className="[&.active]:font-bold [&.active]:bg-secondary"
+          className="[&.active]:bg-secondary [&.active]:font-bold"
         >
           About
         </Link>
@@ -51,8 +51,8 @@ const RootLayout = () => (
         <ReloadButton />
       </div>
     </header>
-    <Sidebar className="w-[25rem] hidden xl:flex" />
-    <div className="pt-30 xl:pl-[25rem] pb-40">
+    <Sidebar className="hidden w-[25rem] xl:flex" />
+    <div className="pt-30 pb-40 xl:pl-[25rem]">
       <Outlet />
     </div>
 
@@ -69,19 +69,19 @@ function Sidebar({ className }: { className?: string }) {
   return (
     <section
       className={cn(
-        "fixed top-0 bottom-0 left-0 flex flex-col p-10 border-4 items-center bg-background",
-        className
+        "bg-background fixed top-0 bottom-0 left-0 flex flex-col items-center border-4 p-10",
+        className,
       )}
     >
-      <h2 className="text-2xl text-center pb-2 font-inter-400">QUEUE</h2>
+      <h2 className="font-inter-400 pb-2 text-center text-2xl">QUEUE</h2>
       <PlaybackQueue />
       <div className="grow"></div>
-      <h2 className="text-2xl text-center pb-2 font-inter-400">
+      <h2 className="font-inter-400 pb-2 text-center text-2xl">
         PLAYBACK CONTROLS
       </h2>
 
-      <div className="self-end bg-accent rounded-2xl w-full p-4 flex-col items-center justify-items-center">
-        <div className="flex justify-items-center items-center">
+      <div className="bg-accent w-full flex-col items-center justify-items-center self-end rounded-2xl p-4">
+        <div className="flex items-center justify-items-center">
           <Controls />
         </div>
       </div>

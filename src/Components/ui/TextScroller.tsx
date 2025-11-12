@@ -18,7 +18,7 @@ export function TextScroller({
   className,
 }: TextScrollerProps) {
   const [displayText, setDisplayText] = useState(
-    text.substring(0, displayWidth)
+    text.substring(0, displayWidth),
   )
 
   useEffect(() => {
@@ -37,13 +37,13 @@ export function TextScroller({
           } else {
             currentIndex = (currentIndex + 1) % text.length
             setDisplayText(
-              loopingText.substring(currentIndex, currentIndex + displayWidth)
+              loopingText.substring(currentIndex, currentIndex + displayWidth),
             )
           }
         },
         speed,
         text,
-        displayWidth
+        displayWidth,
       ) // reset when text changes
     }, 1000)
 
@@ -55,7 +55,7 @@ export function TextScroller({
 
   return (
     <div
-      className={cn("font-mono whitespace-nowrap overflow-hidden", className)}
+      className={cn("overflow-hidden font-mono whitespace-nowrap", className)}
     >
       {displayText.padEnd(displayWidth, " ")}
     </div>

@@ -45,7 +45,7 @@ export function usePlayAlbum() {
             name: album.name,
           },
         })),
-        trackIndex
+        trackIndex,
       )
     },
   })

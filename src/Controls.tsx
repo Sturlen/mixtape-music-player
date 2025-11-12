@@ -19,47 +19,47 @@ export function Controls() {
   const prev = useAudioPlayer.use.queuePrev()
 
   return (
-    <div className="flex flex-col w-full items-center">
-      <div className="w-70 bg-gray-400 pb-10 rounded-md">
+    <div className="flex w-full flex-col items-center">
+      <div className="w-70 rounded-md bg-gray-400 pb-10">
         <Cassette />
       </div>
       <div className="h-4"></div>
       <SeekBar />
       <CurrentTrackScroller />
       <div>VOLUME CONTROLS</div>
-      <VolumeSlider className="w-full mt-4 mb-4" direction="horizontal" />
+      <VolumeSlider className="mt-4 mb-4 w-full" direction="horizontal" />
       <div className="w-full">
         <div className="grow"></div>
 
-        <div className="h-6 flex justify-center items-center">
-          <div className="backdrop-blur-sm px-2">
+        <div className="flex h-6 items-center justify-center">
+          <div className="px-2 backdrop-blur-sm">
             <CurrentTime />
             <Duration />
           </div>
         </div>
-        <div className="flex justify-stretch gap-2 pt-4 h-20">
+        <div className="flex h-20 justify-stretch gap-2 pt-4">
           <button
-            className="grow flex justify-center items-center bg-primary text-primary-foreground hover:bg-primary/90"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 flex grow items-center justify-center"
             onClick={() => prev()}
           >
             <SkipBackIcon />
           </button>
           <button
-            className="grow flex justify-center items-center bg-primary text-primary-foreground hover:bg-primary/90"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 flex grow items-center justify-center"
             onClick={() => play()}
           >
             <PlayIcon />
           </button>
 
           <button
-            className="grow flex justify-center items-center bg-primary text-primary-foreground hover:bg-primary/90"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 flex grow items-center justify-center"
             onClick={() => pause()}
           >
             <PauseIcon />
           </button>
 
           <button
-            className="grow flex justify-center items-center bg-primary text-primary-foreground hover:bg-primary/90"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 flex grow items-center justify-center"
             onClick={() => skip()}
           >
             <SkipForwardIcon />

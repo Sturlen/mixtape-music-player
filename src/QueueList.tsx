@@ -8,7 +8,7 @@ import { useEffect, useRef } from "react"
 function scrollIntoViewIfNeeded(
   container: HTMLElement,
   element: HTMLElement,
-  behavior: ScrollBehavior = "smooth"
+  behavior: ScrollBehavior = "smooth",
 ) {
   const cRect = container.getBoundingClientRect()
   const eRect = element.getBoundingClientRect()
@@ -58,34 +58,34 @@ export function PlaybackQueue() {
     scrollIntoViewIfNeeded(
       container_ref.current,
       active_el_ref.current,
-      "smooth"
+      "smooth",
     )
   }, [queueIndex])
 
   return (
-    <div className={cn("flex flex-col justify-stretch w-full")}>
+    <div className={cn("flex w-full flex-col justify-stretch")}>
       <div
         id="playback-queue"
         ref={container_ref}
-        className="overflow-y-auto border rounded-md h-[300px]"
+        className="h-[300px] overflow-y-auto rounded-md border"
       >
-        <ol className="flex flex-col h-full w-full">
+        <ol className="flex h-full w-full flex-col">
           {tracks ? (
             tracks.map((tr, i) => (
               <li key={tr.queueId} className="">
                 <div
                   ref={i === queueIndex ? active_el_ref : undefined}
                   data-active={i === queueIndex}
-                  className="flex gap-2 data-[active=true]:bg-accent items-stretch cursor-pointer hover:bg-muted"
+                  className="data-[active=true]:bg-accent hover:bg-muted flex cursor-pointer items-stretch gap-2"
                   onClick={() => queueJump(i)}
                 >
-                  <div className="p-2 px-4 truncate h-10 grow">{tr.name}</div>
+                  <div className="h-10 grow truncate p-2 px-4">{tr.name}</div>
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
                       queueRemove(i)
                     }}
-                    className="hover:bg-foreground text-foreground hover:text-background p-2 justify-self-end"
+                    className="hover:bg-foreground text-foreground hover:text-background justify-self-end p-2"
                   >
                     <XIcon />
                   </button>

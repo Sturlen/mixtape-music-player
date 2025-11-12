@@ -33,7 +33,7 @@ export function usePlaybackDrawer() {
   const ctx = useContext(PlaybackDrawerContext)
   if (!ctx)
     throw new Error(
-      "usePlaybackDrawer must be used within PlaybackDrawerProvider"
+      "usePlaybackDrawer must be used within PlaybackDrawerProvider",
     )
   return ctx
 }

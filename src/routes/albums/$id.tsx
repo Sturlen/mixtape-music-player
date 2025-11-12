@@ -50,41 +50,41 @@ function RouteComponent() {
           alt={album.name}
           className="size-40 bg-[url(cassette.webp)] bg-cover object-cover"
         />
-        <h1 className="text-4xl md:text-6xl lg:text-8xl font-extrabold">
+        <h1 className="text-4xl font-extrabold md:text-6xl lg:text-8xl">
           {album.name}
         </h1>
 
         <div>
           <button
-            className="hover:bg-accent p-4 border bg-background rounded-md mb-4"
+            className="hover:bg-accent bg-background mb-4 rounded-md border p-4"
             onClick={() => playAlbum({ albumId: album.id })}
           >
             Play Album
           </button>
         </div>
-        <h2 className="text-2xl font-bold mt-8 mb-4">TRACKS</h2>
+        <h2 className="mt-8 mb-4 text-2xl font-bold">TRACKS</h2>
       </div>
 
-      <ol className="w-full flex flex-col bg-background">
+      <ol className="bg-background flex w-full flex-col">
         {album.tracks.map((track, i) => (
           <li
             key={track.id}
-            className="w-full grid grid-cols-[1fr_auto_auto] gap-2 items-center p-2 pl-8 border-t hover:bg-accent/50 transition-colors last:border-b"
+            className="hover:bg-accent/50 grid w-full grid-cols-[1fr_auto_auto] items-center gap-2 border-t p-2 pl-8 transition-colors last:border-b"
           >
             <button
               onClick={() => {
                 playAlbum({ albumId: album.id, trackIndex: i })
               }}
-              className="text-left font-medium text-sm md:text-base hover:underline truncate"
+              className="truncate text-left text-sm font-medium hover:underline md:text-base"
             >
-              <span className="font-mono text-muted-foreground w-10 inline-block">
+              <span className="text-muted-foreground inline-block w-10 font-mono">
                 {track.trackNumber?.toString().padStart(3, "0") || "--"}
               </span>
               <span>{track.name}</span>
 
               {track.assets.length > 1 ? (
                 <span
-                  className="text-sm text-muted-foreground px-2"
+                  className="text-muted-foreground px-2 text-sm"
                   title={`Several files available`}
                 >
                   {" "}
@@ -93,7 +93,7 @@ function RouteComponent() {
               ) : null}
             </button>
             <button
-              className="px-4 py-2 border border-current rounded hover:bg-accent transition-colors whitespace-nowrap"
+              className="hover:bg-accent rounded border border-current px-4 py-2 whitespace-nowrap transition-colors"
               onClick={() => {
                 queuePush({
                   id: track.id,

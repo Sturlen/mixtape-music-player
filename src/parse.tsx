@@ -88,7 +88,7 @@ export async function parse(source: Source) {
         const filenameWithoutExt = filename.replace(/\.[^/.]+$/, "")
         const track_id = generateHash(
           "track",
-          `${artist.name}/${album.name}/${filenameWithoutExt}`
+          `${artist.name}/${album.name}/${filenameWithoutExt}`,
         )
         const { trackNumber, title } = extractSongInfo(filename)
         const track: Track = {

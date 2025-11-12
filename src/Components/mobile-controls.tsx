@@ -37,14 +37,14 @@ const MobileControls = ({ className }: { className?: string }) => {
       {...handlers}
       onClick={openPlaybackDetails}
       className={cn(
-        "fixed bottom-0 left-0 right-0 bg-sidebar text-foreground flex items-center justify-between pr-4 z-50 shadow-[0_-2px_8px_rgba(0,0,0,0.2)] gap-4 touch-none",
+        "bg-sidebar text-foreground fixed right-0 bottom-0 left-0 z-50 flex touch-none items-center justify-between gap-4 pr-4 shadow-[0_-2px_8px_rgba(0,0,0,0.2)]",
         { hidden: !currentTrack },
-        className
+        className,
       )}
     >
       <div className="flex items-center gap-2">
         <button
-          className="p-2 flex items-center justify-center"
+          className="flex items-center justify-center p-2"
           onClick={(e) => {
             e.stopPropagation()
             if (isPlaying) {
@@ -56,7 +56,7 @@ const MobileControls = ({ className }: { className?: string }) => {
           aria-label={isPlaying ? "Pause" : "Play"}
         >
           <div
-            className="p-3 rounded-full hover:bg-gray-800 transition flex items-center justify-center"
+            className="flex items-center justify-center rounded-full p-3 transition hover:bg-gray-800"
             style={{
               backgroundImage: currentTrack?.artURL
                 ? `url(${currentTrack.artURL})`
@@ -67,8 +67,8 @@ const MobileControls = ({ className }: { className?: string }) => {
           </div>
         </button>
       </div>
-      <div className="flex-1 w-1 py-3">
-        <div className="font-bold block truncate line-clamp-1">
+      <div className="w-1 flex-1 py-3">
+        <div className="line-clamp-1 block truncate font-bold">
           {currentTrack?.name || "No track"}
         </div>
         <div className="text-sm opacity-80">

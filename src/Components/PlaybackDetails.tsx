@@ -48,11 +48,11 @@ export default function PlaybackDetails() {
     <>
       <Drawer open={open} onOpenChange={setOpen}>
         <DrawerContent>
-          <div className="p-4 flex flex-col gap-4">
+          <div className="flex flex-col gap-4 p-4">
             <PlaybackQueue />
-            <div className="w-full flex gap-4 items-center">
+            <div className="flex w-full items-center gap-4">
               <div
-                className="w-36 h-36 bg-gray-800 bg-center bg-cover shrink-0"
+                className="h-36 w-36 shrink-0 bg-gray-800 bg-cover bg-center"
                 style={{
                   backgroundImage: currentTrack?.artURL
                     ? `url(${currentTrack.artURL})`
@@ -60,7 +60,7 @@ export default function PlaybackDetails() {
                 }}
               />
               <div className="flex-1">
-                <div className="text-xl font-bold line-clamp-2">
+                <div className="line-clamp-2 text-xl font-bold">
                   {currentTrack?.name ?? "No track"}
                 </div>
                 <div className="text-sm opacity-80">{album_name}</div>
@@ -80,7 +80,7 @@ export default function PlaybackDetails() {
               <button
                 onClick={queuePrev}
                 aria-label="Previous"
-                className="p-2 rounded-full hover:bg-gray-800 transition"
+                className="rounded-full p-2 transition hover:bg-gray-800"
               >
                 <SkipBackIcon size={28} />
               </button>
@@ -88,7 +88,7 @@ export default function PlaybackDetails() {
               <button
                 onClick={isPlaying ? pause : play}
                 aria-label={isPlaying ? "Pause" : "Play"}
-                className="p-3 rounded-full bg-white/5 hover:bg-white/10 transition"
+                className="rounded-full bg-white/5 p-3 transition hover:bg-white/10"
               >
                 {isPlaying ? <PauseIcon size={28} /> : <PlayIcon size={28} />}
               </button>
@@ -96,7 +96,7 @@ export default function PlaybackDetails() {
               <button
                 onClick={queueSkip}
                 aria-label="Next"
-                className="p-2 rounded-full hover:bg-gray-800 transition"
+                className="rounded-full p-2 transition hover:bg-gray-800"
               >
                 <SkipForwardIcon size={28} />
               </button>

@@ -25,12 +25,12 @@ function RouteComponent() {
     <Page>
       <article className="space-y-16">
         <div className="mb-20">
-          <h1 className="text-5xl md:text-7xl lg:text-9xl font-black tracking-tighter leading-tight">
+          <h1 className="text-5xl leading-tight font-black tracking-tighter md:text-7xl lg:text-9xl">
             YOUR COLLECTION
           </h1>
-          <span className="block text-xl md:text-2xl lg:text-3xl font-bold tracking-wide">
+          <span className="block text-xl font-bold tracking-wide md:text-2xl lg:text-3xl">
             LOOK UPON YOUR MIGHTY BACKLOG AND{" "}
-            <span className="text-amber-400 animate-pulse">✨DESPAIR✨</span>
+            <span className="animate-pulse text-amber-400">✨DESPAIR✨</span>
           </span>
         </div>
         <Content />
@@ -55,7 +55,7 @@ function Content() {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 py-12">
+    <div className="grid grid-cols-1 gap-8 py-12 md:grid-cols-3">
       <Link to="/artists">
         <StatCard
           number={data.artists}
@@ -97,15 +97,15 @@ function StatCard({
 }) {
   return (
     <div
-      className={`${className} p-8 rounded-lg transform hover:scale-105 transition-transform duration-300 shadow-xl cursor-pointer`}
+      className={`${className} transform cursor-pointer rounded-lg p-8 shadow-xl transition-transform duration-300 hover:scale-105`}
     >
       <div className="mb-4">
-        <Icon className="w-12 h-12 text-white" />
+        <Icon className="h-12 w-12 text-white" />
       </div>
-      <div className="text-6xl md:text-7xl font-black text-white mb-2">
+      <div className="mb-2 text-6xl font-black text-white md:text-7xl">
         {number.toLocaleString()}
       </div>
-      <div className="text-xl md:text-2xl font-bold text-white tracking-widest">
+      <div className="text-xl font-bold tracking-widest text-white md:text-2xl">
         {label}
       </div>
     </div>

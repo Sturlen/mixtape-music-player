@@ -20,7 +20,7 @@ export default function SeekBar() {
 
   const seekValue: [number] = useMemo(
     () => [deferredSeeking ?? currentTime ?? 0],
-    [deferredSeeking, currentTime]
+    [deferredSeeking, currentTime],
   )
 
   const onSeekStart = () => setSeeking(currentTime ?? 0)
@@ -31,8 +31,8 @@ export default function SeekBar() {
   }
 
   return (
-    <div className="w-full mt-4 mb-4">
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+    <div className="mt-4 mb-4 w-full">
+      <div className="text-muted-foreground flex items-center gap-2 text-xs">
         <span className="w-10 text-right">{formatTime(seekValue[0])}</span>
         <Slider
           aria-label="Seek"

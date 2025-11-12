@@ -15,7 +15,7 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
     "audio html el",
     audio_el.current,
     "player store audio",
-    player_audio_el
+    player_audio_el,
   )
 
   // on mount, set the audio element in the player store

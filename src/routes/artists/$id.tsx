@@ -61,7 +61,7 @@ function ArtistPage() {
           className="size-40 bg-[url(cassette.webp)] bg-cover object-cover"
         />
       </picture>
-      <h1 className="text-4xl md:text-6xl lg:text-8xl font-extrabold">
+      <h1 className="text-4xl font-extrabold md:text-6xl lg:text-8xl">
         {artist.name}
       </h1>
       <h2>Albums</h2>
@@ -69,16 +69,16 @@ function ArtistPage() {
         {artist.albums.map((album) => (
           <li
             key={album.id}
-            className="5bg-card text-card-foreground overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+            className="5bg-card text-card-foreground overflow-hidden shadow-sm transition-shadow hover:shadow-md"
           >
             <div className="relative">
-              <div className="group  p-1 bg-gradient-to-br from-muted/10 to-transparent">
+              <div className="group from-muted/10 bg-gradient-to-br to-transparent p-1">
                 <button
                   type="button"
                   onClick={() => playAlbum({ albumId: album.id })}
-                  className="group-hover:cursor-pointer w-full block relative transform-gpu transition-transform group-hover:scale-[1.01]"
+                  className="relative block w-full transform-gpu transition-transform group-hover:scale-[1.01] group-hover:cursor-pointer"
                 >
-                  <div className="w-full aspect-square relative border border-[rgba(0,0,0,0.06)] shadow-[0_8px_20px_rgba(2,6,23,0.12)] transform-gpu transition-transform duration-200 will-change-transform origin-center group-hover:[transform:scale(1.03)]">
+                  <div className="relative aspect-square w-full origin-center transform-gpu border border-[rgba(0,0,0,0.06)] shadow-[0_8px_20px_rgba(2,6,23,0.12)] transition-transform duration-200 will-change-transform group-hover:[transform:scale(1.03)]">
                     <picture>
                       <source
                         srcSet={
@@ -103,7 +103,7 @@ function ArtistPage() {
                             : "/cassette.webp"
                         }
                         alt={album.name}
-                        className="w-full h-full object-contain rounded-none border-0 p-0 bg-muted"
+                        className="bg-muted h-full w-full rounded-none border-0 object-contain p-0"
                       />
                     </picture>
                   </div>
@@ -112,7 +112,7 @@ function ArtistPage() {
             </div>
 
             <div className="p-3">
-              <h2 className="text-sm font-semibold truncate">
+              <h2 className="truncate text-sm font-semibold">
                 <Link
                   to="/albums/$id"
                   params={{ id: album.id }}
@@ -121,7 +121,7 @@ function ArtistPage() {
                   {album.name}
                 </Link>
               </h2>
-              <p className="text-xs text-muted-foreground truncate">Artist</p>
+              <p className="text-muted-foreground truncate text-xs">Artist</p>
             </div>
           </li>
         ))}

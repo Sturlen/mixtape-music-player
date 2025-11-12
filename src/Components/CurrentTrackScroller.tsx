@@ -9,7 +9,7 @@ export function CurrentTrackScroller() {
 
   return (
     <TextScroller
-      className="flex w-full items-center whitespace-pre overflow-hidden bg-background px-4 py-3 rounded-md font-mono text-blue-400 font-bold tracking-widest min-h-[40px]"
+      className="bg-background flex min-h-[40px] w-full items-center overflow-hidden rounded-md px-4 py-3 font-mono font-bold tracking-widest whitespace-pre text-blue-400"
       text={"01 " + title}
       displayWidth={24}
       speed={200}

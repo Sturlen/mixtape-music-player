@@ -111,7 +111,7 @@ const app = new Elysia()
     openapi({
       path: "/openapi",
       references: fromTypes(),
-    })
+    }),
   )
   .get("/*", index, { detail: "hide" })
   .get("/api/*", "418")
@@ -139,7 +139,7 @@ const app = new Elysia()
     {
       detail: "Get artists",
       query: t.Object({ q: t.Optional(t.String()) }),
-    }
+    },
   )
   .get("/api/artists/:artistId", async ({ params: { artistId } }) => {
     const artist = db.artists.get(artistId)
@@ -147,7 +147,7 @@ const app = new Elysia()
       return { artist: undefined }
     }
     const artistAlbums = Array.from(db.albums.values()).filter(
-      (a) => a.artistId === artistId
+      (a) => a.artistId === artistId,
     )
 
     return {
@@ -180,7 +180,7 @@ const app = new Elysia()
           .sort((a, b) => a.name.localeCompare(b.name)),
       }
     },
-    { detail: "Get albums", query: t.Object({ q: t.Optional(t.String()) }) }
+    { detail: "Get albums", query: t.Object({ q: t.Optional(t.String()) }) },
   )
   .get("/api/albums/:albumId", async ({ params: { albumId } }) => {
     const album = db.albums.get(albumId)
@@ -188,7 +188,7 @@ const app = new Elysia()
       return { album: undefined }
     }
     const albumTracks = Array.from(db.tracks.values()).filter(
-      (t) => t.albumId === albumId
+      (t) => t.albumId === albumId,
     )
 
     const tracks = albumTracks
@@ -235,7 +235,7 @@ const app = new Elysia()
         console.error(`Error serving artist art for ${artistId}:`, err)
         throw new NotFoundError()
       }
-    }
+    },
   )
   .get(
     "/api/files/albumart/:albumId",
@@ -255,7 +255,7 @@ const app = new Elysia()
         console.error(`Error serving album art for ${albumId}:`, err)
         throw new NotFoundError()
       }
-    }
+    },
   )
   .get("/api/files/track/:trackId", async ({ params: { trackId } }) => {
     try {
@@ -308,7 +308,7 @@ const app = new Elysia()
       // TODO: ACCEPTS or codec check
 
       const audio_assets = [...db.audioAssets.values()].filter(
-        (asset) => asset.parentId == trackId
+        (asset) => asset.parentId == trackId,
       )
 
       console.log("audio assets found: ", audio_assets)
@@ -328,7 +328,7 @@ const app = new Elysia()
         url: `/api/assets/${main_asset.id}`, //TODO: adapt to s3 or similar later
       }
     },
-    { body: t.Object({ trackId: t.String() }) }
+    { body: t.Object({ trackId: t.String() }) },
   )
   .post("/api/playAlbum/:albumId", async ({ params: { albumId }, status }) => {
     const album = db.albums.get(albumId)
@@ -343,7 +343,7 @@ const app = new Elysia()
       "playAlbum requested for album",
       albumId,
       "tracks:",
-      albumTracks.length
+      albumTracks.length,
     )
 
     return { album, tracks: albumTracks }

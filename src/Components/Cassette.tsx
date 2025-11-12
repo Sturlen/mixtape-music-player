@@ -28,48 +28,48 @@ export function Cassette({ className }: { className?: string }) {
   const spool_size = 1.25
 
   return (
-    <div className={cn("aspect-video relative w-full", className)}>
+    <div className={cn("relative aspect-video w-full", className)}>
       {/* supply */}
       <div
-        className="absolute left-[23.3%] top-[44.5%] w-[16%] text-amber-950"
+        className="absolute top-[44.5%] left-[23.3%] w-[16%] text-amber-950"
         style={{ scale: scaleSupply }}
       >
         <Circle />
       </div>
       {/* spool extender fix */}
       <div
-        className="absolute left-[23.3%] top-[44.5%] w-[16%] text-white "
+        className="absolute top-[44.5%] left-[23.3%] w-[16%] text-white"
         style={{ scale: spool_size }}
       >
         <Circle />
       </div>
       {/* cover */}
-      <div className="absolute left-[23.3%] top-[44.5%] w-[16%] text-gray-400 ">
+      <div className="absolute top-[44.5%] left-[23.3%] w-[16%] text-gray-400">
         <Circle />
       </div>
       <img
         className={cn(
           { reel: isPlaying },
-          "absolute left-[23.3%] top-[44.5%] w-[16%]"
+          "absolute top-[44.5%] left-[23.3%] w-[16%]",
         )}
         style={{ animationDuration: durationSupply.toFixed() + "s" }}
         src={CasseteSpool}
       />
       <div
-        className="absolute right-[23.6%] top-[44.5%] w-[16%] text-amber-950"
+        className="absolute top-[44.5%] right-[23.6%] w-[16%] text-amber-950"
         style={{ scale: scaleTakeUp }}
       >
         <Circle />
       </div>
       {/* spool extender fix */}
       <div
-        className="absolute right-[23.6%] top-[44.5%] w-[16%] text-white"
+        className="absolute top-[44.5%] right-[23.6%] w-[16%] text-white"
         style={{ scale: spool_size }}
       >
         <Circle />
       </div>
       {/* cover */}
-      <div className="absolute right-[23.6%] top-[44.5%] w-[16%] text-gray-400">
+      <div className="absolute top-[44.5%] right-[23.6%] w-[16%] text-gray-400">
         <Circle />
       </div>
 
@@ -77,13 +77,13 @@ export function Cassette({ className }: { className?: string }) {
       <img
         className={cn(
           { reel: isPlaying },
-          "absolute right-[23.6%] top-[44.5%] w-[16%]"
+          "absolute top-[44.5%] right-[23.6%] w-[16%]",
         )}
         src={CasseteSpool}
         style={{ animationDuration: durationTakeUp.toFixed() + "s" }}
       />
       <img className="absolute my-auto w-full" src={CasseteImage} />
-      <div className="bg-white text-black text-sm font-inter overflow-ellipsis text-nowrap overflow-hidden absolute left-[10.9%] top-[24%] right-[12.1%] h-[16%] px-2">
+      <div className="font-inter absolute top-[24%] right-[12.1%] left-[10.9%] h-[16%] overflow-hidden bg-white px-2 text-sm text-nowrap overflow-ellipsis text-black">
         <span>{currentTrackName}</span>
       </div>
     </div>

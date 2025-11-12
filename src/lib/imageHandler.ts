@@ -15,7 +15,7 @@ export interface ImageOptions {
  */
 export async function processImage(
   filePath: string,
-  options: ImageOptions = {}
+  options: ImageOptions = {},
 ): Promise<Buffer> {
   const { width, height, quality = 80, format = "webp" } = options
 
