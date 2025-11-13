@@ -1,4 +1,4 @@
-import { useCallback } from "react"
+import { useCallback, useEffect } from "react"
 import { useMediaSession } from "@/lib/mediasession"
 import { useAudioPlayer, useCurrentTrack } from "@/Player"
 
@@ -8,6 +8,7 @@ export function MediaSessionSync() {
   const currentTrack = useCurrentTrack()
   const queueSkip = useAudioPlayer.use.queueSkip()
   const queuePrev = useAudioPlayer.use.queuePrev()
+  const seek = useAudioPlayer.use.seek()
 
   const artwork = currentTrack?.artURL
     ? [{ src: currentTrack?.artURL, sizes: "512x512" }]
@@ -24,6 +25,12 @@ export function MediaSessionSync() {
       },
       previoustrack: () => {
         queuePrev()
+      },
+      seekto: ({ seekTime }) => {
+        if (!seekTime) {
+          return
+        }
+        seek(seekTime)
       },
     },
   })
