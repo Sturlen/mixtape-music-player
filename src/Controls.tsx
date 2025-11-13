@@ -8,9 +8,9 @@ import {
 import { useAudioPlayer, useCurrentTrack } from "@/Player"
 import { cn } from "@/lib/utils"
 import VolumeSlider from "@/VolumeControl"
-import { Cassette } from "@/Components/Cassette"
-import { CurrentTrackScroller } from "./Components/CurrentTrackScroller"
-import SeekBar from "./Components/SeekBar"
+import { Cassette } from "@/client/components/Cassette"
+import { CurrentTrackScroller } from "@/client/components/CurrentTrackScroller"
+import SeekBar from "@/client/components/SeekBar"
 
 export function Controls() {
   const play = useAudioPlayer.use.play()

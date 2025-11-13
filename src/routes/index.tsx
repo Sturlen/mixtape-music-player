@@ -1,4 +1,4 @@
-import Page from "@/Components/Page"
+import Page from "@/client/components/Page"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { useQuery } from "@tanstack/react-query"
 import { EdenClient } from "@/lib/eden"

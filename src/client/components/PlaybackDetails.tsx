@@ -13,12 +13,12 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerClose,
-} from "@/Components/ui/drawer"
+} from "@/client/components/ui/drawer"
 import PlaybackQueue from "@/QueueList"
-import SeekBar from "@/Components/SeekBar"
+import SeekBar from "@/client/components/SeekBar"
 import { usePlaybackDrawer } from "@/contexts/PlaybackDrawerContext"
 import VolumeSlider from "@/VolumeControl"
-import { Cassette } from "@/Components/Cassette"
+import { Cassette } from "@/client/components/Cassette"
 
 const formatTime = (s?: number) => {
   if (!s || !isFinite(s)) return "0:00"

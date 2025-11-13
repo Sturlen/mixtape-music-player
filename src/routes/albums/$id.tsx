@@ -3,7 +3,7 @@ import { createFileRoute, useParams } from "@tanstack/react-router"
 import { useQuery } from "@tanstack/react-query"
 import { useAudioPlayer } from "@/Player"
 import { EdenClient } from "@/lib/eden"
-import Page from "@/Components/Page"
+import Page from "@/client/components/Page"
 import { usePlayAlbum } from "@/lib/api"
 
 export const Route = createFileRoute("/albums/$id")({

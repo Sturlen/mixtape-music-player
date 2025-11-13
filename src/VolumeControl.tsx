@@ -1,5 +1,5 @@
 import { useAudioPlayer } from "@/Player"
-import { Slider } from "./Components/ui/slider"
+import { Slider } from "@/client/components/ui/slider"
 
 export function VolumeSlider({
   className,

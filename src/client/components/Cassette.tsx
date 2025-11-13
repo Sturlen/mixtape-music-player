@@ -1,6 +1,6 @@
 import CasseteImage from "@/assets/cassette_empty.svg"
 import CasseteSpool from "@/assets/cassette_spool.svg"
-import { Circle } from "@/Components/Circle"
+import { Circle } from "@/client/components/Circle"
 import { useAudioPlayer, useCurrentTrack } from "@/Player"
 import { cn } from "@/lib/utils"
 

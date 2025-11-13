@@ -1,4 +1,4 @@
-import Page from "@/Components/Page"
+import Page from "@/client/components/Page"
 import { createFileRoute } from "@tanstack/react-router"
 
 export const Route = createFileRoute("/about")({
