@@ -41,14 +41,14 @@ function scrollIntoViewIfNeeded(
   }
 }
 
-export function PlaybackQueue() {
+export function PlaybackQueue({ className }: { className?: string }) {
   const tracks = useAudioPlayer.use.queueTracks()
   const has_queue = tracks.length > 0
   const queueIndex = useAudioPlayer.use.queueIndex()
   const queueRemove = useAudioPlayer.use.queueRemove()
   const queueJump = useAudioPlayer.use.queueJump()
   const active_el_ref = useRef<HTMLDivElement | null>(null)
-  const container_ref = useRef<HTMLDivElement | null>(null)
+  const container_ref = useRef<HTMLOListElement | null>(null)
 
   useEffect(() => {
     if (!active_el_ref.current || !container_ref.current) {
@@ -63,41 +63,39 @@ export function PlaybackQueue() {
   }, [queueIndex])
 
   return (
-    <div className={cn("flex w-full flex-col justify-stretch")}>
-      <div
-        id="playback-queue"
-        ref={container_ref}
-        className="h-[300px] overflow-y-auto rounded-md border"
-      >
-        <ol className="flex h-full w-full flex-col">
-          {tracks ? (
-            tracks.map((tr, i) => (
-              <li key={tr.queueId} className="">
-                <div
-                  ref={i === queueIndex ? active_el_ref : undefined}
-                  data-active={i === queueIndex}
-                  className="data-[active=true]:bg-accent hover:bg-muted flex cursor-pointer items-stretch gap-2"
-                  onClick={() => queueJump(i)}
-                >
-                  <div className="h-10 grow truncate p-2 px-4">{tr.name}</div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      queueRemove(i)
-                    }}
-                    className="hover:bg-foreground text-foreground hover:text-background justify-self-end p-2"
-                  >
-                    <XIcon />
-                  </button>
-                </div>
-              </li>
-            ))
-          ) : (
-            <p>No tracks in queue.</p>
-          )}
-        </ol>
-      </div>
-    </div>
+    <ol
+      className={cn(
+        "flex w-full flex-col justify-stretch overflow-y-auto rounded-md border",
+        className,
+      )}
+      ref={container_ref}
+    >
+      {tracks ? (
+        tracks.map((tr, i) => (
+          <li key={tr.queueId} className="">
+            <div
+              ref={i === queueIndex ? active_el_ref : undefined}
+              data-active={i === queueIndex}
+              className="data-[active=true]:bg-accent hover:bg-muted flex cursor-pointer items-stretch gap-2"
+              onClick={() => queueJump(i)}
+            >
+              <div className="h-10 grow truncate p-2 px-4">{tr.name}</div>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  queueRemove(i)
+                }}
+                className="hover:bg-foreground text-foreground hover:text-background justify-self-end p-2"
+              >
+                <XIcon />
+              </button>
+            </div>
+          </li>
+        ))
+      ) : (
+        <p>No tracks in queue.</p>
+      )}
+    </ol>
   )
 }
 

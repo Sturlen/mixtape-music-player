@@ -47,12 +47,12 @@ export default function PlaybackDetails() {
   return (
     <>
       <Drawer open={open} onOpenChange={setOpen}>
-        <DrawerContent>
-          <div className="flex flex-col gap-4 p-4">
-            <PlaybackQueue />
-            <div className="flex w-full items-center gap-4">
+        <DrawerContent className="p flex h-[900px] pb-10">
+          <PlaybackQueue className="mt-3 min-h-0 flex-1 overflow-y-auto" />
+          <div className="h-70 flex-col gap-4 p-4">
+            <div className="flex w-full shrink-0 items-center gap-4">
               <div
-                className="h-36 w-36 shrink-0 bg-gray-800 bg-cover bg-center"
+                className="aspect-square h-36 w-36 shrink-0 bg-gray-800 bg-cover bg-center"
                 style={{
                   backgroundImage: currentTrack?.artURL
                     ? `url(${currentTrack.artURL})`
