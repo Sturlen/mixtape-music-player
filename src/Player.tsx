@@ -226,7 +226,7 @@ export const useAudioPlayerBase = create<PlayerState>()(
 
         OnEnded: () => {
           console.log("Playback ended")
-          // useMediaStore.setState({ isPlaying: false });
+          get().queueSkip()
         },
 
         OnError: (error) => {
