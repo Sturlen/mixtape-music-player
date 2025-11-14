@@ -10,10 +10,16 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
   const queueSkip = useAudioPlayer.use.queueSkip()
   const audio_el = React.useRef<HTMLAudioElement>(null)
   const onDurationChange = useAudioPlayer((state) => state.OnDurationChange)
+  const onEnded = useAudioPlayer((state) => state.OnEnded)
   const volume = useAudioPlayer((state) => state.volume)
   const is_playing = useAudioPlayer((state) => state.isPlaying)
   const currentTrack = useCurrentTrack()
   const src = useAudioPlayer((state) => state.src)
+  const currentTime = useAudioPlayer((state) => state.currentTime)
+  const endSeek = useAudioPlayer((state) => state.endSeek)
+  const requestedSeekPosition = useAudioPlayer(
+    (state) => state.requestedSeekPosition,
+  )
 
   // on mount, set the audio element in the player store
   useEffect(() => {
@@ -29,10 +35,11 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
   // this is how we send commands to the audio element
 
   useEffect(() => {
-    if (audio_el.current) {
-      audio_el.current.volume = volume
+    if (audio_el.current && requestedSeekPosition != undefined) {
+      audio_el.current.currentTime = requestedSeekPosition
+      endSeek()
     }
-  }, [volume])
+  }, [requestedSeekPosition])
 
   useEffect(() => {
     if (audio_el.current) {
@@ -60,7 +67,7 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
         onDurationChange={(e) => onDurationChange(e.currentTarget.duration)}
         onPlaying={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
-        onEnded={() => queueSkip()}
+        onEnded={onEnded}
       />
     </>
   )

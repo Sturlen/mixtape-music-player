@@ -63,7 +63,7 @@ type MediaEventHandlers = {
   /**
    * Fired when playback stops when end of the media is reached or because no further data is available.
    */
-  OnEnded?(): void
+  OnEnded(): void
 
   /**
    * Fired when the resource could not be loaded due to an error.
@@ -158,6 +158,7 @@ type PlayerState = {
   // todo: fix AbortError
   isLoading: boolean
   isError: boolean
+  requestedSeekPosition: number | undefined
   src: string | undefined
   play: () => Promise<void>
   pause: () => void
@@ -171,6 +172,7 @@ type PlayerState = {
   setDuration: (duration: number) => void
   setVolume: (newVolumeFraction: number) => void
   seek: (time: number) => void
+  endSeek: () => void
   duration: number
   queueTracks: (Track & { queueId: string })[]
   queueIndex: number
@@ -292,6 +294,7 @@ export const useAudioPlayerBase = create<PlayerState>()(
           // useMediaStore.setState({ volume });
         },
         src: undefined,
+        requestedSeekPosition: undefined,
         isPlaying: false,
         isLoading: false,
         isError: false,
@@ -379,7 +382,10 @@ export const useAudioPlayerBase = create<PlayerState>()(
         },
         setCurrentTime: (currentTime) => set({ currentTime }),
         seek: (time) => {
-          set({ currentTime: time })
+          set({ requestedSeekPosition: time })
+        },
+        endSeek: () => {
+          set({ requestedSeekPosition: undefined })
         },
         setDuration: (duration) => set({ duration }),
         setIsPlaying: (isPlaying) => set({ isPlaying }),

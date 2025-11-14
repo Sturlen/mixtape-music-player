@@ -71,7 +71,9 @@ export function Controls() {
 }
 
 function CurrentTime() {
-  const time = useAudioPlayer.use.currentTime()
+  const player_time = useAudioPlayer.use.currentTime()
+  const requested_time = useAudioPlayer.use.requestedSeekPosition()
+  const time = requested_time ?? player_time
   if (!Number.isFinite(time)) {
     return <span>--:--</span>
   }
