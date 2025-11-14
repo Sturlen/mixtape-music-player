@@ -140,22 +140,26 @@ const createSelectors = <S extends UseBoundStore<StoreApi<object>>>(
   return store
 }
 
+function log(message?: string, ...optionalParams: unknown[]) {
+  console.log(`[PLAYER] ${message}`, ...optionalParams)
+}
+
 export const useAudioPlayerBase = create<PlayerState>()(
   persist(
     (set, get) => {
-      console.log("creating player store")
+      log("creating player store")
       return {
         OnAbort: () => {
-          console.log("Media loading aborted")
+          log("Media loading aborted")
         },
 
         OnLoadStart: () => {
-          console.log("Start load")
+          log("Start load")
           set({ isLoading: true, _playbackState: "paused" })
         },
 
         OnCanPlay: () => {
-          console.log("Media can start playing")
+          log("Media can start playing")
           set({ isLoading: false })
         },
 
@@ -164,17 +168,17 @@ export const useAudioPlayerBase = create<PlayerState>()(
         },
 
         OnDurationChange: (durationSeconds) => {
-          console.log(`Duration updated: ${durationSeconds}s`)
+          log(`Duration updated: ${durationSeconds}s`)
           set({ duration: durationSeconds })
         },
 
         OnEnded: () => {
-          console.log("Playback ended")
+          log("Playback ended")
           get().queueSkip()
         },
 
         OnEmptied: () => {
-          console.log("source empty")
+          log("source empty")
           set({ _playbackState: "paused" })
         },
 
@@ -184,17 +188,17 @@ export const useAudioPlayerBase = create<PlayerState>()(
         },
 
         OnPaused: () => {
-          console.log("Playback paused")
+          log("Playback paused")
           set({ _playbackState: "paused" })
         },
 
         OnPlay: () => {
-          console.log("Playback started")
+          log("Playback started")
           set({ _playbackState: "playing" })
         },
 
         OnPlaying: () => {
-          console.log("Playback is active")
+          log("Playback is active")
           set({ _playbackState: "playing" })
         },
         _playbackState: "paused",
@@ -247,7 +251,7 @@ export const useAudioPlayerBase = create<PlayerState>()(
           return track
         },
         queueRemove: (deleteIndex) => {
-          console.log("deleteindex", 0, get().queueTracks)
+          log("deleteindex", 0, get().queueTracks)
           const exitsts = get().queueTracks[deleteIndex]
           if (!exitsts) {
             return
@@ -302,7 +306,7 @@ export const useAudioPlayerBase = create<PlayerState>()(
           await player.setTrack(track)
         },
         setTrack: async (track) => {
-          console.log("setTrack", track)
+          log("setTrack", track)
 
           set({ isError: false, isLoading: true })
 
@@ -319,7 +323,7 @@ export const useAudioPlayerBase = create<PlayerState>()(
           get().play()
         },
         play: async () => {
-          console.log("try plays", get().queueTracks)
+          log("try plays", get().queueTracks)
 
           if (get().queueTracks[get().queueIndex]) {
             set({ isPlaying: true })
