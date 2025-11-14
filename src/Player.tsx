@@ -38,7 +38,7 @@ type MediaEventHandlers = {
    * Fired when the user agent can play the media, but estimates that not enough data
    * has been loaded to play the media up to its end without having to stop for further buffering.
    */
-  OnCanPlay?(): void
+  OnCanPlay(): void
 
   /**
    * Fired when the duration property has been updated.
@@ -60,7 +60,7 @@ type MediaEventHandlers = {
   /**
    * Fired when the browser has started to load a resource.
    */
-  OnLoadStart?(): void
+  OnLoadStart(): void
 
   /**
    * Fired when a request to pause play is handled and the activity has entered its paused state,
@@ -78,6 +78,8 @@ type MediaEventHandlers = {
    * Fired when playback is ready to start after having been paused or delayed due to lack of data.
    */
   OnPlaying(): void
+
+  OnEmptied(): void
 
   /**
    * Fired when the time indicated by the currentTime property has been updated.
@@ -147,8 +149,14 @@ export const useAudioPlayerBase = create<PlayerState>()(
           console.log("Media loading aborted")
         },
 
+        OnLoadStart: () => {
+          console.log("Start load")
+          set({ isLoading: true, _playbackState: "paused" })
+        },
+
         OnCanPlay: () => {
           console.log("Media can start playing")
+          set({ isLoading: false })
         },
 
         OnTimeUpdate: (currentTimeSeconds) => {
@@ -165,13 +173,13 @@ export const useAudioPlayerBase = create<PlayerState>()(
           get().queueSkip()
         },
 
-        OnError: (error) => {
-          console.error("Media error:", error)
+        OnEmptied: () => {
+          console.log("source empty")
           set({ _playbackState: "paused" })
         },
 
-        OnLoadStart: () => {
-          console.log("Loading started")
+        OnError: (error) => {
+          console.error("Media error:", error)
           set({ _playbackState: "paused" })
         },
 
@@ -308,10 +316,10 @@ export const useAudioPlayerBase = create<PlayerState>()(
 
           set({ src: data.url })
 
-          await get().play()
+          get().play()
         },
         play: async () => {
-          console.log("try plays")
+          console.log("try plays", get().queueTracks)
 
           if (get().queueTracks[get().queueIndex]) {
             set({ isPlaying: true })

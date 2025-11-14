@@ -1,20 +1,24 @@
 import * as React from "react"
 import { type PropsWithChildren, useEffect } from "react"
-import { useAudioPlayer } from "@/Player"
+import { useAudioPlayer, useCurrentTrack } from "@/Player"
 
 export const PlayerProvider = ({ children }: PropsWithChildren) => {
-  const setIsPlaying = useAudioPlayer.use.setIsPlaying()
   const onTimeUpdate = useAudioPlayer.use.OnTimeUpdate()
   const onDurationChange = useAudioPlayer.use.OnDurationChange()
   const onPlaying = useAudioPlayer.use.OnPlaying()
   const onPaused = useAudioPlayer.use.OnPaused()
   const onPlay = useAudioPlayer.use.OnPlay()
   const onEnded = useAudioPlayer.use.OnEnded()
+  const onEmptied = useAudioPlayer.use.OnEmptied()
+  const onLoadStart = useAudioPlayer.use.OnLoadStart()
+  const onCanPlay = useAudioPlayer.use.OnCanPlay()
   const volume = useAudioPlayer.use.volume()
   const is_playing = useAudioPlayer.use.isPlaying()
+  const is_loading = useAudioPlayer.use.isLoading()
   const src = useAudioPlayer.use.src()
   const endSeek = useAudioPlayer.use.endSeek()
   const requestedSeekPosition = useAudioPlayer.use.requestedSeekPosition()
+  const currentTrack = useCurrentTrack()
 
   const audio_ref = React.useRef<HTMLAudioElement>(null)
 
@@ -44,6 +48,8 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
   useEffect(() => {
     if (!audio_ref.current) return
 
+    console.log("is_playing", is_playing)
+
     if (is_playing) {
       audio_ref.current
         .play()
@@ -52,6 +58,18 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
       audio_ref.current.pause()
     }
   }, [is_playing])
+
+  useEffect(() => {
+    if (!audio_ref.current) return
+
+    console.log("is_loading", [is_loading, is_playing])
+
+    if (is_loading === false && is_playing) {
+      audio_ref.current
+        .play()
+        .catch((err) => console.error("Play failed:", err))
+    }
+  }, [is_loading, is_playing])
 
   return (
     <>
@@ -64,6 +82,9 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
         onPlay={onPlay}
         onPause={onPaused}
         onEnded={onEnded}
+        onCanPlay={onCanPlay}
+        onEmptied={onEmptied}
+        onLoadStart={onLoadStart}
       />
     </>
   )
