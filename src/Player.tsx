@@ -25,6 +25,130 @@ export type Track = {
   }
 }
 
+/**
+ * Media event handlers for HTML media elements (audio/video).
+ * Implement these methods to respond to various media playback events.
+ */
+type MediaEventHandlers = {
+  /**
+   * Fired when the resource was not fully loaded, but not as the result of an error.
+   */
+  OnAbort?(): void
+
+  /**
+   * Fired when the user agent can play the media, but estimates that not enough data
+   * has been loaded to play the media up to its end without having to stop for further buffering.
+   */
+  OnCanPlay?(): void
+
+  /**
+   * Fired when the user agent can play the media, and estimates that enough data has been
+   * loaded to play the media up to its end without having to stop for further buffering.
+   */
+  OnCanPlayThrough?(): void
+
+  /**
+   * Fired when the duration property has been updated.
+   * @param durationSeconds The total duration of the media in seconds.
+   */
+  OnDurationChange(durationSeconds: number): void
+
+  /**
+   * Fired when the media has become empty; for example, when the HTMLMediaElement.load()
+   * method is called to reload already loaded or partially loaded media.
+   */
+  OnEmptied?(): void
+
+  /**
+   * Fired when playback stops when end of the media is reached or because no further data is available.
+   */
+  OnEnded?(): void
+
+  /**
+   * Fired when the resource could not be loaded due to an error.
+   * @param error The error that occurred.
+   */
+  OnError?(error: Error): void
+
+  /**
+   * Fired when the first frame of the media has finished loading.
+   */
+  OnLoadedData?(): void
+
+  /**
+   * Fired when the metadata has been loaded.
+   */
+  OnLoadedMetadata?(): void
+
+  /**
+   * Fired when the browser has started to load a resource.
+   */
+  OnLoadStart?(): void
+
+  /**
+   * Fired when a request to pause play is handled and the activity has entered its paused state,
+   * most commonly occurring when the HTMLMediaElement.pause() method is called.
+   */
+  OnPaused?(): void
+
+  /**
+   * Fired when the paused property is changed from true to false, as a result of the
+   * HTMLMediaElement.play() method or the autoplay attribute.
+   */
+  OnPlay?(): void
+
+  /**
+   * Fired when playback is ready to start after having been paused or delayed due to lack of data.
+   */
+  OnPlaying?(): void
+
+  /**
+   * Fired periodically as the browser loads a resource.
+   * @param loadedBytes The number of bytes loaded so far.
+   * @param totalBytes The total number of bytes to load, or -1 if unknown.
+   */
+  OnProgress?(loadedBytes: number, totalBytes: number): void
+
+  /**
+   * Fired when the playback rate has changed.
+   * @param rate The new playback rate (e.g., 1.0 for normal, 2.0 for 2x speed).
+   */
+  OnRateChange?(rate: number): void
+
+  /**
+   * Fired when a seek operation completes.
+   * @param currentTimeSeconds The current playback position in seconds after seeking.
+   */
+  OnSeeked?(currentTimeSeconds: number): void
+
+  /**
+   * Fired when a seek operation begins.
+   * @param targetTimeSeconds The target playback position in seconds being seeked to.
+   */
+  OnSeeking?(targetTimeSeconds: number): void
+
+  /**
+   * Fired when the user agent is trying to fetch media data, but data is unexpectedly not forthcoming.
+   */
+  OnStalled?(): void
+  /**
+   * Fired when the time indicated by the currentTime property has been updated.
+   * @param currentTimeSeconds The current playback position in seconds.
+   */
+  OnTimeUpdate?(currentTimeSeconds: number): void
+
+  /**
+   * Fired when the volume has changed.
+   * @param volume The new volume level (0.0 to 1.0).
+   */
+  OnVolumeChange?(volume: number): void
+
+  /**
+   * Fired when playback has stopped because of a temporary lack of data.
+   */
+  OnWaiting?(): void
+}
+
 type PlayerState = {
   audio: HTMLAudioElement | undefined
   volume: number
@@ -56,7 +180,7 @@ type PlayerState = {
   queueSet: (tracks: Track[], startAtIndex?: number) => void
   queueJump: (trackIndex: number) => Track | undefined
   setAudio: (el?: HTMLAudioElement) => void
-}
+} & MediaEventHandlers
 
 type WithSelectors<S> = S extends { getState: () => infer T }
   ? S & { use: { [K in keyof T]: () => T[K] } }
@@ -87,6 +211,92 @@ export const useAudioPlayerBase = create<PlayerState>()(
     (set, get) => {
       console.log("creating player store")
       return {
+        OnAbort: () => {
+          console.log("Media loading aborted")
+        },
+
+        OnCanPlay: () => {
+          console.log("Media can start playing")
+        },
+
+        OnDurationChange: (durationSeconds) => {
+          console.log(`Duration updated: ${durationSeconds}s`)
+          set({ duration: durationSeconds })
+        },
+
+        OnEmptied: () => {
+          console.log("Media emptied")
+        },
+
+        OnEnded: () => {
+          console.log("Playback ended")
+          // useMediaStore.setState({ isPlaying: false });
+        },
+
+        OnError: (error) => {
+          console.error("Media error:", error)
+          // useMediaStore.setState({ error: error.message });
+        },
+
+        OnLoadedData: () => {
+          console.log("First frame loaded")
+        },
+
+        OnLoadedMetadata: () => {
+          console.log("Metadata loaded")
+        },
+
+        OnLoadStart: () => {
+          console.log("Loading started")
+          // useMediaStore.setState({ isLoading: true });
+        },
+
+        OnPaused: () => {
+          console.log("Playback paused")
+          // useMediaStore.setState({ isPlaying: false });
+        },
+
+        OnPlay: () => {
+          console.log("Playback started")
+          // useMediaStore.setState({ isPlaying: true });
+        },
+
+        OnPlaying: () => {
+          console.log("Playback is active")
+          // useMediaStore.setState({ isPlaying: true });
+        },
+
+        OnProgress: (loadedBytes, totalBytes) => {
+          const percentage =
+            totalBytes > 0 ? ((loadedBytes / totalBytes) * 100).toFixed(2) : 0
+          console.log(`Loading: ${percentage}%`)
+          // useMediaStore.setState({ loadProgress: percentage });
+        },
+
+        OnRateChange: (rate) => {
+          console.log(`Playback rate changed to ${rate}x`)
+          // useMediaStore.setState({ playbackRate: rate });
+        },
+
+        OnSeeked: (currentTimeSeconds) => {
+          console.log(`Seek completed at ${currentTimeSeconds}s`)
+          // useMediaStore.setState({ currentTime: currentTimeSeconds });
+        },
+
+        OnSeeking: (targetTimeSeconds) => {
+          console.log(`Seeking to ${targetTimeSeconds}s`)
+          // useMediaStore.setState({ isSeeking: true });
+        },
+
+        OnTimeUpdate: (currentTimeSeconds) => {
+          console.log(`Current time: ${currentTimeSeconds}s`)
+          // useMediaStore.setState({ currentTime: currentTimeSeconds });
+        },
+
+        OnVolumeChange: (volume) => {
+          console.log(`Volume changed to ${(volume * 100).toFixed(0)}%`)
+          // useMediaStore.setState({ volume });
+        },
         isPlaying: false,
         isLoading: false,
         isError: false,
@@ -106,6 +316,7 @@ export const useAudioPlayerBase = create<PlayerState>()(
 
           el.volume = clamp(newVolumeFraction)
         },
+
         queuePush: (tr: Track) => {
           const queueTracks = [...get().queueTracks]
           queueTracks.push({ ...tr, queueId: randomUUIDFallback() })

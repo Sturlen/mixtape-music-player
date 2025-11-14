@@ -1,6 +1,7 @@
 import * as React from "react"
 import { type PropsWithChildren, useEffect } from "react"
 import { useAudioPlayer } from "@/Player"
+import { stat } from "fs"
 
 export const PlayerProvider = ({ children }: PropsWithChildren) => {
   const setAudio = useAudioPlayer.use.setAudio()
@@ -10,13 +11,7 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
   const setIsPlaying = useAudioPlayer.use.setIsPlaying()
   const queueSkip = useAudioPlayer.use.queueSkip()
   const audio_el = React.useRef<HTMLAudioElement>(null)
-
-  console.log(
-    "audio html el",
-    audio_el.current,
-    "player store audio",
-    player_audio_el,
-  )
+  const onDurationChange = useAudioPlayer((state) => state.OnDurationChange)
 
   // on mount, set the audio element in the player store
   useEffect(() => {
@@ -38,7 +33,7 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
       <audio
         ref={audio_el}
         onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
-        onDurationChange={(e) => setDuration(e.currentTarget.duration)}
+        onDurationChange={(e) => onDurationChange(e.currentTarget.duration)}
         onPlaying={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
         onEnded={() => queueSkip()}
