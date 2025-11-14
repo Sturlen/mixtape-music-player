@@ -1,55 +1,52 @@
 import * as React from "react"
 import { type PropsWithChildren, useEffect } from "react"
-import { useAudioPlayer, useCurrentTrack } from "@/Player"
-import { stat } from "fs"
+import { useAudioPlayer } from "@/Player"
 
 export const PlayerProvider = ({ children }: PropsWithChildren) => {
   const setCurrentTime = useAudioPlayer.use.setCurrentTime()
-  const setDuration = useAudioPlayer.use.setDuration()
   const setIsPlaying = useAudioPlayer.use.setIsPlaying()
-  const queueSkip = useAudioPlayer.use.queueSkip()
-  const audio_el = React.useRef<HTMLAudioElement>(null)
-  const onDurationChange = useAudioPlayer((state) => state.OnDurationChange)
-  const onEnded = useAudioPlayer((state) => state.OnEnded)
-  const volume = useAudioPlayer((state) => state.volume)
-  const is_playing = useAudioPlayer((state) => state.isPlaying)
-  const currentTrack = useCurrentTrack()
-  const src = useAudioPlayer((state) => state.src)
-  const endSeek = useAudioPlayer((state) => state.endSeek)
-  const requestedSeekPosition = useAudioPlayer(
-    (state) => state.requestedSeekPosition,
-  )
+  const onDurationChange = useAudioPlayer.use.OnDurationChange()
+  const onEnded = useAudioPlayer.use.OnEnded()
+  const volume = useAudioPlayer.use.volume()
+  const is_playing = useAudioPlayer.use.isPlaying()
+  const src = useAudioPlayer.use.src()
+  const endSeek = useAudioPlayer.use.endSeek()
+  const requestedSeekPosition = useAudioPlayer.use.requestedSeekPosition()
+
+  const audio_ref = React.useRef<HTMLAudioElement>(null)
 
   // on mount, set the audio element in the player store
   useEffect(() => {
-    if (audio_el.current) {
-      audio_el.current.volume = volume
+    if (audio_ref.current) {
+      audio_ref.current.volume = volume
     }
   }, [volume])
 
   // this is how we send commands to the audio element
 
   useEffect(() => {
-    if (audio_el.current && requestedSeekPosition != undefined) {
-      audio_el.current.currentTime = requestedSeekPosition
+    if (audio_ref.current && requestedSeekPosition != undefined) {
+      audio_ref.current.currentTime = requestedSeekPosition
       endSeek()
     }
   }, [requestedSeekPosition])
 
   useEffect(() => {
-    if (audio_el.current) {
-      audio_el.current.src = src ?? ""
-      audio_el.current.load()
+    if (audio_ref.current) {
+      audio_ref.current.src = src ?? ""
+      audio_ref.current.load()
     }
   }, [src])
 
   useEffect(() => {
-    if (!audio_el.current) return
+    if (!audio_ref.current) return
 
     if (is_playing) {
-      audio_el.current.play().catch((err) => console.error("Play failed:", err))
+      audio_ref.current
+        .play()
+        .catch((err) => console.error("Play failed:", err))
     } else {
-      audio_el.current.pause()
+      audio_ref.current.pause()
     }
   }, [is_playing])
 
@@ -57,7 +54,7 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
     <>
       {children}
       <audio
-        ref={audio_el}
+        ref={audio_ref}
         onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
         onDurationChange={(e) => onDurationChange(e.currentTarget.duration)}
         onPlaying={() => setIsPlaying(true)}
