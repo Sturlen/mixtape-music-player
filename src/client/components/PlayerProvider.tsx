@@ -6,6 +6,9 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
   const setIsPlaying = useAudioPlayer.use.setIsPlaying()
   const onTimeUpdate = useAudioPlayer.use.OnTimeUpdate()
   const onDurationChange = useAudioPlayer.use.OnDurationChange()
+  const onPlaying = useAudioPlayer.use.OnPlaying()
+  const onPaused = useAudioPlayer.use.OnPaused()
+  const onPlay = useAudioPlayer.use.OnPlay()
   const onEnded = useAudioPlayer.use.OnEnded()
   const volume = useAudioPlayer.use.volume()
   const is_playing = useAudioPlayer.use.isPlaying()
@@ -57,8 +60,9 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
         ref={audio_ref}
         onTimeUpdate={(e) => onTimeUpdate(e.currentTarget.currentTime)}
         onDurationChange={(e) => onDurationChange(e.currentTarget.duration)}
-        onPlaying={() => setIsPlaying(true)}
-        onPause={() => setIsPlaying(false)}
+        onPlaying={onPlaying}
+        onPlay={onPlay}
+        onPause={onPaused}
         onEnded={onEnded}
       />
     </>

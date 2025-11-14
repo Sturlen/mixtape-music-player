@@ -66,18 +66,18 @@ type MediaEventHandlers = {
    * Fired when a request to pause play is handled and the activity has entered its paused state,
    * most commonly occurring when the HTMLMediaElement.pause() method is called.
    */
-  OnPaused?(): void
+  OnPaused(): void
 
   /**
    * Fired when the paused property is changed from true to false, as a result of the
    * HTMLMediaElement.play() method or the autoplay attribute.
    */
-  OnPlay?(): void
+  OnPlay(): void
 
   /**
    * Fired when playback is ready to start after having been paused or delayed due to lack of data.
    */
-  OnPlaying?(): void
+  OnPlaying(): void
 
   /**
    * Fired when the time indicated by the currentTime property has been updated.
@@ -94,6 +94,7 @@ type PlayerState = {
   // todo: fix AbortError
   isLoading: boolean
   isError: boolean
+  _playbackState: "playing" | "paused"
   requestedSeekPosition: number | undefined
   src: string | undefined
   play: () => Promise<void>
@@ -159,10 +160,6 @@ export const useAudioPlayerBase = create<PlayerState>()(
           set({ duration: durationSeconds })
         },
 
-        OnEmptied: () => {
-          console.log("Media emptied")
-        },
-
         OnEnded: () => {
           console.log("Playback ended")
           get().queueSkip()
@@ -170,37 +167,29 @@ export const useAudioPlayerBase = create<PlayerState>()(
 
         OnError: (error) => {
           console.error("Media error:", error)
-          // useMediaStore.setState({ error: error.message });
-        },
-
-        OnLoadedData: () => {
-          console.log("First frame loaded")
-        },
-
-        OnLoadedMetadata: () => {
-          console.log("Metadata loaded")
+          set({ _playbackState: "paused" })
         },
 
         OnLoadStart: () => {
           console.log("Loading started")
-          // useMediaStore.setState({ isLoading: true });
+          set({ _playbackState: "paused" })
         },
 
         OnPaused: () => {
           console.log("Playback paused")
-          // useMediaStore.setState({ isPlaying: false });
+          set({ _playbackState: "paused" })
         },
 
         OnPlay: () => {
           console.log("Playback started")
-          // useMediaStore.setState({ isPlaying: true });
+          set({ _playbackState: "playing" })
         },
 
         OnPlaying: () => {
           console.log("Playback is active")
-          // useMediaStore.setState({ isPlaying: true });
+          set({ _playbackState: "playing" })
         },
-
+        _playbackState: "paused",
         src: undefined,
         requestedSeekPosition: undefined,
         isPlaying: false,
