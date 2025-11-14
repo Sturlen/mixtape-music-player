@@ -4,6 +4,7 @@ import { create, type StoreApi, type UseBoundStore } from "zustand"
 import { persist } from "zustand/middleware"
 import { randomUUIDFallback } from "@/lib/uuid"
 import { EdenClient } from "@/lib/eden"
+import { clamp } from "./lib/math"
 
 async function startPlaybackAPI(trackId: string) {
   const { data, error } = await EdenClient.api.player.post({ trackId })
@@ -150,7 +151,6 @@ type MediaEventHandlers = {
 }
 
 type PlayerState = {
-  audio: HTMLAudioElement | undefined
   volume: number
   isPlaying: boolean
   // todo: improve loading states
@@ -158,6 +158,7 @@ type PlayerState = {
   // todo: fix AbortError
   isLoading: boolean
   isError: boolean
+  src: string | undefined
   play: () => Promise<void>
   pause: () => void
   stop: () => void
@@ -179,7 +180,6 @@ type PlayerState = {
   queuePrev: () => Track | undefined
   queueSet: (tracks: Track[], startAtIndex?: number) => void
   queueJump: (trackIndex: number) => Track | undefined
-  setAudio: (el?: HTMLAudioElement) => void
 } & MediaEventHandlers
 
 type WithSelectors<S> = S extends { getState: () => infer T }
@@ -198,12 +198,6 @@ const createSelectors = <S extends UseBoundStore<StoreApi<object>>>(
   }
 
   return store
-}
-
-export function clamp(value: number, min = 0, max = 1): number {
-  const low = Math.min(min, max)
-  const high = Math.max(min, max)
-  return Math.min(Math.max(value, low), high)
 }
 
 export const useAudioPlayerBase = create<PlayerState>()(
@@ -297,10 +291,10 @@ export const useAudioPlayerBase = create<PlayerState>()(
           console.log(`Volume changed to ${(volume * 100).toFixed(0)}%`)
           // useMediaStore.setState({ volume });
         },
+        src: undefined,
         isPlaying: false,
         isLoading: false,
         isError: false,
-        audio: undefined,
         currentTime: 0,
         volume: 0.1,
         duration: 0,
@@ -308,22 +302,11 @@ export const useAudioPlayerBase = create<PlayerState>()(
         queueIndex: 0,
         setVolume: (newVolumeFraction) => {
           set({ volume: clamp(newVolumeFraction) })
-
-          const el = get().audio
-          if (!el) {
-            return
-          }
-
-          el.volume = clamp(newVolumeFraction)
         },
-
         queuePush: (tr: Track) => {
           const queueTracks = [...get().queueTracks]
           queueTracks.push({ ...tr, queueId: randomUUIDFallback() })
           set({ queueTracks })
-          if (!get().audio?.src) {
-            get().setTrack(tr)
-          }
         },
         queueSkip: () => {
           const next_track = get().queueTracks[get().queueIndex + 1]
@@ -396,15 +379,8 @@ export const useAudioPlayerBase = create<PlayerState>()(
         },
         setCurrentTime: (currentTime) => set({ currentTime }),
         seek: (time) => {
-          const a = get().audio
-          if (!a) {
-            return
-          }
-          const clampedTime = clamp(time, 0, a.duration || 0)
-          a.currentTime = clampedTime
-          set({ currentTime: clampedTime })
+          set({ currentTime: time })
         },
-        setAudio: (audio) => set({ audio }),
         setDuration: (duration) => set({ duration }),
         setIsPlaying: (isPlaying) => set({ isPlaying }),
         playTrack: async (track) => {
@@ -416,11 +392,7 @@ export const useAudioPlayerBase = create<PlayerState>()(
           await player.setTrack(track)
         },
         setTrack: async (track) => {
-          const a = get().audio
-          console.log("setTrack", a, track)
-          if (!a) {
-            return
-          }
+          console.log("setTrack", track)
 
           set({ isError: false, isLoading: true })
 
@@ -432,20 +404,16 @@ export const useAudioPlayerBase = create<PlayerState>()(
             return
           }
 
-          a.src = data.url
-          a.load()
+          set({ src: data.url })
+
           await get().play()
         },
         play: async () => {
           console.log("try plays")
-          const a = get().audio
-          if (!a) {
-            return
+
+          if (get().queueTracks[get().queueIndex]) {
+            set({ isPlaying: true })
           }
-
-          await a.play()
-
-          set({ isPlaying: true, duration: a.duration })
         },
         stop: () => {
           set({
@@ -454,20 +422,10 @@ export const useAudioPlayerBase = create<PlayerState>()(
             duration: 0,
             queueIndex: 0,
             queueTracks: [],
+            src: undefined,
           })
-          const el = get().audio
-          if (!el) {
-            return
-          }
-          el.src = ""
-          el.load()
         },
         pause: () => {
-          const a = get().audio
-          if (!a) {
-            return
-          }
-          a.pause()
           set({ isPlaying: false })
         },
       }

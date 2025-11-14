@@ -1,17 +1,19 @@
 import * as React from "react"
 import { type PropsWithChildren, useEffect } from "react"
-import { useAudioPlayer } from "@/Player"
+import { useAudioPlayer, useCurrentTrack } from "@/Player"
 import { stat } from "fs"
 
 export const PlayerProvider = ({ children }: PropsWithChildren) => {
-  const setAudio = useAudioPlayer.use.setAudio()
-  const player_audio_el = useAudioPlayer.use.audio()
   const setCurrentTime = useAudioPlayer.use.setCurrentTime()
   const setDuration = useAudioPlayer.use.setDuration()
   const setIsPlaying = useAudioPlayer.use.setIsPlaying()
   const queueSkip = useAudioPlayer.use.queueSkip()
   const audio_el = React.useRef<HTMLAudioElement>(null)
   const onDurationChange = useAudioPlayer((state) => state.OnDurationChange)
+  const volume = useAudioPlayer((state) => state.volume)
+  const is_playing = useAudioPlayer((state) => state.isPlaying)
+  const currentTrack = useCurrentTrack()
+  const src = useAudioPlayer((state) => state.src)
 
   // on mount, set the audio element in the player store
   useEffect(() => {
@@ -20,12 +22,34 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
       return
     }
 
-    setAudio(audio)
     audio.volume = useAudioPlayer.getState().volume
-    return () => {
-      setAudio()
-    }
+    return () => {}
   }, [])
+
+  // this is how we send commands to the audio element
+
+  useEffect(() => {
+    if (audio_el.current) {
+      audio_el.current.volume = volume
+    }
+  }, [volume])
+
+  useEffect(() => {
+    if (audio_el.current) {
+      audio_el.current.src = src ?? ""
+      audio_el.current.load()
+    }
+  }, [currentTrack])
+
+  useEffect(() => {
+    if (!audio_el.current) return
+
+    if (is_playing) {
+      audio_el.current.play().catch((err) => console.error("Play failed:", err))
+    } else {
+      audio_el.current.pause()
+    }
+  }, [is_playing])
 
   return (
     <>
