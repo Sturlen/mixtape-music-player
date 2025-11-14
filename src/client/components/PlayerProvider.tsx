@@ -3,8 +3,8 @@ import { type PropsWithChildren, useEffect } from "react"
 import { useAudioPlayer } from "@/Player"
 
 export const PlayerProvider = ({ children }: PropsWithChildren) => {
-  const setCurrentTime = useAudioPlayer.use.setCurrentTime()
   const setIsPlaying = useAudioPlayer.use.setIsPlaying()
+  const onTimeUpdate = useAudioPlayer.use.OnTimeUpdate()
   const onDurationChange = useAudioPlayer.use.OnDurationChange()
   const onEnded = useAudioPlayer.use.OnEnded()
   const volume = useAudioPlayer.use.volume()
@@ -55,7 +55,7 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
       {children}
       <audio
         ref={audio_ref}
-        onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+        onTimeUpdate={(e) => onTimeUpdate(e.currentTarget.currentTime)}
         onDurationChange={(e) => onDurationChange(e.currentTarget.duration)}
         onPlaying={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}

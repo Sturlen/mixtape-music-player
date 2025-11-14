@@ -83,7 +83,7 @@ type MediaEventHandlers = {
    * Fired when the time indicated by the currentTime property has been updated.
    * @param currentTimeSeconds The current playback position in seconds.
    */
-  OnTimeUpdate?(currentTimeSeconds: number): void
+  OnTimeUpdate(currentTimeSeconds: number): void
 }
 
 type PlayerState = {
@@ -104,7 +104,6 @@ type PlayerState = {
   /** The public api for starting a new track. */
   playTrack: (track: Track) => void
   currentTime: number
-  setCurrentTime: (currentTime: number) => void
   setDuration: (duration: number) => void
   setVolume: (newVolumeFraction: number) => void
   seek: (time: number) => void
@@ -149,6 +148,10 @@ export const useAudioPlayerBase = create<PlayerState>()(
 
         OnCanPlay: () => {
           console.log("Media can start playing")
+        },
+
+        OnTimeUpdate: (currentTimeSeconds) => {
+          set({ currentTime: currentTimeSeconds })
         },
 
         OnDurationChange: (durationSeconds) => {
@@ -285,7 +288,6 @@ export const useAudioPlayerBase = create<PlayerState>()(
           }
           player.setTrack(start_track)
         },
-        setCurrentTime: (currentTime) => set({ currentTime }),
         seek: (time) => {
           set({ requestedSeekPosition: time })
         },
