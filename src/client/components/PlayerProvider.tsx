@@ -39,7 +39,7 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
       audio_el.current.src = src ?? ""
       audio_el.current.load()
     }
-  }, [currentTrack])
+  }, [src])
 
   useEffect(() => {
     if (!audio_el.current) return
