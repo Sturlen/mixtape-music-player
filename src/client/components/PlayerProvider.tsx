@@ -15,7 +15,6 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
   const is_playing = useAudioPlayer((state) => state.isPlaying)
   const currentTrack = useCurrentTrack()
   const src = useAudioPlayer((state) => state.src)
-  const currentTime = useAudioPlayer((state) => state.currentTime)
   const endSeek = useAudioPlayer((state) => state.endSeek)
   const requestedSeekPosition = useAudioPlayer(
     (state) => state.requestedSeekPosition,
@@ -23,14 +22,10 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
 
   // on mount, set the audio element in the player store
   useEffect(() => {
-    const audio = audio_el.current
-    if (!audio) {
-      return
+    if (audio_el.current) {
+      audio_el.current.volume = volume
     }
-
-    audio.volume = useAudioPlayer.getState().volume
-    return () => {}
-  }, [])
+  }, [volume])
 
   // this is how we send commands to the audio element
 
