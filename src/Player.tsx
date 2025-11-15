@@ -32,60 +32,60 @@ type MediaEventHandlers = {
   /**
    * Fired when the resource was not fully loaded, but not as the result of an error.
    */
-  OnAbort?(): void
+  onAbort?(): void
 
   /**
    * Fired when the user agent can play the media, but estimates that not enough data
    * has been loaded to play the media up to its end without having to stop for further buffering.
    */
-  OnCanPlay(): void
+  onCanPlay(): void
 
   /**
    * Fired when the duration property has been updated.
    * @param durationSeconds The total duration of the media in seconds.
    */
-  OnDurationChange(durationSeconds: number): void
+  onDurationChange(durationSeconds: number): void
 
   /**
    * Fired when playback stops when end of the media is reached or because no further data is available.
    */
-  OnEnded(): void
+  onEnded(): void
 
   /**
    * Fired when the resource could not be loaded due to an error.
    * @param error The error that occurred.
    */
-  OnError?(error: Error): void
+  onError?(error: Error): void
 
   /**
    * Fired when the browser has started to load a resource.
    */
-  OnLoadStart(): void
+  onLoadStart(): void
 
   /**
    * Fired when a request to pause play is handled and the activity has entered its paused state,
    * most commonly occurring when the HTMLMediaElement.pause() method is called.
    */
-  OnPaused(): void
+  onPaused(): void
 
   /**
    * Fired when the paused property is changed from true to false, as a result of the
    * HTMLMediaElement.play() method or the autoplay attribute.
    */
-  OnPlay(): void
+  onPlay(): void
 
   /**
    * Fired when playback is ready to start after having been paused or delayed due to lack of data.
    */
-  OnPlaying(): void
+  onPlaying(): void
 
-  OnEmptied(): void
+  onEmptied(): void
 
   /**
    * Fired when the time indicated by the currentTime property has been updated.
    * @param currentTimeSeconds The current playback position in seconds.
    */
-  OnTimeUpdate(currentTimeSeconds: number): void
+  onTimeUpdate(currentTimeSeconds: number): void
 }
 
 type PublicAPI = {
@@ -113,11 +113,11 @@ type PlayerState = {
   duration: number
   queueTracks: (Track & { queueId: string })[]
   queueIndex: number
+  events: MediaEventHandlers
   stop: () => void
   setTrack: (trackId: Track) => Promise<void>
   endSeek: () => void
-} & MediaEventHandlers &
-  PublicAPI
+} & PublicAPI
 
 type WithSelectors<S> = S extends { getState: () => infer T }
   ? S & { use: { [K in keyof T]: () => T[K] } }
@@ -146,57 +146,59 @@ export const useAudioPlayerBase = create<PlayerState>()(
     (set, get) => {
       log("creating player store")
       return {
-        OnAbort: () => {
-          log("Media loading aborted")
-        },
+        events: {
+          onAbort: () => {
+            log("Media loading aborted")
+          },
 
-        OnLoadStart: () => {
-          log("Start load")
-          set({ isLoading: true, _playbackState: "paused" })
-        },
+          onLoadStart: () => {
+            log("Start load")
+            set({ isLoading: true, _playbackState: "paused" })
+          },
 
-        OnCanPlay: () => {
-          log("Media can start playing")
-          set({ isLoading: false })
-        },
+          onCanPlay: () => {
+            log("Media can start playing")
+            set({ isLoading: false })
+          },
 
-        OnTimeUpdate: (currentTimeSeconds) => {
-          set({ currentTime: currentTimeSeconds })
-        },
+          onTimeUpdate: (currentTimeSeconds) => {
+            set({ currentTime: currentTimeSeconds })
+          },
 
-        OnDurationChange: (durationSeconds) => {
-          log(`Duration updated: ${durationSeconds}s`)
-          set({ duration: durationSeconds })
-        },
+          onDurationChange: (durationSeconds) => {
+            log(`Duration updated: ${durationSeconds}s`)
+            set({ duration: durationSeconds })
+          },
 
-        OnEnded: () => {
-          log("Playback ended")
-          get().queueSkip()
-        },
+          onEnded: () => {
+            log("Playback ended")
+            get().queueSkip()
+          },
 
-        OnEmptied: () => {
-          log("source empty")
-          set({ _playbackState: "paused" })
-        },
+          onEmptied: () => {
+            log("source empty")
+            set({ _playbackState: "paused" })
+          },
 
-        OnError: (error) => {
-          console.error("Media error:", error)
-          set({ _playbackState: "paused" })
-        },
+          onError: (error) => {
+            console.error("Media error:", error)
+            set({ _playbackState: "paused" })
+          },
 
-        OnPaused: () => {
-          log("Playback paused")
-          set({ _playbackState: "paused" })
-        },
+          onPaused: () => {
+            log("Playback paused")
+            set({ _playbackState: "paused" })
+          },
 
-        OnPlay: () => {
-          log("Playback started")
-          set({ _playbackState: "playing" })
-        },
+          onPlay: () => {
+            log("Playback started")
+            set({ _playbackState: "playing" })
+          },
 
-        OnPlaying: () => {
-          log("Playback is active")
-          set({ _playbackState: "playing" })
+          onPlaying: () => {
+            log("Playback is active")
+            set({ _playbackState: "playing" })
+          },
         },
         _playbackState: "paused",
         requestedPlaybackState: "paused",
@@ -351,4 +353,8 @@ export const useCurrentTrack = () => {
 export const useIsPlaying = () => {
   const state = useAudioPlayer.use._playbackState()
   return state === "playing"
+}
+
+export const useEvents = () => {
+  return useAudioPlayer((state) => state.events)
 }

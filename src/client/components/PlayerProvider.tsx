@@ -1,17 +1,20 @@
 import * as React from "react"
 import { type PropsWithChildren, useEffect } from "react"
-import { useAudioPlayer, useCurrentTrack } from "@/Player"
+import { useAudioPlayer, useCurrentTrack, useEvents } from "@/Player"
 
 export const PlayerProvider = ({ children }: PropsWithChildren) => {
-  const onTimeUpdate = useAudioPlayer.use.OnTimeUpdate()
-  const onDurationChange = useAudioPlayer.use.OnDurationChange()
-  const onPlaying = useAudioPlayer.use.OnPlaying()
-  const onPaused = useAudioPlayer.use.OnPaused()
-  const onPlay = useAudioPlayer.use.OnPlay()
-  const onEnded = useAudioPlayer.use.OnEnded()
-  const onEmptied = useAudioPlayer.use.OnEmptied()
-  const onLoadStart = useAudioPlayer.use.OnLoadStart()
-  const onCanPlay = useAudioPlayer.use.OnCanPlay()
+  const {
+    onCanPlay,
+    onTimeUpdate,
+    onDurationChange,
+    onPlaying,
+    onPaused,
+    onPlay,
+    onEnded,
+    onEmptied,
+    onLoadStart,
+  } = useEvents()
+
   const volume = useAudioPlayer.use.volume()
   const requested_playback_state = useAudioPlayer.use.requestedPlaybackState()
   const is_loading = useAudioPlayer.use.isLoading()
