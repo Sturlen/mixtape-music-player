@@ -96,13 +96,12 @@ type PlayerState = {
   isLoading: boolean
   isError: boolean
   _playbackState: "playing" | "paused"
-  requestedPlaybackState: boolean
+  requestedPlaybackState: "playing" | "paused"
   requestedSeekPosition: number | undefined
   src: string | undefined
   play: () => Promise<void>
   pause: () => void
   stop: () => void
-  setIsPlaying: (isPlaying: boolean) => void
   setTrack: (trackId: Track) => Promise<void>
   /** The public api for starting a new track. */
   playTrack: (track: Track) => void
@@ -202,9 +201,9 @@ export const useAudioPlayerBase = create<PlayerState>()(
           set({ _playbackState: "playing" })
         },
         _playbackState: "paused",
+        requestedPlaybackState: "paused",
         src: undefined,
         requestedSeekPosition: undefined,
-        requestedPlaybackState: false,
         isLoading: false,
         isError: false,
         currentTime: 0,
@@ -296,7 +295,6 @@ export const useAudioPlayerBase = create<PlayerState>()(
           set({ requestedSeekPosition: undefined })
         },
         setDuration: (duration) => set({ duration }),
-        setIsPlaying: (isPlaying) => set({ requestedPlaybackState: isPlaying }),
         playTrack: async (track) => {
           const player = get()
           set({
@@ -326,12 +324,12 @@ export const useAudioPlayerBase = create<PlayerState>()(
           log("try plays", get().queueTracks)
 
           if (get().queueTracks[get().queueIndex]) {
-            set({ requestedPlaybackState: true })
+            set({ requestedPlaybackState: "playing" })
           }
         },
         stop: () => {
           set({
-            requestedPlaybackState: false,
+            requestedPlaybackState: "paused",
             currentTime: 0,
             duration: 0,
             queueIndex: 0,
@@ -340,7 +338,7 @@ export const useAudioPlayerBase = create<PlayerState>()(
           })
         },
         pause: () => {
-          set({ requestedPlaybackState: false })
+          set({ requestedPlaybackState: "paused" })
         },
       }
     },
