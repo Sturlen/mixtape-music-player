@@ -13,7 +13,7 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
   const onLoadStart = useAudioPlayer.use.OnLoadStart()
   const onCanPlay = useAudioPlayer.use.OnCanPlay()
   const volume = useAudioPlayer.use.volume()
-  const is_playing = useAudioPlayer.use.isPlaying()
+  const requested_playback_state = useAudioPlayer.use.requestedPlaybackState()
   const is_loading = useAudioPlayer.use.isLoading()
   const src = useAudioPlayer.use.src()
   const endSeek = useAudioPlayer.use.endSeek()
@@ -48,28 +48,28 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
   useEffect(() => {
     if (!audio_ref.current) return
 
-    console.log("is_playing", is_playing)
+    console.log("is_playing", requested_playback_state)
 
-    if (is_playing) {
+    if (requested_playback_state) {
       audio_ref.current
         .play()
         .catch((err) => console.error("Play failed:", err))
     } else {
       audio_ref.current.pause()
     }
-  }, [is_playing])
+  }, [requested_playback_state])
 
   useEffect(() => {
     if (!audio_ref.current) return
 
-    console.log("is_loading", [is_loading, is_playing])
+    console.log("is_loading", [is_loading, requested_playback_state])
 
-    if (is_loading === false && is_playing) {
+    if (is_loading === false && requested_playback_state) {
       audio_ref.current
         .play()
         .catch((err) => console.error("Play failed:", err))
     }
-  }, [is_loading, is_playing])
+  }, [is_loading, requested_playback_state])
 
   return (
     <>

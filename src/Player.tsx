@@ -90,13 +90,13 @@ type MediaEventHandlers = {
 
 type PlayerState = {
   volume: number
-  isPlaying: boolean
   // todo: improve loading states
   // https://goo.gl/LdLk22
   // todo: fix AbortError
   isLoading: boolean
   isError: boolean
   _playbackState: "playing" | "paused"
+  requestedPlaybackState: boolean
   requestedSeekPosition: number | undefined
   src: string | undefined
   play: () => Promise<void>
@@ -204,7 +204,7 @@ export const useAudioPlayerBase = create<PlayerState>()(
         _playbackState: "paused",
         src: undefined,
         requestedSeekPosition: undefined,
-        isPlaying: false,
+        requestedPlaybackState: false,
         isLoading: false,
         isError: false,
         currentTime: 0,
@@ -296,7 +296,7 @@ export const useAudioPlayerBase = create<PlayerState>()(
           set({ requestedSeekPosition: undefined })
         },
         setDuration: (duration) => set({ duration }),
-        setIsPlaying: (isPlaying) => set({ isPlaying }),
+        setIsPlaying: (isPlaying) => set({ requestedPlaybackState: isPlaying }),
         playTrack: async (track) => {
           const player = get()
           set({
@@ -326,12 +326,12 @@ export const useAudioPlayerBase = create<PlayerState>()(
           log("try plays", get().queueTracks)
 
           if (get().queueTracks[get().queueIndex]) {
-            set({ isPlaying: true })
+            set({ requestedPlaybackState: true })
           }
         },
         stop: () => {
           set({
-            isPlaying: false,
+            requestedPlaybackState: false,
             currentTime: 0,
             duration: 0,
             queueIndex: 0,
@@ -340,7 +340,7 @@ export const useAudioPlayerBase = create<PlayerState>()(
           })
         },
         pause: () => {
-          set({ isPlaying: false })
+          set({ requestedPlaybackState: false })
         },
       }
     },
@@ -359,4 +359,9 @@ export const useCurrentTrack = () => {
   const index = useAudioPlayer.use.queueIndex()
   const tracks = useAudioPlayer.use.queueTracks()
   return tracks[index]
+}
+
+export const useIsPlaying = () => {
+  const state = useAudioPlayer.use._playbackState()
+  return state === "playing"
 }
