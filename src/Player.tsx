@@ -88,38 +88,36 @@ type MediaEventHandlers = {
   OnTimeUpdate(currentTimeSeconds: number): void
 }
 
-type PlayerState = {
-  volume: number
-  // todo: improve loading states
-  // https://goo.gl/LdLk22
-  // todo: fix AbortError
-  isLoading: boolean
-  isError: boolean
-  _playbackState: "playing" | "paused"
-  requestedPlaybackState: "playing" | "paused"
-  requestedSeekPosition: number | undefined
-  src: string | undefined
+type PublicAPI = {
   play: () => Promise<void>
   pause: () => void
-  stop: () => void
-  setTrack: (trackId: Track) => Promise<void>
-  /** The public api for starting a new track. */
-  playTrack: (track: Track) => void
-  currentTime: number
-  setDuration: (duration: number) => void
-  setVolume: (newVolumeFraction: number) => void
-  seek: (time: number) => void
-  endSeek: () => void
-  duration: number
-  queueTracks: (Track & { queueId: string })[]
-  queueIndex: number
   queueRemove: (trackIndex: number) => void
   queuePush: (track: Track) => void
   queueSkip: () => Track | undefined
   queuePrev: () => Track | undefined
   queueSet: (tracks: Track[], startAtIndex?: number) => void
   queueJump: (trackIndex: number) => Track | undefined
-} & MediaEventHandlers
+  setVolume: (newVolumeFraction: number) => void
+  seek: (time: number) => void
+}
+
+type PlayerState = {
+  volume: number
+  isLoading: boolean
+  isError: boolean
+  _playbackState: "playing" | "paused"
+  requestedPlaybackState: "playing" | "paused"
+  requestedSeekPosition: number | undefined
+  src: string | undefined
+  currentTime: number
+  duration: number
+  queueTracks: (Track & { queueId: string })[]
+  queueIndex: number
+  stop: () => void
+  setTrack: (trackId: Track) => Promise<void>
+  endSeek: () => void
+} & MediaEventHandlers &
+  PublicAPI
 
 type WithSelectors<S> = S extends { getState: () => infer T }
   ? S & { use: { [K in keyof T]: () => T[K] } }
@@ -293,15 +291,6 @@ export const useAudioPlayerBase = create<PlayerState>()(
         },
         endSeek: () => {
           set({ requestedSeekPosition: undefined })
-        },
-        setDuration: (duration) => set({ duration }),
-        playTrack: async (track) => {
-          const player = get()
-          set({
-            queueIndex: 0,
-            queueTracks: [{ ...track, queueId: randomUUIDFallback() }],
-          })
-          await player.setTrack(track)
         },
         setTrack: async (track) => {
           log("setTrack", track)
