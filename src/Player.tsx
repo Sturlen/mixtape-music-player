@@ -1,18 +1,7 @@
-import { createContext, useContext, useState } from "react"
-
 import { create, type StoreApi, type UseBoundStore } from "zustand"
 import { persist } from "zustand/middleware"
 import { randomUUIDFallback } from "@/lib/uuid"
-import { EdenClient } from "@/lib/eden"
-
-async function startPlaybackAPI(trackId: string) {
-  const { data, error } = await EdenClient.api.player.post({ trackId })
-  if (error) {
-    return { data, error }
-  }
-
-  return { data, error }
-}
+import { clamp } from "./lib/math"
 
 export type Track = {
   id: string
@@ -23,40 +12,102 @@ export type Track = {
     id: string
     name: string
   }
+  trackNumber?: number
 }
 
-type PlayerState = {
-  audio: HTMLAudioElement | undefined
-  volume: number
-  isPlaying: boolean
-  // todo: improve loading states
-  // https://goo.gl/LdLk22
-  // todo: fix AbortError
-  isLoading: boolean
-  isError: boolean
+/**
+ * Media event handlers for HTML media elements (audio/video).
+ * Implement these methods to respond to various media playback events.
+ */
+type MediaEventHandlers = {
+  /**
+   * Fired when the resource was not fully loaded, but not as the result of an error.
+   */
+  onAbort?(): void
+
+  /**
+   * Fired when the user agent can play the media, but estimates that not enough data
+   * has been loaded to play the media up to its end without having to stop for further buffering.
+   */
+  onCanPlay(): void
+
+  /**
+   * Fired when the duration property has been updated.
+   * @param durationSeconds The total duration of the media in seconds.
+   */
+  onDurationChange(durationSeconds: number): void
+
+  /**
+   * Fired when playback stops when end of the media is reached or because no further data is available.
+   */
+  onEnded(): void
+
+  /**
+   * Fired when the resource could not be loaded due to an error.
+   * @param error The error that occurred.
+   */
+  onError?(error: Error): void
+
+  /**
+   * Fired when the browser has started to load a resource.
+   */
+  onLoadStart(): void
+
+  /**
+   * Fired when a request to pause play is handled and the activity has entered its paused state,
+   * most commonly occurring when the HTMLMediaElement.pause() method is called.
+   */
+  onPaused(): void
+
+  /**
+   * Fired when the paused property is changed from true to false, as a result of the
+   * HTMLMediaElement.play() method or the autoplay attribute.
+   */
+  onPlay(): void
+
+  /**
+   * Fired when playback is ready to start after having been paused or delayed due to lack of data.
+   */
+  onPlaying(): void
+
+  onEmptied(): void
+
+  /**
+   * Fired when the time indicated by the currentTime property has been updated.
+   * @param currentTimeSeconds The current playback position in seconds.
+   */
+  onTimeUpdate(currentTimeSeconds: number): void
+}
+
+type PublicAPI = {
   play: () => Promise<void>
   pause: () => void
-  stop: () => void
-  setIsPlaying: (isPlaying: boolean) => void
-  setTrack: (trackId: Track) => Promise<void>
-  /** The public api for starting a new track. */
-  playTrack: (track: Track) => void
-  currentTime: number
-  setCurrentTime: (currentTime: number) => void
-  setDuration: (duration: number) => void
-  setVolume: (newVolumeFraction: number) => void
-  seek: (time: number) => void
-  duration: number
-  queueTracks: (Track & { queueId: string })[]
-  queueIndex: number
   queueRemove: (trackIndex: number) => void
   queuePush: (track: Track) => void
   queueSkip: () => Track | undefined
   queuePrev: () => Track | undefined
   queueSet: (tracks: Track[], startAtIndex?: number) => void
   queueJump: (trackIndex: number) => Track | undefined
-  setAudio: (el?: HTMLAudioElement) => void
+  setVolume: (newVolumeFraction: number) => void
+  seek: (time: number) => void
 }
+
+type PlayerState = {
+  volume: number
+  isLoading: boolean
+  isError: boolean
+  _playbackState: "playing" | "paused"
+  requestedPlaybackState: "playing" | "paused"
+  requestedSeekPosition: number | undefined
+  src: string | undefined
+  currentTime: number
+  duration: number
+  queueTracks: (Track & { queueId: string })[]
+  queueIndex: number
+  events: MediaEventHandlers
+  stop: () => void
+  endSeek: () => void
+} & PublicAPI
 
 type WithSelectors<S> = S extends { getState: () => infer T }
   ? S & { use: { [K in keyof T]: () => T[K] } }
@@ -76,21 +127,75 @@ const createSelectors = <S extends UseBoundStore<StoreApi<object>>>(
   return store
 }
 
-export function clamp(value: number, min = 0, max = 1): number {
-  const low = Math.min(min, max)
-  const high = Math.max(min, max)
-  return Math.min(Math.max(value, low), high)
+function log(message?: string, ...optionalParams: unknown[]) {
+  console.log(`[PLAYER] ${message}`, ...optionalParams)
 }
 
 export const useAudioPlayerBase = create<PlayerState>()(
   persist(
     (set, get) => {
-      console.log("creating player store")
+      log("creating player store")
       return {
-        isPlaying: false,
+        events: {
+          onAbort: () => {
+            log("Media loading aborted")
+          },
+
+          onLoadStart: () => {
+            log("Start load")
+            set({ isLoading: true, _playbackState: "paused" })
+          },
+
+          onCanPlay: () => {
+            log("Media can start playing")
+            set({ isLoading: false })
+          },
+
+          onTimeUpdate: (currentTimeSeconds) => {
+            set({ currentTime: currentTimeSeconds })
+          },
+
+          onDurationChange: (durationSeconds) => {
+            log(`Duration updated: ${durationSeconds}s`)
+            set({ duration: durationSeconds })
+          },
+
+          onEnded: () => {
+            log("Playback ended")
+            get().queueSkip()
+          },
+
+          onEmptied: () => {
+            log("source empty")
+            set({ _playbackState: "paused" })
+          },
+
+          onError: (error) => {
+            console.error("Media error:", error)
+            set({ _playbackState: "paused" })
+          },
+
+          onPaused: () => {
+            log("Playback paused")
+            set({ _playbackState: "paused" })
+          },
+
+          onPlay: () => {
+            log("Playback started")
+            set({ _playbackState: "playing" })
+          },
+
+          onPlaying: () => {
+            log("Playback is active")
+            set({ _playbackState: "playing" })
+          },
+        },
+        _playbackState: "paused",
+        requestedPlaybackState: "paused",
+        src: undefined,
+        requestedSeekPosition: undefined,
         isLoading: false,
         isError: false,
-        audio: undefined,
         currentTime: 0,
         volume: 0.1,
         duration: 0,
@@ -98,21 +203,11 @@ export const useAudioPlayerBase = create<PlayerState>()(
         queueIndex: 0,
         setVolume: (newVolumeFraction) => {
           set({ volume: clamp(newVolumeFraction) })
-
-          const el = get().audio
-          if (!el) {
-            return
-          }
-
-          el.volume = clamp(newVolumeFraction)
         },
         queuePush: (tr: Track) => {
           const queueTracks = [...get().queueTracks]
           queueTracks.push({ ...tr, queueId: randomUUIDFallback() })
           set({ queueTracks })
-          if (!get().audio?.src) {
-            get().setTrack(tr)
-          }
         },
         queueSkip: () => {
           const next_track = get().queueTracks[get().queueIndex + 1]
@@ -120,7 +215,6 @@ export const useAudioPlayerBase = create<PlayerState>()(
             return
           }
           set({ queueIndex: get().queueIndex + 1 })
-          get().setTrack(next_track)
           return next_track
         },
         queuePrev: () => {
@@ -132,7 +226,6 @@ export const useAudioPlayerBase = create<PlayerState>()(
             return
           }
           set({ queueIndex: get().queueIndex - 1 })
-          get().setTrack(prev_track)
           return prev_track
         },
         queueJump: (trackIndex) => {
@@ -141,11 +234,10 @@ export const useAudioPlayerBase = create<PlayerState>()(
             return
           }
           set({ queueIndex: trackIndex })
-          get().setTrack(track)
           return track
         },
         queueRemove: (deleteIndex) => {
-          console.log("deleteindex", 0, get().queueTracks)
+          log("deleteindex", 0, get().queueTracks)
           const exitsts = get().queueTracks[deleteIndex]
           if (!exitsts) {
             return
@@ -181,83 +273,32 @@ export const useAudioPlayerBase = create<PlayerState>()(
             get().stop()
             return
           }
-          player.setTrack(start_track)
         },
-        setCurrentTime: (currentTime) => set({ currentTime }),
         seek: (time) => {
-          const a = get().audio
-          if (!a) {
-            return
-          }
-          const clampedTime = clamp(time, 0, a.duration || 0)
-          a.currentTime = clampedTime
-          set({ currentTime: clampedTime })
+          set({ requestedSeekPosition: time })
         },
-        setAudio: (audio) => set({ audio }),
-        setDuration: (duration) => set({ duration }),
-        setIsPlaying: (isPlaying) => set({ isPlaying }),
-        playTrack: async (track) => {
-          const player = get()
-          set({
-            queueIndex: 0,
-            queueTracks: [{ ...track, queueId: randomUUIDFallback() }],
-          })
-          await player.setTrack(track)
-        },
-        setTrack: async (track) => {
-          const a = get().audio
-          console.log("setTrack", a, track)
-          if (!a) {
-            return
-          }
-
-          set({ isError: false, isLoading: true })
-
-          const { data, error } = await startPlaybackAPI(track.id)
-
-          if (error) {
-            console.error("Error starting playback", { cause: error })
-            set({ isError: true, isLoading: false })
-            return
-          }
-
-          a.src = data.url
-          a.load()
-          await get().play()
+        endSeek: () => {
+          set({ requestedSeekPosition: undefined })
         },
         play: async () => {
-          console.log("try plays")
-          const a = get().audio
-          if (!a) {
-            return
+          log("try plays", get().queueTracks)
+
+          if (get().queueTracks[get().queueIndex]) {
+            set({ requestedPlaybackState: "playing" })
           }
-
-          await a.play()
-
-          set({ isPlaying: true, duration: a.duration })
         },
         stop: () => {
           set({
-            isPlaying: false,
+            requestedPlaybackState: "paused",
             currentTime: 0,
             duration: 0,
             queueIndex: 0,
             queueTracks: [],
+            src: undefined,
           })
-          const el = get().audio
-          if (!el) {
-            return
-          }
-          el.src = ""
-          el.load()
         },
         pause: () => {
-          const a = get().audio
-          if (!a) {
-            return
-          }
-          a.pause()
-          set({ isPlaying: false })
+          set({ requestedPlaybackState: "paused" })
         },
       }
     },
@@ -265,6 +306,8 @@ export const useAudioPlayerBase = create<PlayerState>()(
       name: "audio-player-storage",
       partialize: (state) => ({
         volume: state.volume,
+        queueTracks: state.queueTracks,
+        queueIndex: state.queueIndex,
       }),
     },
   ),
@@ -276,4 +319,13 @@ export const useCurrentTrack = () => {
   const index = useAudioPlayer.use.queueIndex()
   const tracks = useAudioPlayer.use.queueTracks()
   return tracks[index]
+}
+
+export const useIsPlaying = () => {
+  const state = useAudioPlayer.use._playbackState()
+  return state === "playing"
+}
+
+export const useEvents = () => {
+  return useAudioPlayer((state) => state.events)
 }

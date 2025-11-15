@@ -3,14 +3,20 @@ import { TextScroller } from "./ui/TextScroller"
 
 export function CurrentTrackScroller() {
   const track = useCurrentTrack()
-  const isLoading = false // todo: fix player so it accurately reports loading
+  const isLoading = useAudioPlayer.use.isLoading()
 
-  const title = isLoading ? "Loading..." : track?.name || "No Track Playing"
+  let text = "No Track Playing"
+
+  if (isLoading) {
+    text = `${track?.trackNumber ?? 1}`.padStart(3, "0") + " " + "Loading..."
+  } else if (track) {
+    text = `${track?.trackNumber ?? 1}`.padStart(3, "0") + " " + track.name
+  }
 
   return (
     <TextScroller
       className="bg-background flex min-h-[40px] w-full items-center overflow-hidden rounded-md px-4 py-3 font-mono font-bold tracking-widest whitespace-pre text-blue-400"
-      text={"01 " + title}
+      text={text}
       displayWidth={24}
       speed={200}
     />

@@ -1,10 +1,10 @@
 import { useCallback, useEffect } from "react"
 import { useMediaSession } from "@/lib/mediasession"
-import { useAudioPlayer, useCurrentTrack } from "@/Player"
+import { useAudioPlayer, useCurrentTrack, useIsPlaying } from "@/Player"
 
 /** Connects the player state machine to browser mediasessions API */
 export function MediaSessionSync() {
-  const isPlaying = useAudioPlayer.use.isPlaying()
+  const isPlaying = useIsPlaying()
   const currentTrack = useCurrentTrack()
   const queueSkip = useAudioPlayer.use.queueSkip()
   const queuePrev = useAudioPlayer.use.queuePrev()

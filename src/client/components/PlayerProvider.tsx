@@ -1,47 +1,114 @@
 import * as React from "react"
 import { type PropsWithChildren, useEffect } from "react"
-import { useAudioPlayer } from "@/Player"
+import { useAudioPlayer, useCurrentTrack, useEvents } from "@/Player"
+import { EdenClient } from "@/lib/eden"
+import { useQuery } from "@tanstack/react-query"
+
+async function fetchPlaybackData(trackId: string) {
+  const { data, error } = await EdenClient.api.player.post({ trackId })
+  if (error) {
+    throw new Error("Playback error", { cause: error })
+  }
+
+  return data.url
+}
 
 export const PlayerProvider = ({ children }: PropsWithChildren) => {
-  const setAudio = useAudioPlayer.use.setAudio()
-  const player_audio_el = useAudioPlayer.use.audio()
-  const setCurrentTime = useAudioPlayer.use.setCurrentTime()
-  const setDuration = useAudioPlayer.use.setDuration()
-  const setIsPlaying = useAudioPlayer.use.setIsPlaying()
-  const queueSkip = useAudioPlayer.use.queueSkip()
-  const audio_el = React.useRef<HTMLAudioElement>(null)
+  const {
+    onCanPlay,
+    onTimeUpdate,
+    onDurationChange,
+    onPlaying,
+    onPaused,
+    onPlay,
+    onEnded,
+    onEmptied,
+    onLoadStart,
+  } = useEvents()
 
-  console.log(
-    "audio html el",
-    audio_el.current,
-    "player store audio",
-    player_audio_el,
-  )
+  const volume = useAudioPlayer.use.volume()
+  const requested_playback_state = useAudioPlayer.use.requestedPlaybackState()
+  const is_loading = useAudioPlayer.use.isLoading()
+  const endSeek = useAudioPlayer.use.endSeek()
+  const requestedSeekPosition = useAudioPlayer.use.requestedSeekPosition()
+  const currentTrack = useCurrentTrack()
+
+  const audio_ref = React.useRef<HTMLAudioElement>(null)
+
+  const { data: src } = useQuery({
+    queryKey: ["playback", currentTrack?.id],
+    enabled: !!currentTrack,
+    queryFn: async ({ queryKey }) => {
+      return fetchPlaybackData(queryKey[1] ?? "")
+    },
+    staleTime: Infinity,
+  })
 
   // on mount, set the audio element in the player store
   useEffect(() => {
-    const audio = audio_el.current
-    if (!audio) {
-      return
+    if (audio_ref.current) {
+      audio_ref.current.volume = volume
     }
+  }, [volume])
 
-    setAudio(audio)
-    audio.volume = useAudioPlayer.getState().volume
-    return () => {
-      setAudio()
+  // this is how we send commands to the audio element
+
+  useEffect(() => {
+    if (audio_ref.current && requestedSeekPosition != undefined) {
+      audio_ref.current.currentTime = requestedSeekPosition
+      endSeek()
     }
-  }, [])
+  }, [requestedSeekPosition])
+
+  useEffect(() => {
+    if (audio_ref.current) {
+      audio_ref.current.src = src ?? ""
+      audio_ref.current.load()
+    }
+  }, [src])
+
+  useEffect(() => {
+    if (!audio_ref.current) return
+
+    console.log("is_playing", requested_playback_state)
+
+    if (requested_playback_state == "playing") {
+      audio_ref.current
+        .play()
+        .catch((err) => console.error("Play failed:", err))
+    } else {
+      console.log("Pause")
+      audio_ref.current.pause()
+    }
+  }, [requested_playback_state])
+
+  useEffect(() => {
+    if (!audio_ref.current) return
+
+    console.log("is_loading", [is_loading, requested_playback_state])
+
+    if (is_loading === false && requested_playback_state == "playing") {
+      audio_ref.current
+        .play()
+        .catch((err) => console.error("Play failed:", err))
+    }
+  }, [is_loading, requested_playback_state])
 
   return (
     <>
       {children}
       <audio
-        ref={audio_el}
-        onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
-        onDurationChange={(e) => setDuration(e.currentTarget.duration)}
-        onPlaying={() => setIsPlaying(true)}
-        onPause={() => setIsPlaying(false)}
-        onEnded={() => queueSkip()}
+        ref={audio_ref}
+        onTimeUpdate={(e) => onTimeUpdate(e.currentTarget.currentTime)}
+        onDurationChange={(e) => onDurationChange(e.currentTarget.duration)}
+        onPlaying={onPlaying}
+        onPlay={onPlay}
+        onPause={onPaused}
+        onEnded={onEnded}
+        onCanPlay={onCanPlay}
+        onEmptied={onEmptied}
+        onLoadStart={onLoadStart}
+        src={src}
       />
     </>
   )

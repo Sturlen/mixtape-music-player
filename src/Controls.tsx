@@ -17,6 +17,9 @@ export function Controls() {
   const pause = useAudioPlayer.use.pause()
   const skip = useAudioPlayer.use.queueSkip()
   const prev = useAudioPlayer.use.queuePrev()
+  const requestedPlaybackState = useAudioPlayer.use.requestedPlaybackState()
+
+  const is_play_button_down = requestedPlaybackState === "playing"
 
   return (
     <div className="flex w-full flex-col items-center">
@@ -45,7 +48,14 @@ export function Controls() {
             <SkipBackIcon />
           </button>
           <button
-            className="bg-primary text-primary-foreground hover:bg-primary/90 flex grow items-center justify-center"
+            data-active={is_play_button_down}
+            className={cn(
+              "bg-primary text-primary-foreground hover:bg-primary/90 flex grow items-center justify-center",
+              {
+                "text-foreground bg-amber-400 hover:bg-amber-400/90":
+                  is_play_button_down,
+              },
+            )}
             onClick={() => play()}
           >
             <PlayIcon />
@@ -71,7 +81,9 @@ export function Controls() {
 }
 
 function CurrentTime() {
-  const time = useAudioPlayer.use.currentTime()
+  const player_time = useAudioPlayer.use.currentTime()
+  const requested_time = useAudioPlayer.use.requestedSeekPosition()
+  const time = requested_time ?? player_time
   if (!Number.isFinite(time)) {
     return <span>--:--</span>
   }
