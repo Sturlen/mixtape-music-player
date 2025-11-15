@@ -44,6 +44,7 @@ export function usePlayAlbum() {
             id: album.id,
             name: album.name,
           },
+          trackNumber: track.trackNumber,
         })),
         trackIndex,
       )
