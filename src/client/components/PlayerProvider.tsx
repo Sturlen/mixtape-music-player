@@ -53,11 +53,12 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
 
     console.log("is_playing", requested_playback_state)
 
-    if (requested_playback_state) {
+    if (requested_playback_state == "playing") {
       audio_ref.current
         .play()
         .catch((err) => console.error("Play failed:", err))
     } else {
+      console.log("Pause")
       audio_ref.current.pause()
     }
   }, [requested_playback_state])
@@ -67,7 +68,7 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
 
     console.log("is_loading", [is_loading, requested_playback_state])
 
-    if (is_loading === false && requested_playback_state) {
+    if (is_loading === false && requested_playback_state == "playing") {
       audio_ref.current
         .play()
         .catch((err) => console.error("Play failed:", err))
