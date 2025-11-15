@@ -8,7 +8,7 @@ export function CurrentTrackScroller() {
   let text = "No Track Playing"
 
   if (isLoading) {
-    text = "Loading..."
+    text = `${track?.trackNumber ?? 1}`.padStart(3, "0") + " " + "Loading..."
   } else if (track) {
     text = `${track?.trackNumber ?? 1}`.padStart(3, "0") + " " + track.name
   }
