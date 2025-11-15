@@ -311,7 +311,7 @@ const app = new Elysia()
 
         return proc.stdout
       } catch (error) {
-        console.error()
+        console.error(ffmpeg_stderr)
         console.error(error)
       }
     }
