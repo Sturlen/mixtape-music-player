@@ -24,6 +24,7 @@ async function playAlbum(albumId: string) {
 
 export function usePlayAlbum() {
   const queueSet = useAudioPlayer.use.queueSet()
+  const play = useAudioPlayer.use.play()
   const { mutate } = useMutation<
     {
       album: Album
@@ -48,6 +49,7 @@ export function usePlayAlbum() {
         })),
         trackIndex,
       )
+      play()
     },
   })
   return mutate
