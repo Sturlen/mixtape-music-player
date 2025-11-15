@@ -12,8 +12,15 @@ import type {
   Source,
   Track,
 } from "@/lib/types"
-import { processImage, getMimeType } from "@/lib/imageHandler"
 import { raise } from "@/lib/utils"
+import { $ } from "bun"
+
+if (env.USE_FFMPEG) {
+  console.warn(
+    Bun.color("yellow", "ansi") +
+      "FFMPEG audio file conversion is enabled. if you are experiencing issues, try setting USE_FFMPEG=0 disable it.",
+  )
+}
 
 function compareTracksByNumberName(a: Track, b: Track): number {
   if (a.trackNumber !== undefined && b.trackNumber !== undefined) {
@@ -279,13 +286,27 @@ const app = new Elysia()
       throw new NotFoundError()
     }
   })
-  .get("/api/assets/:assetId", async ({ params: { assetId } }) => {
-    try {
-      const asset = db.audioAssets.get(assetId)
-      return Bun.file(asset?.path ?? "")
-    } catch (err) {
-      throw new NotFoundError()
+  .get("/api/assets/:assetId", async ({ params: { assetId }, set, status }) => {
+    const asset = db.audioAssets.get(assetId)
+    if (!asset) {
+      return status(404, "Asset not found")
     }
+
+    if (env.USE_FFMPEG)
+      try {
+        const proc =
+          await $`ffmpeg -i ${asset?.path ?? ""} -f mp3 -vn -q:a 1 pipe:1`.quiet()
+        console.error(proc.stderr.toString())
+        set.headers["content-type"] = "audio/mpeg"
+
+        return proc.stdout
+      } catch (error) {
+        console.error(error)
+      }
+
+    const file = Bun.file(asset?.path ?? "")
+    set.headers["content-type"] = file.type
+    return file
   })
   .post("/api/libary/reload", async () => await reloadLibrary(), {
     detail: {
