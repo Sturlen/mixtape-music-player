@@ -1,17 +1,7 @@
 import { create, type StoreApi, type UseBoundStore } from "zustand"
 import { persist } from "zustand/middleware"
 import { randomUUIDFallback } from "@/lib/uuid"
-import { EdenClient } from "@/lib/eden"
 import { clamp } from "./lib/math"
-
-async function startPlaybackAPI(trackId: string) {
-  const { data, error } = await EdenClient.api.player.post({ trackId })
-  if (error) {
-    return { data, error }
-  }
-
-  return { data, error }
-}
 
 export type Track = {
   id: string
@@ -115,7 +105,6 @@ type PlayerState = {
   queueIndex: number
   events: MediaEventHandlers
   stop: () => void
-  setTrack: (trackId: Track) => Promise<void>
   endSeek: () => void
 } & PublicAPI
 
@@ -225,7 +214,6 @@ export const useAudioPlayerBase = create<PlayerState>()(
             return
           }
           set({ queueIndex: get().queueIndex + 1 })
-          get().setTrack(next_track)
           return next_track
         },
         queuePrev: () => {
@@ -237,7 +225,6 @@ export const useAudioPlayerBase = create<PlayerState>()(
             return
           }
           set({ queueIndex: get().queueIndex - 1 })
-          get().setTrack(prev_track)
           return prev_track
         },
         queueJump: (trackIndex) => {
@@ -246,7 +233,6 @@ export const useAudioPlayerBase = create<PlayerState>()(
             return
           }
           set({ queueIndex: trackIndex })
-          get().setTrack(track)
           return track
         },
         queueRemove: (deleteIndex) => {
@@ -286,30 +272,12 @@ export const useAudioPlayerBase = create<PlayerState>()(
             get().stop()
             return
           }
-          player.setTrack(start_track)
         },
         seek: (time) => {
           set({ requestedSeekPosition: time })
         },
         endSeek: () => {
           set({ requestedSeekPosition: undefined })
-        },
-        setTrack: async (track) => {
-          log("setTrack", track)
-
-          set({ isError: false, isLoading: true })
-
-          const { data, error } = await startPlaybackAPI(track.id)
-
-          if (error) {
-            console.error("Error starting playback", { cause: error })
-            set({ isError: true, isLoading: false })
-            return
-          }
-
-          set({ src: data.url })
-
-          get().play()
         },
         play: async () => {
           log("try plays", get().queueTracks)
@@ -337,6 +305,8 @@ export const useAudioPlayerBase = create<PlayerState>()(
       name: "audio-player-storage",
       partialize: (state) => ({
         volume: state.volume,
+        queueTracks: state.queueTracks,
+        queueIndex: state.queueIndex,
       }),
     },
   ),

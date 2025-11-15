@@ -1,6 +1,17 @@
 import * as React from "react"
 import { type PropsWithChildren, useEffect } from "react"
 import { useAudioPlayer, useCurrentTrack, useEvents } from "@/Player"
+import { EdenClient } from "@/lib/eden"
+import { useQuery } from "@tanstack/react-query"
+
+async function fetchPlaybackData(trackId: string) {
+  const { data, error } = await EdenClient.api.player.post({ trackId })
+  if (error) {
+    throw new Error("Playback error", { cause: error })
+  }
+
+  return data.url
+}
 
 export const PlayerProvider = ({ children }: PropsWithChildren) => {
   const {
@@ -18,12 +29,20 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
   const volume = useAudioPlayer.use.volume()
   const requested_playback_state = useAudioPlayer.use.requestedPlaybackState()
   const is_loading = useAudioPlayer.use.isLoading()
-  const src = useAudioPlayer.use.src()
   const endSeek = useAudioPlayer.use.endSeek()
   const requestedSeekPosition = useAudioPlayer.use.requestedSeekPosition()
   const currentTrack = useCurrentTrack()
 
   const audio_ref = React.useRef<HTMLAudioElement>(null)
+
+  const { data: src } = useQuery({
+    queryKey: ["playback", currentTrack?.id],
+    enabled: !!currentTrack,
+    queryFn: async ({ queryKey }) => {
+      return fetchPlaybackData(queryKey[1] ?? "")
+    },
+    staleTime: Infinity,
+  })
 
   // on mount, set the audio element in the player store
   useEffect(() => {
@@ -89,6 +108,7 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
         onCanPlay={onCanPlay}
         onEmptied={onEmptied}
         onLoadStart={onLoadStart}
+        src={src}
       />
     </>
   )
