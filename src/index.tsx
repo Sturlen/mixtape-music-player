@@ -292,17 +292,20 @@ const app = new Elysia()
       return status(404, "Asset not found")
     }
 
-    if (env.USE_FFMPEG)
+    if (env.USE_FFMPEG) {
+      let ffmpeg_stderr = ""
       try {
         const proc =
           await $`ffmpeg -i ${asset?.path ?? ""} -f mp3 -vn -q:a 1 pipe:1`.quiet()
-        console.error(proc.stderr.toString())
+        ffmpeg_stderr = proc.stderr.toString()
         set.headers["content-type"] = "audio/mpeg"
 
         return proc.stdout
       } catch (error) {
+        console.error()
         console.error(error)
       }
+    }
 
     const file = Bun.file(asset?.path ?? "")
     set.headers["content-type"] = file.type
