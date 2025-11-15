@@ -295,10 +295,19 @@ const app = new Elysia()
     if (env.USE_FFMPEG) {
       let ffmpeg_stderr = ""
       try {
+        const start = performance.now()
         const proc =
           await $`ffmpeg -i ${asset?.path ?? ""} -f mp3 -vn -q:a 1 pipe:1`.quiet()
         ffmpeg_stderr = proc.stderr.toString()
         set.headers["content-type"] = "audio/mpeg"
+
+        const end = performance.now()
+
+        console.log(
+          "ffmpeg took %ds for file '%s'",
+          (end - start) / 1000,
+          asset.name,
+        )
 
         return proc.stdout
       } catch (error) {
