@@ -18,13 +18,13 @@ RUN bun run build
 
 FROM oven/bun:1.3-debian  AS release
 WORKDIR /app
-# copy only production node_modules and built assets
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
-# copy source in case start script requires it (keeps runtime correct)
 COPY --from=builder /app/src ./src
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/tsconfig.json ./tsconfig.json
+COPY --from=builder /app/demo-music ./demo-music
 
 ENV NODE_ENV=production
 EXPOSE 3000
