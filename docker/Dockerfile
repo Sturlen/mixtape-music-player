@@ -1,7 +1,7 @@
 
 FROM oven/bun:1.3-debian
 WORKDIR /app
-COPY package.json bun.lock /app/
+COPY . /app/
 
 RUN bun install --frozen-lockfile --production
 RUN bun run build
