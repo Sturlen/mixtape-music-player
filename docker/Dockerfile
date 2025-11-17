@@ -24,6 +24,7 @@ COPY --from=builder /app/dist ./dist
 # copy source in case start script requires it (keeps runtime correct)
 COPY --from=builder /app/src ./src
 COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/tsconfig.json ./tsconfig.json
 
 ENV NODE_ENV=production
 EXPOSE 3000
