@@ -4,11 +4,11 @@
 
 Self hosted music streaming service, built on top of your own library. Stream your collection directly to any device with a web browser.
 
-[!WARNING]
-This project is still experimental. Do not expect a stable API. 
+> [!WARNING]
+> This project is still experimental. Do not expect a stable API. 
 
-[!WARNING]
-Seriously. Read above warning. 
+> [!WARNING]
+> Seriously. Read above warning. 
 
 
 
