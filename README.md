@@ -4,6 +4,14 @@
 
 Self hosted music streaming service, built on top of your own library. Stream your collection directly to any device with a web browser.
 
+[!WARNING]
+This project is still experimental. Do not expect a stable API. 
+
+[!WARNING]
+Seriously. Read above warning. 
+
+
+
 ## How to use
 
 ### 1. Install bun
