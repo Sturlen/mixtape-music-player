@@ -5,12 +5,10 @@
 Self hosted music streaming service, built on top of your own library. Stream your collection directly to any device with a web browser.
 
 > [!WARNING]
-> This project is still experimental. Do not expect a stable API. 
+> This project is still experimental. Do not expect a stable API.
 
 > [!WARNING]
-> Seriously. Read above warning. 
-
-
+> Seriously. Read above warning.
 
 ## How to use
 
@@ -34,22 +32,40 @@ cd mixtape-music-player
 ### 3. Install dependencies
 
 ```bash
-bun install --production
+bun install
 ```
 
 ### 4. Configure
 
-Available options are listed in [/src/shared/env.ts](/src/shared/env.ts)
-enviorment variables can be set through your system or by creating a `.env.production.local` file
+Mixtape is currently configured through environment variables. Available options are listed in [/src/shared/env.ts](/src/shared/env.ts)
+
+To begin using it with your music, set `MUSIC_PATH` to point towards your music library. Here's how mixtape expects it to be structured:
+
+```
+Media/
+├─ Gorillaz/
+│  ├─ artist.jpg
+│  ├─ Demon Days/
+│  │  ├─ 01 - Intro.mp3
+│  │  ├─ 02 - Last Living Souls.mp3
+│  │  ├─ 03 - Kids with Guns.mp3
+│  │  ├─ ...
+│  │  └─ cover.jpg
+│  └─ Plastic Beach/
+│     └─ ...
+├─ 2 Mello/
+```
+
+Works out of the box with how Bancamp formats albums, so you can drop that right in. Audio files that differ only by the extension will be treated as different formats of the same track.
 
 ### 5. Run
 
-Mixtape does not currently come with any auto restart, run on startup or other functions you would expect from a long running service. If you need this you can run it with tools like pm2 or inside a docker image.
+Mixtape does not currently come with any auto restart, run on startup or other functions you would expect from a long running service. If you need this you can run it with tools like pm2 or inside a docker image. Not yet opitmized for production.
 
 To run for production:
 
 ```bash
-bun start
+bun run start
 ```
 
 ## Current Limitations
@@ -79,3 +95,7 @@ bun dev
 ```
 
 Now tinker away to your hearts content. Feel free to submit back patches.
+
+## Philosophy
+
+Your files, your rules. Use the file system as a source of truth as much as possible, rather than some propietary format. (very much inspired by Obsidian)
