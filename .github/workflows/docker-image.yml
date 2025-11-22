@@ -51,7 +51,7 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
-            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/spelemann-demo:${{ github.sha }}
-            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/spelemann-demo:latest
+            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mixtape:${{ github.sha }}
+            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mixtape:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
