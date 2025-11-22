@@ -15,5 +15,6 @@ ENV NODE_ENV=production
 EXPOSE 3000
 USER bun
 
-CMD ["bun", "run", "start"]
+# using start script can lead to illegal instruction execptions.
+CMD ["bun", "run", "src/index.tsx"]
 
