@@ -1,6 +1,11 @@
 # MIXTAPE
+<p align="center">
+<img src="/mixtape_logo.svg" width="500px" align="center" alt="Open5e logo" />
+</p>
 
-![MIXTAPE Audio Cassette Logo](/mixtape_logo.svg)
+<p align="center">
+    <a href="https://open5e.com">DEMO PAGE</a>
+</p>
 
 Self hosted music streaming service, built on top of your own library. Stream your collection directly to any device with a web browser.
 
@@ -9,6 +14,16 @@ Self hosted music streaming service, built on top of your own library. Stream yo
 
 > [!WARNING]
 > Seriously. Read above warning.
+
+## Screenshots
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/e544c705-428e-4c1c-9cbf-bc7429749aa8" height="300px" align="center" alt="Screenshot of desktop version" />
+  <img height="300px" align="center" alt="mobile_albums" src="https://github.com/user-attachments/assets/9e9b1a93-2756-4d40-aa6d-c35280dc6efe" />
+  <img height="300px" align="center" alt="mobile_controls" src="https://github.com/user-attachments/assets/270e7804-2ec6-4eb2-9713-76aca2bc5172" />
+</p>
+
+
 
 ## How to use
 
