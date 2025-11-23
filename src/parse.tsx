@@ -157,16 +157,25 @@ export function extractSongInfo(filename: string): {
   // Pattern: "Artist - Album - 01 Title" or "Artist - Album - Title"
   const match = baseName.match(/^(.+?)\s-\s(.+?)\s-\s(?:(\d+)\s)?(.+)$/)
 
-  if (!match || !match[1] || !match[2] || !match[4]) {
+  if (match && match[1] && match[2] && match[4]) {
     return {
-      title: baseName,
+      artist: match[1].trim(),
+      album: match[2].trim(),
+      trackNumber: match[3] ? parseInt(match[3]) : undefined,
+      title: match[4].trim(),
+    }
+  }
+
+  const track_number_match = baseName.match(/^(?:(\d+)\s)?(.+)$/)
+
+  if (track_number_match && track_number_match[1] && track_number_match[2]) {
+    return {
+      trackNumber: parseInt(track_number_match[1]),
+      title: track_number_match[2],
     }
   }
 
   return {
-    artist: match[1].trim(),
-    album: match[2].trim(),
-    trackNumber: match[3] ? parseInt(match[3]) : undefined,
-    title: match[4].trim(),
+    title: baseName,
   }
 }
