@@ -27,7 +27,7 @@ Self hosted music streaming service, built on top of your own library. Stream yo
 
 ## How to use
 
-Available on docker hub as [spetling/mixtape:latest](https://hub.docker.com/repository/docker/spetling/mixtape/general). Don't want or need a container? Follow the instructions below:
+Available on docker hub as [spetling/mixtape](https://hub.docker.com/r/spetling/mixtape). Don't want or need a container? Follow the instructions below:
 
 ### 1. Install bun
 
