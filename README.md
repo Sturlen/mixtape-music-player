@@ -4,7 +4,7 @@
 </p>
 
 <p align="center">
-    <a href="https://open5e.com">DEMO PAGE</a>
+    <a href="https://mixtape.spetland.no">DEMO APP</a>
 </p>
 
 Self hosted music streaming service, built on top of your own library. Stream your collection directly to any device with a web browser.
