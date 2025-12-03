@@ -1,0 +1,7 @@
+name: "My Playlist"
+id: "playlist_iada"
+tracks:
+  - name: "My Song"
+    id: "trackabc"
+  - name: "Song 2"
+    id: "track2"

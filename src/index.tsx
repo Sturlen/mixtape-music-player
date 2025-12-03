@@ -14,6 +14,7 @@ import type {
 } from "@/lib/types"
 import { raise } from "@/lib/utils"
 import { $ } from "bun"
+import { parsePlaylists } from "./server/playlist_parser"
 
 if (env.USE_FFMPEG) {
   console.warn(
@@ -36,12 +37,17 @@ function compareTracksByNumberName(a: Track, b: Track): number {
 
 const started_at = performance.now()
 
+const playlists = await parsePlaylists("./data/playlists")
+
+console.log("playlists", JSON.stringify(playlists, undefined, 4))
+
 const db = {
   artists: new Map<string, Artist>(),
   albums: new Map<string, Album>(),
   tracks: new Map<string, Track>(),
   artAssets: new Map<string, ArtAsset>(),
   audioAssets: new Map<string, AudioAsset>(),
+  playlists: playlists,
 }
 
 export const fuse_artists = new Fuse<Artist>([], {
@@ -380,6 +386,12 @@ const app = new Elysia()
     )
 
     return { album, tracks: albumTracks }
+  })
+  .get("/api/playlists/", async () => {
+    // todo: make unique per user
+    return {
+      result: [],
+    }
   })
   .listen(env.PORT, () => {
     console.log(`started in ${(performance.now() - started_at).toFixed(2)} ms`)
