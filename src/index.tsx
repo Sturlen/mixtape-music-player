@@ -1,4 +1,3 @@
-// ...existing code...
 import Elysia, { NotFoundError, redirect, t } from "elysia"
 import { openapi, fromTypes } from "@elysiajs/openapi"
 import Fuse from "fuse.js"
@@ -39,17 +38,18 @@ function compareTracksByNumberName(a: Track, b: Track): number {
 
 const started_at = performance.now()
 
-const playlists = await parsePlaylists("./data/playlists")
-
-console.log("playlists", JSON.stringify(playlists, undefined, 4))
-
 const db = {
   artists: new Map<string, Artist>(),
   albums: new Map<string, Album>(),
   tracks: new Map<string, Track>(),
   artAssets: new Map<string, ArtAsset>(),
   audioAssets: new Map<string, AudioAsset>(),
-  playlists: playlists,
+  playlists: new Map<string, Playlist>(),
+}
+
+async function loadPlaylists(): Promise<Playlist[]> {
+  const playlistsArr = await parsePlaylists("./data/playlists")
+  return playlistsArr
 }
 
 export const fuse_artists = new Fuse<Artist>([], {
@@ -57,6 +57,10 @@ export const fuse_artists = new Fuse<Artist>([], {
 })
 
 export const fuse_albums = new Fuse<Album>([], {
+  keys: ["name"],
+})
+
+export const fuse_playlists = new Fuse<Playlist>([], {
   keys: ["name"],
 })
 
@@ -82,6 +86,16 @@ async function reloadLibrary() {
   db.tracks.clear()
   db.artAssets.clear()
   db.audioAssets.clear()
+  db.playlists.clear()
+
+  const playlistsArr = await loadPlaylists()
+  for (const playlist of playlistsArr) {
+    db.playlists.set(playlist.id, playlist)
+  }
+  console.log(
+    "playlists",
+    JSON.stringify(Array.from(db.playlists.values()), undefined, 4),
+  )
 
   for (const source of sources) {
     try {
@@ -109,6 +123,7 @@ async function reloadLibrary() {
 
   fuse_artists.setCollection(Array.from(db.artists.values()))
   fuse_albums.setCollection(Array.from(db.albums.values()))
+  fuse_playlists.setCollection(Array.from(db.playlists.values()))
 
   console.log("Library reloaded", {
     artists: db.artists.size,
@@ -116,6 +131,7 @@ async function reloadLibrary() {
     tracks: db.tracks.size,
     artAssets: db.artAssets.size,
     audioAssets: db.audioAssets.size,
+    playlists: db.playlists.size,
   })
 }
 
@@ -137,7 +153,7 @@ const app = new Elysia()
     tracks: db.tracks.size,
     artAssets: db.artAssets.size,
     audioAssets: db.audioAssets.size,
-    playlists: db.playlists.length,
+    playlists: db.playlists.size,
   }))
   .get(
     "/api/artists",
@@ -393,22 +409,18 @@ const app = new Elysia()
   .get(
     "/api/playlists",
     async ({ query: { q } }) => {
-      let playlists: Playlist[] = []
-      // if (q) {
-      //   console.log("q", q)
-      //   albums = fuse_albums.search(q).map((res) => res.item)
-      // } else {
-      //   albums = Array.from(db.albums.values())
-      // }
-      playlists = Array.from(db.playlists.values())
+      let playlists: Playlist[]
+      if (q) {
+        playlists = fuse_playlists.search(q).map((res) => res.item)
+      } else {
+        playlists = Array.from(db.playlists.values())
+      }
       return {
         playlists: playlists
-          .map((playlist) => {
-            return {
-              ...playlist,
-              imagePath: undefined,
-            }
-          })
+          .map((playlist) => ({
+            ...playlist,
+            imagePath: undefined,
+          }))
           .sort((a, b) => a.name.localeCompare(b.name)),
       }
     },
@@ -417,7 +429,7 @@ const app = new Elysia()
   .post(
     "/api/playPlaylist/:playlistId",
     async ({ params: { playlistId }, status }) => {
-      const playlist = db.playlists.find((pl) => pl.id === playlistId)
+      const playlist = db.playlists.get(playlistId)
       if (!playlist) {
         return status(404)
       }

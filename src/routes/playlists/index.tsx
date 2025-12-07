@@ -12,8 +12,9 @@ export const Route = createFileRoute("/playlists/")({
 })
 
 async function getPlaylists(query: string) {
-  // No search for now, but keep signature for future
-  const { data, error } = await EdenClient.api.playlists.get()
+  const { data, error } = await EdenClient.api.playlists.get({
+    query: { q: query },
+  })
   if (error) {
     throw new Error("error")
   }
@@ -38,11 +39,10 @@ function RouteComponent() {
           Playlists
         </h1>
         <Input
-          placeholder="🔍 Search playlists... (not implemented)"
+          placeholder="🔍 Search playlists..."
           className="rounded-none md:w-1/2"
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
-          disabled
         />
       </div>
       <Content searchTerm={deferredSearchTerm} />
