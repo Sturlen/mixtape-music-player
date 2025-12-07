@@ -31,6 +31,13 @@ export type Artist = {
   artAssetId?: string
 }
 
+export interface Playlist {
+  name: string
+  id: string
+  tracks: Array<{ id: string; name: string }>
+  imageUrl?: string
+}
+
 export type AssetBase = {
   id: string
   parentId: string

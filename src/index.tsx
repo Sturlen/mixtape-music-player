@@ -1,3 +1,4 @@
+// ...existing code...
 import Elysia, { NotFoundError, redirect, t } from "elysia"
 import { openapi, fromTypes } from "@elysiajs/openapi"
 import Fuse from "fuse.js"
@@ -9,6 +10,7 @@ import type {
   ArtAsset,
   Artist,
   AudioAsset,
+  Playlist,
   Source,
   Track,
 } from "@/lib/types"
@@ -129,13 +131,14 @@ const app = new Elysia()
   .get("/*", index, { detail: "hide" })
   .get("/api/*", "418")
   .get("/api", () => redirect("/openapi"))
-  .get("/api/stats", {
+  .get("/api/stats", () => ({
     artists: db.artists.size,
     albums: db.albums.size,
     tracks: db.tracks.size,
     artAssets: db.artAssets.size,
     audioAssets: db.audioAssets.size,
-  })
+    playlists: db.playlists.length,
+  }))
   .get(
     "/api/artists",
     ({ query: { q } }) => {
@@ -387,12 +390,51 @@ const app = new Elysia()
 
     return { album, tracks: albumTracks }
   })
-  .get("/api/playlists/", async () => {
-    // todo: make unique per user
-    return {
-      result: [],
-    }
-  })
+  .get(
+    "/api/playlists",
+    async ({ query: { q } }) => {
+      let playlists: Playlist[] = []
+      // if (q) {
+      //   console.log("q", q)
+      //   albums = fuse_albums.search(q).map((res) => res.item)
+      // } else {
+      //   albums = Array.from(db.albums.values())
+      // }
+      playlists = Array.from(db.playlists.values())
+      return {
+        playlists: playlists
+          .map((playlist) => {
+            return {
+              ...playlist,
+              imagePath: undefined,
+            }
+          })
+          .sort((a, b) => a.name.localeCompare(b.name)),
+      }
+    },
+    { detail: "Get playlists", query: t.Object({ q: t.Optional(t.String()) }) },
+  )
+  .post(
+    "/api/playPlaylist/:playlistId",
+    async ({ params: { playlistId }, status }) => {
+      const playlist = db.playlists.find((pl) => pl.id === playlistId)
+      if (!playlist) {
+        return status(404)
+      }
+      // Map playlist.tracks to full track objects from db.tracks
+      const playlistTracks = playlist.tracks
+        .map((plTrack, i) => {
+          const fullTrack = db.tracks.get(plTrack.id)
+          if (!fullTrack) return undefined
+          return {
+            ...fullTrack,
+            trackNumber: i + 1,
+          }
+        })
+        .filter((t) => !!t)
+      return { playlist, tracks: playlistTracks }
+    },
+  )
   .listen(env.PORT, () => {
     console.log(`started in ${(performance.now() - started_at).toFixed(2)} ms`)
   })

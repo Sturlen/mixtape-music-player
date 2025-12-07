@@ -29,16 +29,18 @@ const RootLayout = () => (
         >
           Albums
         </Link>
-      </nav>
-      <nav className="hidden w-full items-center justify-around md:flex [&>*]:p-4">
         <Link
           to="/artists"
           className="[&.active]:bg-secondary [&.active]:font-bold"
         >
           Artists
         </Link>
-      </nav>
-      <nav className="hidden w-full items-center justify-around md:flex [&>*]:p-4">
+        <Link
+          to="/playlists"
+          className="[&.active]:bg-secondary [&.active]:font-bold"
+        >
+          Playlists
+        </Link>
         <Link
           to="/about"
           className="[&.active]:bg-secondary [&.active]:font-bold"
