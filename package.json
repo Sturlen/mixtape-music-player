@@ -8,14 +8,15 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently \"bun watch-routes\"  \"bun --hot src/index.tsx\"",
-    "build": "bun generate-routes && bun build ./src/index.html --outdir=dist --sourcemap --target=browser --minify --define:process.env.NODE_ENV='\"production\"' --env='BUN_PUBLIC_*'",
+    "build": "bun generate-routes && bun typecheck && bun build ./src/index.html --outdir=dist --sourcemap --target=browser --minify --define:process.env.NODE_ENV='\"production\"' --env='BUN_PUBLIC_*'",
     "start": "NODE_ENV=production bun src/index.tsx",
     "generate-routes": "tsr generate",
     "watch-routes": "tsr watch",
     "lint": "eslint . --ext .ts,.tsx",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "format": "prettier .",
-    "format:fix": "prettier . --write"
+    "format:fix": "prettier . --write",
+    "typecheck": "bun tsc --noEmit"
   },
   "dependencies": {
     "@elysiajs/eden": "^1.4.3",
