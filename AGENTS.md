@@ -29,6 +29,24 @@
 - `bun run format` - Run Prettier
 - `bun run generate-routes` - Generate TanStack Router routes
 - `bun run watch-routes` - Watch for route changes
+- `bun run typecheck` - Run TypeScript type checking
+
+## Code Quality Verification
+
+**IMPORTANT:** After making any code changes, always run type checking to verify code correctness:
+
+```bash
+bun run typecheck
+```
+
+This command validates TypeScript types and catches:
+
+- Type errors and mismatches
+- Missing imports/exports
+- Incorrect prop types
+- Interface violations
+
+Never commit changes without ensuring `bun run typecheck` passes without errors.
 
 ## Key Technologies & Patterns
 
