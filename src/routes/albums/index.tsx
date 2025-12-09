@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { useQuery } from "@tanstack/react-query"
-import { useAudioPlayer } from "@/Player"
 import { EdenClient } from "@/lib/eden"
 import { Link } from "@tanstack/react-router"
 import { GridLayout } from "@/client/components/ui/grid"
@@ -8,7 +7,6 @@ import { Input } from "@/client/components/ui/input"
 import Page from "@/client/components/Page"
 import { useState } from "react"
 import { useDebouncer } from "@tanstack/react-pacer"
-import { useQuery } from "@tanstack/react-query"
 import { usePlayAlbum } from "@/lib/api"
 
 export const Route = createFileRoute("/albums/")({
