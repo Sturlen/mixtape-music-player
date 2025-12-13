@@ -1,0 +1,9 @@
+name: My Awesome Mixtape
+id: playlist_1234567890abcdef
+tracks:
+  - name: A Proper Story
+    id: trackeb4d5eaa2d900185
+  - name: Stained Glass
+    id: track692bf6b99ac61a02
+  - id: trackedb22e9831c7d490
+    name: Terminal March

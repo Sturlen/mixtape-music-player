@@ -39,7 +39,7 @@ const RootLayout = () => (
           to="/playlists"
           className="[&.active]:bg-secondary [&.active]:font-bold"
         >
-          Playlists
+          Mixtapes
         </Link>
         <Link
           to="/about"

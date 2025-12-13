@@ -75,7 +75,7 @@ function Content() {
       <Link to="/playlists">
         <StatCard
           number={data.playlists ?? 0}
-          label="PLAYLISTS"
+          label="MIXTAPES"
           icon={Music}
           className="bg-green-500"
         />

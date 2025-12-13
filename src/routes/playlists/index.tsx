@@ -42,10 +42,10 @@ function RouteComponent() {
     <Page>
       <div className="mb-8 flex flex-col items-center gap-4 md:flex-row md:justify-between">
         <h1 className="mb-6 text-3xl font-extrabold md:text-5xl lg:text-6xl">
-          Playlists
+          Mixtapes
         </h1>
         <Input
-          placeholder="🔍 Search playlists..."
+          placeholder="🔍 Search mixtapes..."
           className="rounded-none md:w-1/2"
           value={searchInput}
           onChange={(e) => {
@@ -63,7 +63,7 @@ function Content({ searchTerm }: { searchTerm: string }) {
   const { data, error } = usePlaylists(searchTerm)
 
   if (error) {
-    return <div className="p-8">Error loading playlists</div>
+    return <div className="p-8">Error loading mixtapes</div>
   }
   if (!data) {
     return <div className="p-8">Loading...</div>
@@ -72,7 +72,7 @@ function Content({ searchTerm }: { searchTerm: string }) {
   const playlists = data.playlists
 
   if (!playlists || playlists.length === 0) {
-    return <div className="p-8">No playlists found</div>
+    return <div className="p-8">No mixtapes found</div>
   }
   return (
     <GridLayout>
