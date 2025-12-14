@@ -116,3 +116,61 @@ Media/
 - **Adding components:** Place in `/src/client/components/`
 - **Environment changes:** Edit `/src/shared/env.ts`
 - **Type definitions:** Edit `/src/lib/types.ts`
+
+## Modular Route Pattern
+
+When extracting routes to separate files, maintain context access:
+
+```typescript
+interface RouteContext {
+  db: {
+    tracks: Map<string, Track>
+    playlists: Map<string, Playlist>
+    artists: Map<string, Artist>
+    albums: Map<string, Album>
+  }
+  fuseInstances: {
+    fuse_playlists: Fuse<Playlist>
+    fuse_artists: Fuse<Artist>
+    fuse_albums: Fuse<Album>
+  }
+}
+
+export function createRoutes(context: RouteContext) {
+  return new Elysia({ prefix: "/api" })
+  // routes with full context access
+}
+```
+
+Usage in main app:
+
+```typescript
+import { createRoutes } from "./routes"
+
+const app = new Elysia()
+  .use(createRoutes({ db, fuseInstances }))
+  .listen(env.PORT)
+```
+
+## Elysia Error Handling
+
+Use proper Elysia error handling patterns:
+
+```typescript
+// ✅ Correct - Use status() function
+.post("/api/resource", async ({ body, status }) => {
+  if (!env.FEATURE_ENABLED) {
+    throw status(403, "Feature disabled")
+  }
+  // ... rest of handler
+})
+
+// ❌ Incorrect - Don't mix set.status with throw
+.post("/api/resource", async ({ body, set }) => {
+  if (!env.FEATURE_ENABLED) {
+    set.status = 403
+    throw new Error("Feature disabled") // This causes type issues
+  }
+})
+```
+
