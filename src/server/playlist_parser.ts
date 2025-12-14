@@ -3,6 +3,7 @@ import { parse, stringify } from "yaml"
 import { readdir, writeFile, unlink } from "fs/promises"
 import path from "path"
 import type { Playlist } from "@/lib/types"
+import { env } from "@/shared/env"
 
 // Helper to generate human-readable filename from playlist name
 function generateFilename(name: string): string {
@@ -36,6 +37,11 @@ async function findFileById(
 }
 
 export async function parsePlaylists(playlists_path: string) {
+  // Only parse playlists if the feature is enabled
+  if (!env.MIXTAPES_ENABLED) {
+    return []
+  }
+
   const playlist_files = await readdir(playlists_path, {
     recursive: false,
     withFileTypes: true,
@@ -65,6 +71,11 @@ export async function parsePlaylists(playlists_path: string) {
 }
 
 export async function savePlaylist(playlist: Playlist, playlists_path: string) {
+  // Check if mixtapes feature is enabled
+  if (!env.MIXTAPES_ENABLED) {
+    throw new Error("Mixtape creation is disabled")
+  }
+
   // Find existing file by ID
   const existingFilename = await findFileById(playlists_path, playlist.id)
 
@@ -99,6 +110,11 @@ export async function deletePlaylist(
   playlistId: string,
   playlists_path: string,
 ) {
+  // Check if mixtapes feature is enabled
+  if (!env.MIXTAPES_ENABLED) {
+    throw new Error("Mixtape deletion is disabled")
+  }
+
   const filename = await findFileById(playlists_path, playlistId)
 
   if (!filename) {

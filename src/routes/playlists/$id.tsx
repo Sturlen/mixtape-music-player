@@ -86,21 +86,31 @@ function RouteComponent() {
           <h1 className="text-4xl font-extrabold md:text-6xl lg:text-8xl">
             {playlist.name}
           </h1>
-          <button
-            onClick={() => {
-              if (
-                confirm(`Are you sure you want to delete "${playlist.name}"?`)
-              ) {
-                deletePlaylistMutation.mutate()
-              }
-            }}
-            disabled={deletePlaylistMutation.isPending}
-            className="hover:bg-destructive hover:text-destructive-foreground border-destructive/20 text-destructive rounded border px-4 py-2 transition-colors disabled:opacity-50"
-          >
-            {deletePlaylistMutation.isPending
-              ? "Deleting..."
-              : "Delete Mixtape"}
-          </button>
+          <div className="flex flex-col items-end gap-2">
+            {deletePlaylistMutation.error && (
+              <div className="text-destructive text-right text-sm">
+                {deletePlaylistMutation.error.message ===
+                "Mixtape deletion is disabled"
+                  ? "Mixtape deletion is disabled"
+                  : "Failed to delete mixtape"}
+              </div>
+            )}
+            <button
+              onClick={() => {
+                if (
+                  confirm(`Are you sure you want to delete "${playlist.name}"?`)
+                ) {
+                  deletePlaylistMutation.mutate()
+                }
+              }}
+              disabled={deletePlaylistMutation.isPending}
+              className="hover:bg-destructive hover:text-destructive-foreground border-destructive/20 text-destructive rounded border px-4 py-2 transition-colors disabled:opacity-50"
+            >
+              {deletePlaylistMutation.isPending
+                ? "Deleting..."
+                : "Delete Mixtape"}
+            </button>
+          </div>
         </div>
 
         <div>

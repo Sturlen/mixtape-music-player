@@ -15,12 +15,8 @@ import type {
 } from "@/lib/types"
 import { raise } from "@/lib/utils"
 import { $ } from "bun"
-import {
-  parsePlaylists,
-  savePlaylist,
-  deletePlaylist,
-  generatePlaylistId,
-} from "./server/playlist_parser"
+import { parsePlaylists } from "./server/playlist_parser"
+import { createPlaylistRoutes } from "./playlist"
 
 if (env.USE_FFMPEG) {
   console.warn(
@@ -411,26 +407,6 @@ const app = new Elysia()
 
     return { album, tracks: albumTracks }
   })
-  .get(
-    "/api/playlists",
-    async ({ query: { q } }) => {
-      let playlists: Playlist[]
-      if (q) {
-        playlists = fuse_playlists.search(q).map((res) => res.item)
-      } else {
-        playlists = Array.from(db.playlists.values())
-      }
-      return {
-        playlists: playlists
-          .map((playlist) => ({
-            ...playlist,
-            imagePath: undefined,
-          }))
-          .sort((a, b) => a.name.localeCompare(b.name)),
-      }
-    },
-    { detail: "Get playlists", query: t.Object({ q: t.Optional(t.String()) }) },
-  )
   .post(
     "/api/playPlaylist/:playlistId",
     async ({ params: { playlistId }, status }) => {
@@ -452,133 +428,7 @@ const app = new Elysia()
       return { playlist, tracks: playlistTracks }
     },
   )
-  .post(
-    "/api/playlists",
-    async ({ body }) => {
-      const playlist: Playlist = {
-        id: generatePlaylistId(),
-        name: body.name,
-        tracks: [],
-      }
-
-      await savePlaylist(playlist, "./data/playlists")
-      db.playlists.set(playlist.id, playlist)
-      fuse_playlists.setCollection(Array.from(db.playlists.values()))
-
-      return playlist
-    },
-    {
-      body: t.Object({
-        name: t.String(),
-      }),
-      detail: "Create a new playlist",
-    },
-  )
-  .put(
-    "/api/playlists/:playlistId",
-    async ({ params: { playlistId }, body }) => {
-      const playlist = db.playlists.get(playlistId)
-      if (!playlist) {
-        throw new NotFoundError("Playlist not found")
-      }
-
-      const updatedPlaylist: Playlist = {
-        ...playlist,
-        name: body.name || playlist.name,
-        tracks: body.tracks || playlist.tracks,
-      }
-
-      await savePlaylist(updatedPlaylist, "./data/playlists")
-      db.playlists.set(playlistId, updatedPlaylist)
-      fuse_playlists.setCollection(Array.from(db.playlists.values()))
-
-      return updatedPlaylist
-    },
-    {
-      body: t.Object({
-        name: t.Optional(t.String()),
-        tracks: t.Optional(
-          t.Array(t.Object({ id: t.String(), name: t.String() })),
-        ),
-      }),
-      detail: "Update a playlist",
-    },
-  )
-  .delete(
-    "/api/playlists/:playlistId",
-    async ({ params: { playlistId } }) => {
-      const deletedPlaylist = await deletePlaylist(
-        playlistId,
-        "./data/playlists",
-      )
-      db.playlists.delete(playlistId)
-      fuse_playlists.setCollection(Array.from(db.playlists.values()))
-
-      return deletedPlaylist
-    },
-    {
-      detail: "Delete a playlist",
-    },
-  )
-  .post(
-    "/api/playlists/:playlistId/tracks",
-    async ({ params: { playlistId }, body }) => {
-      const playlist = db.playlists.get(playlistId)
-      if (!playlist) {
-        throw new NotFoundError("Playlist not found")
-      }
-
-      const track = db.tracks.get(body.trackId)
-      if (!track) {
-        throw new NotFoundError("Track not found")
-      }
-
-      const trackExists = playlist.tracks.some((t) => t.id === body.trackId)
-      if (trackExists) {
-        throw new Error("Track already exists in playlist")
-      }
-
-      const updatedPlaylist: Playlist = {
-        ...playlist,
-        tracks: [...playlist.tracks, { id: track.id, name: track.name }],
-      }
-
-      await savePlaylist(updatedPlaylist, "./data/playlists")
-      db.playlists.set(playlistId, updatedPlaylist)
-      fuse_playlists.setCollection(Array.from(db.playlists.values()))
-
-      return updatedPlaylist
-    },
-    {
-      body: t.Object({
-        trackId: t.String(),
-      }),
-      detail: "Add a track to a playlist",
-    },
-  )
-  .delete(
-    "/api/playlists/:playlistId/tracks/:trackId",
-    async ({ params: { playlistId, trackId } }) => {
-      const playlist = db.playlists.get(playlistId)
-      if (!playlist) {
-        throw new NotFoundError("Playlist not found")
-      }
-
-      const updatedPlaylist: Playlist = {
-        ...playlist,
-        tracks: playlist.tracks.filter((t) => t.id !== trackId),
-      }
-
-      await savePlaylist(updatedPlaylist, "./data/playlists")
-      db.playlists.set(playlistId, updatedPlaylist)
-      fuse_playlists.setCollection(Array.from(db.playlists.values()))
-
-      return updatedPlaylist
-    },
-    {
-      detail: "Remove a track from a playlist",
-    },
-  )
+  .use(createPlaylistRoutes({ db, fuse_playlists }))
   .listen(env.PORT, () => {
     console.log(`started in ${(performance.now() - started_at).toFixed(2)} ms`)
   })

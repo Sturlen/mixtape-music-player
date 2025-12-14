@@ -11,6 +11,7 @@ export const env = createEnv({
     MUSIC2_PATH: z.string().optional(),
     PORT: z.coerce.number().int().default(3000),
     USE_FFMPEG: z.stringbool().default(false),
+    MIXTAPES_ENABLED: z.stringbool().default(false),
   },
 
   client: {

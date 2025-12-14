@@ -125,7 +125,14 @@ export function PlaylistSelector({
           )}
 
           <div className="border-t pt-4">
-            {showCreateForm ? (
+            {createPlaylistMutation.error ? (
+              <div className="text-destructive p-3 text-center text-sm">
+                {createPlaylistMutation.error.message ===
+                "Mixtape creation is disabled"
+                  ? "Mixtape creation is disabled"
+                  : "Failed to create mixtape"}
+              </div>
+            ) : showCreateForm ? (
               <form onSubmit={handleCreatePlaylist} className="flex gap-2">
                 <Input
                   placeholder="New mixtape name..."
@@ -148,6 +155,7 @@ export function PlaylistSelector({
                   onClick={() => {
                     setShowCreateForm(false)
                     setNewPlaylistName("")
+                    createPlaylistMutation.reset()
                   }}
                   className="border-border hover:bg-accent rounded-lg border px-4 py-2"
                 >
@@ -166,6 +174,14 @@ export function PlaylistSelector({
             )}
           </div>
 
+          {addToPlaylistMutation.error && (
+            <div className="text-destructive p-3 text-center text-sm">
+              {addToPlaylistMutation.error.message ===
+              "Mixtape modification is disabled"
+                ? "Mixtape modification is disabled"
+                : "Failed to add track to mixtape"}
+            </div>
+          )}
           {addToPlaylistMutation.isPending && (
             <div className="text-muted-foreground text-center text-sm">
               Adding to mixtape...
