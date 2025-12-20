@@ -90,6 +90,9 @@ type PublicAPI = {
   queueJump: (trackIndex: number) => Track | undefined
   setVolume: (newVolumeFraction: number) => void
   seek: (time: number) => void
+  setCrossfadeEnabled: (enabled: boolean) => void
+  setCrossfadeDuration: (duration: number) => void
+  setIsTransitioning: (transitioning: boolean) => void
 }
 
 type PlayerState = {
@@ -107,6 +110,11 @@ type PlayerState = {
   events: MediaEventHandlers
   stop: () => void
   endSeek: () => void
+  // Crossfade settings
+  crossfadeEnabled: boolean
+  crossfadeDuration: number
+  isTransitioning: boolean
+  activeAudioElement: "A" | "B"
 } & PublicAPI
 
 type WithSelectors<S> = S extends { getState: () => infer T }
@@ -161,8 +169,19 @@ export const useAudioPlayerBase = create<PlayerState>()(
           },
 
           onEnded: () => {
-            log("Playback ended")
-            get().queueSkip()
+            log("Playback ended", {
+              crossfadeEnabled: get().crossfadeEnabled,
+              isTransitioning: get().isTransitioning,
+              queueIndex: get().queueIndex,
+              queueLength: get().queueTracks.length,
+            })
+            // Only skip if crossfade is not enabled or we're not transitioning
+            if (!get().crossfadeEnabled || !get().isTransitioning) {
+              log("Triggering queueSkip")
+              get().queueSkip()
+            } else {
+              log("Skipping queueSkip due to crossfade")
+            }
           },
 
           onEmptied: () => {
@@ -201,6 +220,11 @@ export const useAudioPlayerBase = create<PlayerState>()(
         duration: 0,
         queueTracks: [],
         queueIndex: 0,
+        // Crossfade settings
+        crossfadeEnabled: true,
+        crossfadeDuration: 2.0,
+        isTransitioning: false,
+        activeAudioElement: "A",
         setVolume: (newVolumeFraction) => {
           set({ volume: clamp(newVolumeFraction) })
         },
@@ -300,6 +324,15 @@ export const useAudioPlayerBase = create<PlayerState>()(
         pause: () => {
           set({ requestedPlaybackState: "paused" })
         },
+        setCrossfadeEnabled: (enabled: boolean) => {
+          set({ crossfadeEnabled: enabled })
+        },
+        setCrossfadeDuration: (duration: number) => {
+          set({ crossfadeDuration: Math.max(0.5, Math.min(10, duration)) }) // Clamp between 0.5 and 10 seconds
+        },
+        setIsTransitioning: (transitioning: boolean) => {
+          set({ isTransitioning: transitioning })
+        },
       }
     },
     {
@@ -308,6 +341,8 @@ export const useAudioPlayerBase = create<PlayerState>()(
         volume: state.volume,
         queueTracks: state.queueTracks,
         queueIndex: state.queueIndex,
+        crossfadeEnabled: state.crossfadeEnabled,
+        crossfadeDuration: state.crossfadeDuration,
       }),
     },
   ),

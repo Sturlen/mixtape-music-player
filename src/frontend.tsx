@@ -9,7 +9,7 @@ import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { RouterProvider } from "@tanstack/react-router"
-import { PlayerProvider } from "@/client/components/PlayerProvider"
+import { ContinuousPlayerProvider } from "@/client/components/ContinuousPlayerProvider"
 import { PlaybackDrawerProvider } from "@/contexts/PlaybackDrawerContext"
 import { router } from "@/client/router"
 
@@ -22,9 +22,9 @@ function renderApp() {
     <StrictMode>
       <QueryClientProvider client={queryClient}>
         <PlaybackDrawerProvider>
-          <PlayerProvider>
+          <ContinuousPlayerProvider>
             <RouterProvider router={router} />
-          </PlayerProvider>
+          </ContinuousPlayerProvider>
         </PlaybackDrawerProvider>
       </QueryClientProvider>
     </StrictMode>
