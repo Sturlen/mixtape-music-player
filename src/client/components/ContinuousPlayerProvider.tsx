@@ -26,6 +26,7 @@ interface AudioElementState {
   sourceNode: MediaElementAudioSourceNode | null
   gainNode: GainNode | null
   trackId: string | null
+  duration: number
 }
 
 export const ContinuousPlayerProvider = ({ children }: PropsWithChildren) => {
@@ -62,9 +63,24 @@ export const ContinuousPlayerProvider = ({ children }: PropsWithChildren) => {
   const audioB_ref = useRef<HTMLAudioElement>(null)
 
   const audioState = useRef<Record<AudioElement, AudioElementState>>({
-    A: { element: null, sourceNode: null, gainNode: null, trackId: null },
-    B: { element: null, sourceNode: null, gainNode: null, trackId: null },
+    A: {
+      element: null,
+      sourceNode: null,
+      gainNode: null,
+      trackId: null,
+      duration: 0,
+    },
+    B: {
+      element: null,
+      sourceNode: null,
+      gainNode: null,
+      trackId: null,
+      duration: 0,
+    },
   })
+
+  // Master volume node for overall volume control
+  const masterGainNode = useRef<GainNode | null>(null)
 
   const isTransitioning = useAudioPlayer.use.isTransitioning()
   const nextTrackRef = useRef<string | null>(null)
@@ -72,6 +88,13 @@ export const ContinuousPlayerProvider = ({ children }: PropsWithChildren) => {
   // Initialize Web Audio Context
   useEffect(() => {
     const ctx = new AudioContext()
+
+    // Create master gain node once
+    const masterGain = ctx.createGain()
+    masterGain.gain.value = volume
+    masterGain.connect(ctx.destination)
+    masterGainNode.current = masterGain
+
     setAudioContext(ctx)
 
     return () => {
@@ -81,6 +104,7 @@ export const ContinuousPlayerProvider = ({ children }: PropsWithChildren) => {
         audioState.current.B.sourceNode?.disconnect()
         audioState.current.A.gainNode?.disconnect()
         audioState.current.B.gainNode?.disconnect()
+        masterGainNode.current?.disconnect()
         ctx.close()
       } catch (error) {
         console.warn("Cleanup error:", error)
@@ -97,9 +121,11 @@ export const ContinuousPlayerProvider = ({ children }: PropsWithChildren) => {
         const sourceNode = audioContext.createMediaElementSource(element)
         const gainNode = audioContext.createGain()
 
-        // Connect the audio graph
+        // Connect the audio graph: element -> elementGain -> masterGain -> destination
         sourceNode.connect(gainNode)
-        gainNode.connect(audioContext.destination)
+        if (masterGainNode.current) {
+          gainNode.connect(masterGainNode.current)
+        }
 
         // Store references
         audioState.current[type] = {
@@ -107,6 +133,7 @@ export const ContinuousPlayerProvider = ({ children }: PropsWithChildren) => {
           sourceNode,
           gainNode,
           trackId: null,
+          duration: 0,
         }
 
         // Set initial gain
@@ -183,24 +210,10 @@ export const ContinuousPlayerProvider = ({ children }: PropsWithChildren) => {
     }
   }, [currentQueueTracks, currentTrack?.id])
 
-  // Volume control for both elements
+  // Master volume control
   useEffect(() => {
-    if (audioState.current.A.gainNode && audioState.current.B.gainNode) {
-      // Apply volume to both gain nodes (they handle the crossfade)
-      const currentGain =
-        audioState.current.A.gainNode.gain.value > 0
-          ? audioState.current.A.gainNode.gain.value
-          : audioState.current.B.gainNode.gain.value
-      const volumeMultiplier = volume
-
-      if (audioState.current.A.gainNode.gain.value > 0) {
-        audioState.current.A.gainNode.gain.value =
-          currentGain * volumeMultiplier
-      }
-      if (audioState.current.B.gainNode.gain.value > 0) {
-        audioState.current.B.gainNode.gain.value =
-          currentGain * volumeMultiplier
-      }
+    if (masterGainNode.current) {
+      masterGainNode.current.gain.value = volume
     }
   }, [volume])
 
@@ -325,6 +338,12 @@ export const ContinuousPlayerProvider = ({ children }: PropsWithChildren) => {
         setIsTransitioning(false)
         nextTrackRef.current = null
 
+        // Update player duration from the new active element
+        const newActiveState = audioState.current[toElement]
+        if (newActiveState.duration > 0) {
+          onDurationChange(newActiveState.duration)
+        }
+
         // Advance queue to the next track
         queueSkip()
       }, crossfadeDuration * 1000)
@@ -392,6 +411,9 @@ export const ContinuousPlayerProvider = ({ children }: PropsWithChildren) => {
       const currentTime = e.currentTarget.currentTime
       const duration = e.currentTarget.duration || 0
 
+      // Update duration for both elements
+      audioState.current[element].duration = duration
+
       // Only update player time from active element
       if (activeElement === element) {
         onTimeUpdate(currentTime)
@@ -402,8 +424,13 @@ export const ContinuousPlayerProvider = ({ children }: PropsWithChildren) => {
     },
 
     onDurationChange: (e: React.SyntheticEvent<HTMLAudioElement>) => {
+      const duration = e.currentTarget.duration || 0
+      // Update duration for both elements
+      audioState.current[element].duration = duration
+
+      // Update player duration from active element
       if (activeElement === element) {
-        onDurationChange(e.currentTarget.duration)
+        onDurationChange(duration)
       }
     },
 
