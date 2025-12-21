@@ -315,16 +315,6 @@ export const ContinuousPlayerProvider = ({ children }: PropsWithChildren) => {
         1,
         currentTime + crossfadeDuration,
       )
-      fromState.gainNode.gain.linearRampToValueAtTime(
-        0,
-        currentTime + crossfadeDuration,
-      )
-
-      toState.gainNode.gain.setValueAtTime(0, currentTime)
-      toState.gainNode.gain.linearRampToValueAtTime(
-        1,
-        currentTime + crossfadeDuration,
-      )
 
       // Switch active element after crossfade
       setTimeout(() => {
@@ -333,9 +323,12 @@ export const ContinuousPlayerProvider = ({ children }: PropsWithChildren) => {
           to: toElement,
           nextTrackId: nextTrackRef.current,
         })
+
+        // Advance queue to the next track BEFORE updating states
+        queueSkip()
+
         setActiveElement(toElement)
         fromState.element?.pause()
-        setIsTransitioning(false)
         nextTrackRef.current = null
 
         // Update player duration from the new active element
@@ -344,8 +337,8 @@ export const ContinuousPlayerProvider = ({ children }: PropsWithChildren) => {
           onDurationChange(newActiveState.duration)
         }
 
-        // Advance queue to the next track
-        queueSkip()
+        // Set transitioning to false last to prevent onEnded from triggering another skip
+        setIsTransitioning(false)
       }, crossfadeDuration * 1000)
     },
     [audioContext, crossfadeDuration],
