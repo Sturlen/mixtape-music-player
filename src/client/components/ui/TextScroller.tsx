@@ -63,7 +63,7 @@ export function TextScroller({
 }
 
 function CurrentTime() {
-  const time = useAudioPlayer.use.currentTime()
+  const time = useAudioPlayer.use.getCurrentTime()()
   if (!Number.isFinite(time)) {
     return <span>--:--</span>
   }
@@ -72,7 +72,7 @@ function CurrentTime() {
 }
 
 function Duration() {
-  const duration = useAudioPlayer.use.duration()
+  const duration = useAudioPlayer.use.getDuration()()
   if (!Number.isFinite(duration)) {
     return <span>--:--</span>
   }

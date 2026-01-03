@@ -81,7 +81,7 @@ export function Controls() {
 }
 
 function CurrentTime() {
-  const player_time = useAudioPlayer.use.currentTime()
+  const player_time = useAudioPlayer.use.getCurrentTime()()
   const requested_time = useAudioPlayer.use.requestedSeekPosition()
   const time = requested_time ?? player_time
   if (!Number.isFinite(time)) {
@@ -92,7 +92,7 @@ function CurrentTime() {
 }
 
 function Duration() {
-  const duration = useAudioPlayer.use.duration()
+  const duration = useAudioPlayer.use.getDuration()()
   if (!Number.isFinite(duration)) {
     return <span>--:--</span>
   }

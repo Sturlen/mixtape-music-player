@@ -90,31 +90,47 @@ type PublicAPI = {
   queueJump: (trackIndex: number) => Track | undefined
   setVolume: (newVolumeFraction: number) => void
   seek: (time: number) => void
-  setCrossfadeEnabled: (enabled: boolean) => void
-  setCrossfadeDuration: (duration: number) => void
-  setIsTransitioning: (transitioning: boolean) => void
+}
+
+// Read from audio elements
+interface AudioElementFeedback {
+  currentTime: number
+  duration: number
+  playbackState: "playing" | "paused"
+  isLoading: boolean
+  error: Error | null
 }
 
 type PlayerState = {
-  volume: number
-  isLoading: boolean
-  isError: boolean
-  _playbackState: "playing" | "paused"
+  // Dual element feedback (READ from elements)
+  elementFeedback: {
+    A: AudioElementFeedback
+    B: AudioElementFeedback
+  }
+
+  // User intentions (WRITTEN to elements)
   requestedPlaybackState: "playing" | "paused"
   requestedSeekPosition: number | undefined
-  src: string | undefined
-  currentTime: number
-  duration: number
+  requestedVolume: number
+  requestedSource: string | undefined
+
+  // Simplified crossfade state
+  activeElement: "A" | "B"
+
+  // Queue and UI state
   queueTracks: (Track & { queueId: string })[]
   queueIndex: number
+  volume: number
   events: MediaEventHandlers
   stop: () => void
   endSeek: () => void
-  // Crossfade settings
-  crossfadeEnabled: boolean
-  crossfadeDuration: number
-  isTransitioning: boolean
-  activeAudioElement: "A" | "B"
+
+  // Computed getters
+  getActiveFeedback: () => AudioElementFeedback
+  getCurrentTime: () => number
+  getDuration: () => number
+  getPlaybackState: () => "playing" | "paused"
+  getVolume: () => number
 } & PublicAPI
 
 type WithSelectors<S> = S extends { getState: () => infer T }
@@ -151,82 +167,184 @@ export const useAudioPlayerBase = create<PlayerState>()(
 
           onLoadStart: () => {
             log("Start load")
-            set({ isLoading: true, _playbackState: "paused" })
+            set((state) => ({
+              elementFeedback: {
+                ...state.elementFeedback,
+                [state.activeElement]: {
+                  ...state.elementFeedback[state.activeElement],
+                  isLoading: true,
+                  playbackState: "paused",
+                },
+              },
+            }))
           },
 
           onCanPlay: () => {
             log("Media can start playing")
-            set({ isLoading: false })
+            set((state) => ({
+              elementFeedback: {
+                ...state.elementFeedback,
+                [state.activeElement]: {
+                  ...state.elementFeedback[state.activeElement],
+                  isLoading: false,
+                },
+              },
+            }))
           },
 
           onTimeUpdate: (currentTimeSeconds) => {
-            set({ currentTime: currentTimeSeconds })
+            set((state) => ({
+              elementFeedback: {
+                ...state.elementFeedback,
+                [state.activeElement]: {
+                  ...state.elementFeedback[state.activeElement],
+                  currentTime: currentTimeSeconds,
+                },
+              },
+            }))
           },
 
           onDurationChange: (durationSeconds) => {
             log(`Duration updated: ${durationSeconds}s`)
-            set({ duration: durationSeconds })
+            set((state) => ({
+              elementFeedback: {
+                ...state.elementFeedback,
+                [state.activeElement]: {
+                  ...state.elementFeedback[state.activeElement],
+                  duration: durationSeconds,
+                },
+              },
+            }))
           },
 
           onEnded: () => {
             log("Playback ended", {
-              crossfadeEnabled: get().crossfadeEnabled,
-              isTransitioning: get().isTransitioning,
               queueIndex: get().queueIndex,
               queueLength: get().queueTracks.length,
             })
-            // Only skip if crossfade is not enabled or we're not transitioning
-            if (!get().crossfadeEnabled || !get().isTransitioning) {
-              log("Triggering queueSkip")
-              get().queueSkip()
-            } else {
-              log("Skipping queueSkip due to crossfade")
-            }
+            // Seamless transitions handle skipping, so this is just for when no next track
+            get().queueSkip()
           },
 
           onEmptied: () => {
             log("source empty")
-            set({ _playbackState: "paused" })
+            set((state) => ({
+              elementFeedback: {
+                ...state.elementFeedback,
+                [state.activeElement]: {
+                  ...state.elementFeedback[state.activeElement],
+                  playbackState: "paused",
+                },
+              },
+            }))
           },
 
           onError: (error) => {
             console.error("Media error:", error)
-            set({ _playbackState: "paused" })
+            set((state) => ({
+              elementFeedback: {
+                ...state.elementFeedback,
+                [state.activeElement]: {
+                  ...state.elementFeedback[state.activeElement],
+                  playbackState: "paused",
+                  error,
+                },
+              },
+            }))
           },
 
           onPaused: () => {
             log("Playback paused")
-            set({ _playbackState: "paused" })
+            set((state) => ({
+              elementFeedback: {
+                ...state.elementFeedback,
+                [state.activeElement]: {
+                  ...state.elementFeedback[state.activeElement],
+                  playbackState: "paused",
+                },
+              },
+            }))
           },
 
           onPlay: () => {
             log("Playback started")
-            set({ _playbackState: "playing" })
+            set((state) => ({
+              elementFeedback: {
+                ...state.elementFeedback,
+                [state.activeElement]: {
+                  ...state.elementFeedback[state.activeElement],
+                  playbackState: "playing",
+                },
+              },
+            }))
           },
 
           onPlaying: () => {
             log("Playback is active")
-            set({ _playbackState: "playing" })
+            set((state) => ({
+              elementFeedback: {
+                ...state.elementFeedback,
+                [state.activeElement]: {
+                  ...state.elementFeedback[state.activeElement],
+                  playbackState: "playing",
+                  isLoading: false,
+                },
+              },
+            }))
           },
         },
-        _playbackState: "paused",
+
+        // Initialize state
+        elementFeedback: {
+          A: {
+            currentTime: 0,
+            duration: 0,
+            playbackState: "paused",
+            isLoading: false,
+            error: null,
+          },
+          B: {
+            currentTime: 0,
+            duration: 0,
+            playbackState: "paused",
+            isLoading: false,
+            error: null,
+          },
+        },
         requestedPlaybackState: "paused",
-        src: undefined,
+        requestedSource: undefined,
+        requestedVolume: 0.1,
         requestedSeekPosition: undefined,
-        isLoading: false,
-        isError: false,
-        currentTime: 0,
+        activeElement: "A",
         volume: 0.1,
-        duration: 0,
         queueTracks: [],
         queueIndex: 0,
-        // Crossfade settings
-        crossfadeEnabled: true,
-        crossfadeDuration: 2.0,
-        isTransitioning: false,
-        activeAudioElement: "A",
+
+        // Computed getters
+        getActiveFeedback: () => {
+          const state = get()
+          return state.elementFeedback[state.activeElement]
+        },
+        getCurrentTime: () => {
+          const state = get()
+          return state.elementFeedback[state.activeElement].currentTime
+        },
+        getDuration: () => {
+          const state = get()
+          return state.elementFeedback[state.activeElement].duration
+        },
+        getPlaybackState: () => {
+          const state = get()
+          return state.elementFeedback[state.activeElement].playbackState
+        },
+        getVolume: () => get().volume,
+
+        // Public API methods
         setVolume: (newVolumeFraction) => {
-          set({ volume: clamp(newVolumeFraction) })
+          set({
+            volume: clamp(newVolumeFraction),
+            requestedVolume: clamp(newVolumeFraction),
+          })
         },
         queuePush: (tr: Track) => {
           const queueTracks = [...get().queueTracks]
@@ -283,7 +401,6 @@ export const useAudioPlayerBase = create<PlayerState>()(
           }
         },
         queueSet: (tracks, startAtIndex) => {
-          const player = get()
           const start_track = tracks[startAtIndex ?? 0]
 
           set({
@@ -314,24 +431,29 @@ export const useAudioPlayerBase = create<PlayerState>()(
         stop: () => {
           set({
             requestedPlaybackState: "paused",
-            currentTime: 0,
-            duration: 0,
+            requestedSource: undefined,
             queueIndex: 0,
             queueTracks: [],
-            src: undefined,
+            elementFeedback: {
+              A: {
+                currentTime: 0,
+                duration: 0,
+                playbackState: "paused",
+                isLoading: false,
+                error: null,
+              },
+              B: {
+                currentTime: 0,
+                duration: 0,
+                playbackState: "paused",
+                isLoading: false,
+                error: null,
+              },
+            },
           })
         },
         pause: () => {
           set({ requestedPlaybackState: "paused" })
-        },
-        setCrossfadeEnabled: (enabled: boolean) => {
-          set({ crossfadeEnabled: enabled })
-        },
-        setCrossfadeDuration: (duration: number) => {
-          set({ crossfadeDuration: Math.max(0.5, Math.min(10, duration)) }) // Clamp between 0.5 and 10 seconds
-        },
-        setIsTransitioning: (transitioning: boolean) => {
-          set({ isTransitioning: transitioning })
         },
       }
     },
@@ -341,8 +463,6 @@ export const useAudioPlayerBase = create<PlayerState>()(
         volume: state.volume,
         queueTracks: state.queueTracks,
         queueIndex: state.queueIndex,
-        crossfadeEnabled: state.crossfadeEnabled,
-        crossfadeDuration: state.crossfadeDuration,
       }),
     },
   ),
@@ -357,7 +477,7 @@ export const useCurrentTrack = () => {
 }
 
 export const useIsPlaying = () => {
-  const state = useAudioPlayer.use._playbackState()
+  const state = useAudioPlayer.use.getPlaybackState()()
   return state === "playing"
 }
 

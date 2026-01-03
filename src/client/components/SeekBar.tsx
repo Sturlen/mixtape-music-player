@@ -10,8 +10,8 @@ const formatTime = (s?: number) => {
 }
 
 export default function SeekBar() {
-  const duration = useAudioPlayer.use.duration()
-  const currentTime = useAudioPlayer.use.currentTime()
+  const duration = useAudioPlayer.use.getDuration()()
+  const currentTime = useAudioPlayer.use.getCurrentTime()()
   const seek = useAudioPlayer.use.seek()
   const [seeking, setSeeking] = useState<number | null>(null)
 

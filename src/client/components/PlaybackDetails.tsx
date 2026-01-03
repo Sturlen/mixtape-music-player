@@ -33,7 +33,7 @@ export default function PlaybackDetails() {
   const pause = useAudioPlayer.use.pause()
   const currentTrack = useCurrentTrack()
   const album_name = currentTrack?.album?.name
-  const duration = useAudioPlayer.use.duration()
+  const duration = useAudioPlayer.use.getDuration()()
   const queueSkip = useAudioPlayer.use.queueSkip()
   const queuePrev = useAudioPlayer.use.queuePrev()
 

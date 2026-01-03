@@ -28,7 +28,7 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
 
   const volume = useAudioPlayer.use.volume()
   const requested_playback_state = useAudioPlayer.use.requestedPlaybackState()
-  const is_loading = useAudioPlayer.use.isLoading()
+  const is_loading = useAudioPlayer.use.getActiveFeedback()().isLoading
   const endSeek = useAudioPlayer.use.endSeek()
   const requestedSeekPosition = useAudioPlayer.use.requestedSeekPosition()
   const currentTrack = useCurrentTrack()

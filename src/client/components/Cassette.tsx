@@ -10,7 +10,7 @@ const spoolScaleMax = 2.3
 export function Cassette({ className }: { className?: string }) {
   const isPlaying = useIsPlaying()
   const progress =
-    useAudioPlayer.use.currentTime() / useAudioPlayer.use.duration()
+    useAudioPlayer.use.getCurrentTime()() / useAudioPlayer.use.getDuration()()
 
   const current_track = useCurrentTrack()
 

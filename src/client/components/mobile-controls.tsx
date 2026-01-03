@@ -6,8 +6,9 @@ import { useSwipeable } from "react-swipeable"
 import { usePlaybackDrawer } from "@/contexts/PlaybackDrawerContext"
 
 const MobileControls = ({ className }: { className?: string }) => {
-  const { play, pause, duration, currentTime, queueSkip, queuePrev } =
-    useAudioPlayer()
+  const { play, pause, queueSkip, queuePrev } = useAudioPlayer()
+  const duration = useAudioPlayer.use.getDuration()()
+  const currentTime = useAudioPlayer.use.getCurrentTime()()
   const isPlaying = useIsPlaying()
   const currentTrack = useCurrentTrack()
   const { openDrawer } = usePlaybackDrawer()

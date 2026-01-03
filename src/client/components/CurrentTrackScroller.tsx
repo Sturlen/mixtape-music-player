@@ -3,7 +3,7 @@ import { TextScroller } from "./ui/TextScroller"
 
 export function CurrentTrackScroller() {
   const track = useCurrentTrack()
-  const isLoading = useAudioPlayer.use.isLoading()
+  const isLoading = useAudioPlayer.use.getActiveFeedback()().isLoading
 
   let text = "No Track Playing"
 
