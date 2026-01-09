@@ -1,6 +1,11 @@
 import * as React from "react"
 import { type PropsWithChildren, useEffect } from "react"
-import { useAudioPlayer, useCurrentTrack, useEvents } from "@/Player"
+import {
+  useAudioPlayer,
+  useCurrentTrack,
+  useEvents,
+  useActiveFeedback,
+} from "@/Player"
 import { EdenClient } from "@/lib/eden"
 import { useQuery } from "@tanstack/react-query"
 
@@ -28,7 +33,7 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
 
   const volume = useAudioPlayer.use.volume()
   const requested_playback_state = useAudioPlayer.use.requestedPlaybackState()
-  const is_loading = useAudioPlayer.use.getActiveFeedback()().isLoading
+  const is_loading = useActiveFeedback().isLoading
   const endSeek = useAudioPlayer.use.endSeek()
   const requestedSeekPosition = useAudioPlayer.use.requestedSeekPosition()
   const currentTrack = useCurrentTrack()

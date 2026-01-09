@@ -125,13 +125,6 @@ type PlayerState = {
   events: MediaEventHandlers
   stop: () => void
   endSeek: () => void
-
-  // Computed getters
-  getActiveFeedback: () => AudioElementFeedback
-  getCurrentTime: () => number
-  getDuration: () => number
-  getPlaybackState: () => "playing" | "paused"
-  getVolume: () => number
 } & PublicAPI
 
 type WithSelectors<S> = S extends { getState: () => infer T }
@@ -321,25 +314,6 @@ export const useAudioPlayerBase = create<PlayerState>()(
         queueTracks: [],
         queueIndex: 0,
 
-        // Computed getters
-        getActiveFeedback: () => {
-          const state = get()
-          return state.elementFeedback[state.activeElement]
-        },
-        getCurrentTime: () => {
-          const state = get()
-          return state.elementFeedback[state.activeElement].currentTime
-        },
-        getDuration: () => {
-          const state = get()
-          return state.elementFeedback[state.activeElement].duration
-        },
-        getPlaybackState: () => {
-          const state = get()
-          return state.elementFeedback[state.activeElement].playbackState
-        },
-        getVolume: () => get().volume,
-
         // Public API methods
         setVolume: (newVolumeFraction) => {
           set({
@@ -459,30 +433,6 @@ export const useAudioPlayerBase = create<PlayerState>()(
         setActiveElement: (element: "A" | "B") => {
           set({ activeElement: element })
         },
-        stop: () => {
-          set({
-            requestedPlaybackState: "paused",
-            requestedSource: undefined,
-            queueIndex: 0,
-            queueTracks: [],
-            elementFeedback: {
-              A: {
-                currentTime: 0,
-                duration: 0,
-                playbackState: "paused",
-                isLoading: false,
-                error: null,
-              },
-              B: {
-                currentTime: 0,
-                duration: 0,
-                playbackState: "paused",
-                isLoading: false,
-                error: null,
-              },
-            },
-          })
-        },
       }
     },
     {
@@ -505,10 +455,33 @@ export const useCurrentTrack = () => {
 }
 
 export const useIsPlaying = () => {
-  const state = useAudioPlayer.use.getPlaybackState()()
-  return state === "playing"
+  const activeElement = useAudioPlayer.use.activeElement()
+  const playbackState =
+    useAudioPlayer.use.elementFeedback()[activeElement].playbackState
+  return playbackState === "playing"
 }
 
 export const useEvents = () => {
   return useAudioPlayer((state) => state.events)
+}
+
+// External selector functions
+export const useCurrentTime = () => {
+  const activeElement = useAudioPlayer.use.activeElement()
+  return useAudioPlayer.use.elementFeedback()[activeElement].currentTime
+}
+
+export const useDuration = () => {
+  const activeElement = useAudioPlayer.use.activeElement()
+  return useAudioPlayer.use.elementFeedback()[activeElement].duration
+}
+
+export const usePlaybackState = () => {
+  const activeElement = useAudioPlayer.use.activeElement()
+  return useAudioPlayer.use.elementFeedback()[activeElement].playbackState
+}
+
+export const useActiveFeedback = () => {
+  const activeElement = useAudioPlayer.use.activeElement()
+  return useAudioPlayer.use.elementFeedback()[activeElement]
 }

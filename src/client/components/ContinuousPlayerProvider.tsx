@@ -6,7 +6,12 @@ import {
   useState,
   useCallback,
 } from "react"
-import { useAudioPlayer, useCurrentTrack, useEvents } from "@/Player"
+import {
+  useAudioPlayer,
+  useCurrentTrack,
+  useEvents,
+  useActiveFeedback,
+} from "@/Player"
 import { EdenClient } from "@/lib/eden"
 import { useQuery } from "@tanstack/react-query"
 
@@ -43,7 +48,7 @@ export const ContinuousPlayerProvider = ({ children }: PropsWithChildren) => {
 
   const volume = useAudioPlayer.use.volume()
   const requested_playback_state = useAudioPlayer.use.requestedPlaybackState()
-  const is_loading = useAudioPlayer.use.getActiveFeedback()().isLoading
+  const is_loading = useActiveFeedback().isLoading
   const endSeek = useAudioPlayer.use.endSeek()
   const requestedSeekPosition = useAudioPlayer.use.requestedSeekPosition()
   const currentTrack = useCurrentTrack()
@@ -164,6 +169,58 @@ export const ContinuousPlayerProvider = ({ children }: PropsWithChildren) => {
     staleTime: Infinity,
   })
 
+  // Crossfade function (replaced with seamless switch)
+  const performSeamlessSwitch = useCallback(
+    (fromElement: AudioElement, toElement: AudioElement) => {
+      const fromState = audioState.current[fromElement]
+      const toState = audioState.current[toElement]
+
+      if (!toState.element) return
+
+      // Start next track immediately
+      toState.element.play().catch(console.error)
+
+      // Switch states immediately
+      queueSkip()
+      setActiveElement(toElement)
+
+      // Update duration
+      if (toState.duration > 0) {
+        onDurationChange(toState.duration)
+      }
+
+      // Pause previous element
+      fromState.element?.pause()
+      nextTrackRef.current = null
+    },
+    [queueSkip, onDurationChange, setActiveElement],
+  )
+
+  // Handle time-based seamless transitions
+  const handleTimeUpdate = (
+    currentTime: number,
+    duration: number,
+    element: AudioElement,
+  ) => {
+    // Only check for seamless transition on active element
+    if (activeElement !== element || !duration || !nextTrackRef.current) return
+
+    const TIME_THRESHOLD = 0.5 // seconds before end to start transition
+    const timeRemaining = duration - currentTime
+
+    if (timeRemaining <= TIME_THRESHOLD) {
+      const inactiveElement = element === "A" ? "B" : "A"
+      const inactiveState = audioState.current[inactiveElement]
+
+      if (
+        inactiveState.trackId === nextTrackRef.current &&
+        inactiveState.element
+      ) {
+        performSeamlessSwitch(element, inactiveElement)
+      }
+    }
+  }
+
   // Cleanup: clear old preloaded tracks that are no longer in queue
   useEffect(() => {
     const currentTrackIds = new Set(currentQueueTracks.map((t) => t.id))
@@ -207,7 +264,7 @@ export const ContinuousPlayerProvider = ({ children }: PropsWithChildren) => {
       activeState.element.currentTime = requestedSeekPosition
       endSeek()
     }
-  }, [requestedSeekPosition, activeElement])
+  }, [requestedSeekPosition, activeElement, endSeek])
 
   // Handle source changes
   useEffect(() => {
@@ -224,17 +281,38 @@ export const ContinuousPlayerProvider = ({ children }: PropsWithChildren) => {
     ) {
       performSeamlessSwitch(inactiveElement, activeElement)
       return
-    } // Fixed dependency
+    }
 
     // Load current track on active element
     if (activeState.element && activeState.trackId !== currentTrack?.id) {
       activeState.element.src = currentSrc
       activeState.element.load()
       activeState.trackId = currentTrack?.id ?? null
-    }
-  }, [currentSrc, currentTrack, activeElement])
 
-  // Handle playback state
+      // If we're supposed to be playing, start playback after loading
+      if (requested_playback_state === "playing") {
+        const attemptPlay = () => {
+          if (!activeState.element || !activeState.element.paused) return
+          activeState.element.play().catch((err) => {
+            console.error("Play attempt failed:", err)
+            // Retry after a short delay
+            setTimeout(attemptPlay, 100)
+          })
+        }
+
+        // Try to play immediately, and also after canPlay fires
+        setTimeout(attemptPlay, 50)
+      }
+    }
+  }, [
+    currentSrc,
+    currentTrack,
+    activeElement,
+    performSeamlessSwitch,
+    requested_playback_state,
+  ])
+
+  // Handle playback state - unified approach
   useEffect(() => {
     const activeState = audioState.current[activeElement]
     if (!activeState.element) return
@@ -248,72 +326,39 @@ export const ContinuousPlayerProvider = ({ children }: PropsWithChildren) => {
     }
   }, [requested_playback_state, activeElement])
 
-  // Handle loading state
+  // Preload next track when available
   useEffect(() => {
-    const activeState = audioState.current[activeElement]
-    if (!activeState.element) return
+    if (
+      nextSrc &&
+      nextTrack &&
+      audioState.current[activeElement === "A" ? "B" : "A"].element
+    ) {
+      const inactiveElement = activeElement === "A" ? "B" : "A"
+      const inactiveState = audioState.current[inactiveElement]
 
-    if (is_loading === false && requested_playback_state === "playing") {
-      activeState.element
-        .play()
-        .catch((err) => console.error("Play failed:", err))
-    }
-  }, [is_loading, requested_playback_state, activeElement])
-
-  // Crossfade function (replaced with seamless switch)
-  const performSeamlessSwitch = useCallback(
-    (fromElement: AudioElement, toElement: AudioElement) => {
-      const fromState = audioState.current[fromElement]
-      const toState = audioState.current[toElement]
-
-      if (!toState.element) return
-
-      // Start next track immediately
-      toState.element.play().catch(console.error)
-
-      // Switch states immediately
-      queueSkip()
-      setActiveElement(toElement)
-
-      // Update duration
-      if (toState.duration > 0) {
-        onDurationChange(toState.duration)
+      if (inactiveState.element && inactiveState.trackId !== nextTrack.id) {
+        inactiveState.element.src = nextSrc
+        inactiveState.element.load()
+        inactiveState.trackId = nextTrack.id
+        nextTrackRef.current = nextTrack.id
       }
+    }
+  }, [nextSrc, nextTrack, activeElement])
 
-      // Pause previous element
-      fromState.element?.pause()
-      nextTrackRef.current = null
-    },
-    [queueSkip, onDurationChange, setActiveElement],
+  // Simple time update every 250ms - only update time, let events handle duration
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const activeState = audioState.current[activeElement]
+      if (activeState.element) {
+        onTimeUpdate(activeState.element.currentTime)
+      }
+    }, 250)
 
-    [
-      activeElement,
-      nextTrack,
-      nextSrc,
-      onTimeUpdate,
-      performSeamlessSwitch,
-      setActiveElement,
-    ],
-  )
+    return () => clearInterval(interval)
+  }, [activeElement, onTimeUpdate])
 
   // Event handlers
   const createAudioEventHandlers = (element: AudioElement) => ({
-    onTimeUpdate: (e: React.SyntheticEvent<HTMLAudioElement>) => {
-      const currentTime = e.currentTarget.currentTime
-      const duration = e.currentTarget.duration || 0
-
-      // Update duration for both elements
-      audioState.current[element].duration = duration
-
-      // Only update player time from active element
-      if (activeElement === element) {
-        onTimeUpdate(currentTime)
-      }
-
-      // Handle time-based logic (seamless transitions)
-      handleTimeUpdate(currentTime, duration, element)
-    },
-
     onDurationChange: (e: React.SyntheticEvent<HTMLAudioElement>) => {
       const duration = e.currentTarget.duration || 0
       // Update duration for both elements

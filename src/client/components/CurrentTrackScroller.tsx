@@ -1,9 +1,9 @@
-import { useAudioPlayer, useCurrentTrack } from "@/Player"
+import { useCurrentTrack, useActiveFeedback } from "@/Player"
 import { TextScroller } from "./ui/TextScroller"
 
 export function CurrentTrackScroller() {
   const track = useCurrentTrack()
-  const isLoading = useAudioPlayer.use.getActiveFeedback()().isLoading
+  const isLoading = useActiveFeedback().isLoading
 
   let text = "No Track Playing"
 

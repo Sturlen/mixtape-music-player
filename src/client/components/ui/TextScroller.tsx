@@ -1,5 +1,10 @@
 import { cn } from "@/lib/utils"
-import { useAudioPlayer, useCurrentTrack } from "@/Player"
+import {
+  useAudioPlayer,
+  useCurrentTrack,
+  useCurrentTime,
+  useDuration,
+} from "@/Player"
 
 import React, { useState, useEffect } from "react"
 
@@ -63,7 +68,7 @@ export function TextScroller({
 }
 
 function CurrentTime() {
-  const time = useAudioPlayer.use.getCurrentTime()()
+  const time = useCurrentTime()
   if (!Number.isFinite(time)) {
     return <span>--:--</span>
   }
@@ -72,7 +77,7 @@ function CurrentTime() {
 }
 
 function Duration() {
-  const duration = useAudioPlayer.use.getDuration()()
+  const duration = useDuration()
   if (!Number.isFinite(duration)) {
     return <span>--:--</span>
   }

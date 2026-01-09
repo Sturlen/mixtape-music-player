@@ -6,7 +6,12 @@ import {
   SkipForward as SkipForwardIcon,
   X as XIcon,
 } from "lucide-react"
-import { useAudioPlayer, useCurrentTrack, useIsPlaying } from "@/Player"
+import {
+  useAudioPlayer,
+  useCurrentTrack,
+  useIsPlaying,
+  useDuration,
+} from "@/Player"
 import {
   Drawer,
   DrawerContent,
@@ -33,7 +38,7 @@ export default function PlaybackDetails() {
   const pause = useAudioPlayer.use.pause()
   const currentTrack = useCurrentTrack()
   const album_name = currentTrack?.album?.name
-  const duration = useAudioPlayer.use.getDuration()()
+  const duration = useDuration()
   const queueSkip = useAudioPlayer.use.queueSkip()
   const queuePrev = useAudioPlayer.use.queuePrev()
 

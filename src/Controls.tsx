@@ -5,7 +5,12 @@ import {
   SkipBackIcon,
   SkipForwardIcon,
 } from "lucide-react"
-import { useAudioPlayer, useCurrentTrack } from "@/Player"
+import {
+  useAudioPlayer,
+  useCurrentTrack,
+  useCurrentTime,
+  useDuration,
+} from "@/Player"
 import { cn } from "@/lib/utils"
 import VolumeSlider from "@/VolumeControl"
 import { Cassette } from "@/client/components/Cassette"
@@ -81,7 +86,7 @@ export function Controls() {
 }
 
 function CurrentTime() {
-  const player_time = useAudioPlayer.use.getCurrentTime()()
+  const player_time = useCurrentTime()
   const requested_time = useAudioPlayer.use.requestedSeekPosition()
   const time = requested_time ?? player_time
   if (!Number.isFinite(time)) {
@@ -92,7 +97,7 @@ function CurrentTime() {
 }
 
 function Duration() {
-  const duration = useAudioPlayer.use.getDuration()()
+  const duration = useDuration()
   if (!Number.isFinite(duration)) {
     return <span>--:--</span>
   }

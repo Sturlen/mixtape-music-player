@@ -1,5 +1,5 @@
 import { useState, useMemo, useDeferredValue } from "react"
-import { useAudioPlayer } from "@/Player"
+import { useAudioPlayer, useDuration, useCurrentTime } from "@/Player"
 import { Slider } from "./ui/slider"
 
 const formatTime = (s?: number) => {
@@ -10,8 +10,8 @@ const formatTime = (s?: number) => {
 }
 
 export default function SeekBar() {
-  const duration = useAudioPlayer.use.getDuration()()
-  const currentTime = useAudioPlayer.use.getCurrentTime()()
+  const duration = useDuration()
+  const currentTime = useCurrentTime()
   const seek = useAudioPlayer.use.seek()
   const [seeking, setSeeking] = useState<number | null>(null)
 
