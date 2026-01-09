@@ -24,7 +24,6 @@ type AudioElement = "A" | "B"
 interface AudioElementState {
   element: HTMLAudioElement | null
   sourceNode: MediaElementAudioSourceNode | null
-  gainNode: GainNode | null
   trackId: string | null
   duration: number
 }
@@ -44,19 +43,15 @@ export const ContinuousPlayerProvider = ({ children }: PropsWithChildren) => {
 
   const volume = useAudioPlayer.use.volume()
   const requested_playback_state = useAudioPlayer.use.requestedPlaybackState()
-  const is_loading = useAudioPlayer.use.isLoading()
+  const is_loading = useAudioPlayer.use.getActiveFeedback()().isLoading
   const endSeek = useAudioPlayer.use.endSeek()
   const requestedSeekPosition = useAudioPlayer.use.requestedSeekPosition()
   const currentTrack = useCurrentTrack()
-
-  // Crossfade settings from store
-  const crossfadeEnabled = useAudioPlayer.use.crossfadeEnabled()
-  const crossfadeDuration = useAudioPlayer.use.crossfadeDuration()
-  const setIsTransitioning = useAudioPlayer.use.setIsTransitioning()
+  const requestedSource = useAudioPlayer.use.requestedSource()
+  const requestedVolume = useAudioPlayer.use.requestedVolume()
 
   // Web Audio Context and nodes
   const [audioContext, setAudioContext] = useState<AudioContext | null>(null)
-  const [activeElement, setActiveElement] = useState<AudioElement>("A")
 
   // Audio elements and their Web Audio nodes
   const audioA_ref = useRef<HTMLAudioElement>(null)
@@ -66,14 +61,12 @@ export const ContinuousPlayerProvider = ({ children }: PropsWithChildren) => {
     A: {
       element: null,
       sourceNode: null,
-      gainNode: null,
       trackId: null,
       duration: 0,
     },
     B: {
       element: null,
       sourceNode: null,
-      gainNode: null,
       trackId: null,
       duration: 0,
     },
@@ -81,8 +74,8 @@ export const ContinuousPlayerProvider = ({ children }: PropsWithChildren) => {
 
   // Master volume node for overall volume control
   const masterGainNode = useRef<GainNode | null>(null)
-
-  const isTransitioning = useAudioPlayer.use.isTransitioning()
+  const activeElement = useAudioPlayer.use.activeElement()
+  const setActiveElement = useAudioPlayer.use.setActiveElement()
   const nextTrackRef = useRef<string | null>(null)
 
   // Initialize Web Audio Context
@@ -102,47 +95,37 @@ export const ContinuousPlayerProvider = ({ children }: PropsWithChildren) => {
       try {
         audioState.current.A.sourceNode?.disconnect()
         audioState.current.B.sourceNode?.disconnect()
-        audioState.current.A.gainNode?.disconnect()
-        audioState.current.B.gainNode?.disconnect()
         masterGainNode.current?.disconnect()
         ctx.close()
       } catch (error) {
-        console.warn("Cleanup error:", error)
+        console.error("Cleanup failed:", error)
       }
     }
   }, [])
 
-  // Initialize audio elements with Web Audio nodes
+  // Initialize audio elements with Web Audio nodes (simplified)
   const initializeAudioElement = useCallback(
     (element: HTMLAudioElement, type: AudioElement) => {
       if (!audioContext) return
 
       try {
         const sourceNode = audioContext.createMediaElementSource(element)
-        const gainNode = audioContext.createGain()
 
-        // Connect the audio graph: element -> elementGain -> masterGain -> destination
-        sourceNode.connect(gainNode)
-        if (masterGainNode.current) {
-          gainNode.connect(masterGainNode.current)
-        }
+        // Connect the audio graph: element -> sourceNode -> masterGain -> destination
+        sourceNode.connect(masterGainNode.current!)
 
         // Store references
         audioState.current[type] = {
           element,
           sourceNode,
-          gainNode,
           trackId: null,
           duration: 0,
         }
-
-        // Set initial gain
-        gainNode.gain.value = type === activeElement ? 1 : 0
       } catch (error) {
         console.error(`Failed to initialize audio element ${type}:`, error)
       }
     },
-    [audioContext, activeElement],
+    [audioContext],
   )
 
   // Setup audio elements when context is ready
@@ -174,7 +157,7 @@ export const ContinuousPlayerProvider = ({ children }: PropsWithChildren) => {
   const nextTrack = currentQueueTracks[currentQueueIndex + 1]
   const { data: nextSrc } = useQuery({
     queryKey: ["playback-next", nextTrack?.id],
-    enabled: !!nextTrack && !isTransitioning && crossfadeEnabled,
+    enabled: !!nextTrack,
     queryFn: async ({ queryKey }) => {
       return fetchPlaybackData(queryKey[1] ?? "")
     },
@@ -239,9 +222,9 @@ export const ContinuousPlayerProvider = ({ children }: PropsWithChildren) => {
       nextTrackRef.current === currentTrack?.id &&
       inactiveState.trackId === currentTrack?.id
     ) {
-      performCrossfade(inactiveElement, activeElement)
+      performSeamlessSwitch(inactiveElement, activeElement)
       return
-    }
+    } // Fixed dependency
 
     // Load current track on active element
     if (activeState.element && activeState.trackId !== currentTrack?.id) {
@@ -277,124 +260,39 @@ export const ContinuousPlayerProvider = ({ children }: PropsWithChildren) => {
     }
   }, [is_loading, requested_playback_state, activeElement])
 
-  // Crossfade function
-  const performCrossfade = useCallback(
+  // Crossfade function (replaced with seamless switch)
+  const performSeamlessSwitch = useCallback(
     (fromElement: AudioElement, toElement: AudioElement) => {
-      if (!audioContext) return
-
       const fromState = audioState.current[fromElement]
       const toState = audioState.current[toElement]
 
-      if (!fromState.gainNode || !toState.gainNode || !toState.element) {
-        console.warn("Crossfade failed: missing audio nodes or elements")
-        return
+      if (!toState.element) return
+
+      // Start next track immediately
+      toState.element.play().catch(console.error)
+
+      // Switch states immediately
+      queueSkip()
+      setActiveElement(toElement)
+
+      // Update duration
+      if (toState.duration > 0) {
+        onDurationChange(toState.duration)
       }
 
-      setIsTransitioning(true)
-
-      const currentTime = audioContext.currentTime
-
-      // Start the next element
-      toState.element.play().catch((err) => {
-        console.error("Next track play failed:", err)
-        setIsTransitioning(false)
-      })
-
-      // Perform crossfade
-      fromState.gainNode.gain.setValueAtTime(
-        fromState.gainNode.gain.value,
-        currentTime,
-      )
-      fromState.gainNode.gain.linearRampToValueAtTime(
-        0,
-        currentTime + crossfadeDuration,
-      )
-
-      toState.gainNode.gain.setValueAtTime(0, currentTime)
-      toState.gainNode.gain.linearRampToValueAtTime(
-        1,
-        currentTime + crossfadeDuration,
-      )
-
-      // Switch active element after crossfade
-      setTimeout(() => {
-        console.log("Crossfade complete - switching elements", {
-          from: fromElement,
-          to: toElement,
-          nextTrackId: nextTrackRef.current,
-        })
-
-        // Advance queue to the next track BEFORE updating states
-        queueSkip()
-
-        setActiveElement(toElement)
-        fromState.element?.pause()
-        nextTrackRef.current = null
-
-        // Update player duration from the new active element
-        const newActiveState = audioState.current[toElement]
-        if (newActiveState.duration > 0) {
-          onDurationChange(newActiveState.duration)
-        }
-
-        // Set transitioning to false last to prevent onEnded from triggering another skip
-        setIsTransitioning(false)
-      }, crossfadeDuration * 1000)
+      // Pause previous element
+      fromState.element?.pause()
+      nextTrackRef.current = null
     },
-    [audioContext, crossfadeDuration],
-  )
+    [queueSkip, onDurationChange, setActiveElement],
 
-  // Check for crossfade trigger
-  const handleTimeUpdate = useCallback(
-    (currentTime: number, duration: number, element: AudioElement) => {
-      // Update player state
-      onTimeUpdate(currentTime)
-
-      // Only do crossfade if enabled
-      if (!crossfadeEnabled) return
-
-      // Check if we should start crossfade
-      if (!isTransitioning && duration > 0) {
-        const remainingTime = duration - currentTime
-        const crossfadeStartTime = crossfadeDuration + 1 // Start 1 second before crossfade
-
-        if (
-          remainingTime <= crossfadeStartTime &&
-          nextTrack &&
-          nextSrc &&
-          !nextTrackRef.current
-        ) {
-          // Preload the next track
-          const nextElement = element === "A" ? "B" : "A"
-          const nextState = audioState.current[nextElement]
-
-          if (nextState.element && nextState.trackId !== nextTrack.id) {
-            nextState.element.src = nextSrc
-            nextState.element.load()
-            nextState.trackId = nextTrack.id
-            nextTrackRef.current = nextTrack.id
-          }
-        }
-
-        // Start crossfade at the right moment
-        if (remainingTime <= crossfadeDuration && nextTrackRef.current) {
-          const nextElement = element === "A" ? "B" : "A"
-          const nextState = audioState.current[nextElement]
-
-          if (nextState.trackId === nextTrackRef.current) {
-            performCrossfade(element, nextElement)
-          }
-        }
-      }
-    },
     [
-      crossfadeEnabled,
-      isTransitioning,
+      activeElement,
       nextTrack,
       nextSrc,
       onTimeUpdate,
-      crossfadeDuration,
-      performCrossfade,
+      performSeamlessSwitch,
+      setActiveElement,
     ],
   )
 
@@ -412,7 +310,7 @@ export const ContinuousPlayerProvider = ({ children }: PropsWithChildren) => {
         onTimeUpdate(currentTime)
       }
 
-      // Handle crossfade logic from both elements
+      // Handle time-based logic (seamless transitions)
       handleTimeUpdate(currentTime, duration, element)
     },
 
@@ -446,8 +344,8 @@ export const ContinuousPlayerProvider = ({ children }: PropsWithChildren) => {
     },
 
     onEnded: () => {
-      if (activeElement === element && !isTransitioning) {
-        // Normal track end without crossfade
+      if (activeElement === element) {
+        // Track end (seamless switch handles most cases)
         onEnded()
       }
     },

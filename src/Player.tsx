@@ -90,6 +90,7 @@ type PublicAPI = {
   queueJump: (trackIndex: number) => Track | undefined
   setVolume: (newVolumeFraction: number) => void
   seek: (time: number) => void
+  setActiveElement: (element: "A" | "B") => void
 }
 
 // Read from audio elements
@@ -454,6 +455,33 @@ export const useAudioPlayerBase = create<PlayerState>()(
         },
         pause: () => {
           set({ requestedPlaybackState: "paused" })
+        },
+        setActiveElement: (element: "A" | "B") => {
+          set({ activeElement: element })
+        },
+        stop: () => {
+          set({
+            requestedPlaybackState: "paused",
+            requestedSource: undefined,
+            queueIndex: 0,
+            queueTracks: [],
+            elementFeedback: {
+              A: {
+                currentTime: 0,
+                duration: 0,
+                playbackState: "paused",
+                isLoading: false,
+                error: null,
+              },
+              B: {
+                currentTime: 0,
+                duration: 0,
+                playbackState: "paused",
+                isLoading: false,
+                error: null,
+              },
+            },
+          })
         },
       }
     },
