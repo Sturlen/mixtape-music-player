@@ -4,6 +4,7 @@
 
 - DO NOT use unnecessary type hints. Let typescript inference do it's job.
 - Avoid "Any" type.
+- DO use absolute imports.
 
 ## Project Architecture
 
