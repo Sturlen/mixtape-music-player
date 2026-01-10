@@ -169,16 +169,51 @@ export const ContinuousPlayerProvider = ({ children }: PropsWithChildren) => {
     staleTime: Infinity,
   })
 
-  // Crossfade function (replaced with seamless switch)
+  // Debugging logs for transitions
+  useEffect(() => {
+    console.log("[DEBUG] Transition state:", {
+      nextTrackRef: nextTrackRef.current,
+      queueIndex: currentQueueIndex,
+    })
+  }, [nextTrackRef.current, currentQueueIndex])
+
+  // Enhanced debugging logs for audio state
+  useEffect(() => {
+    console.log("[DEBUG] Audio state:", {
+      A: audioState.current.A,
+      B: audioState.current.B,
+    })
+  }, [audioState.current])
+
+  // Transition lock to prevent overlapping transitions
+  const transitionLock = useRef(false)
+
+  // Simplified performSeamlessSwitch without async handling
   const performSeamlessSwitch = useCallback(
     (fromElement: AudioElement, toElement: AudioElement) => {
+      console.log("[DEBUG] Performing seamless switch:", {
+        fromElement,
+        toElement,
+        nextTrackRef: nextTrackRef.current,
+        audioState: {
+          A: audioState.current.A,
+          B: audioState.current.B,
+        },
+      })
+
       const fromState = audioState.current[fromElement]
       const toState = audioState.current[toElement]
 
-      if (!toState.element) return
+      if (!toState.element) {
+        console.error("[DEBUG] Target audio element is null.")
+        return
+      }
 
-      // Start next track immediately
-      toState.element.play().catch(console.error)
+      // Set the src explicitly and start playback
+      toState.element.src = nextTrackRef.current || ""
+      toState.element.play().catch((error) => {
+        console.error("[DEBUG] Play failed during seamless switch:", error)
+      })
 
       // Switch states immediately
       queueSkip()
@@ -191,18 +226,31 @@ export const ContinuousPlayerProvider = ({ children }: PropsWithChildren) => {
 
       // Pause previous element
       fromState.element?.pause()
-      nextTrackRef.current = null
+      console.log("[DEBUG] Seamless switch completed:", {
+        activeElement: toElement,
+        audioState: {
+          A: audioState.current.A,
+          B: audioState.current.B,
+        },
+      })
     },
     [queueSkip, onDurationChange, setActiveElement],
   )
 
-  // Handle time-based seamless transitions
+  // Simplified handleTimeUpdate
   const handleTimeUpdate = (
     currentTime: number,
     duration: number,
     element: AudioElement,
   ) => {
-    // Only check for seamless transition on active element
+    console.log("[DEBUG] handleTimeUpdate triggered:", {
+      currentTime,
+      duration,
+      element,
+      activeElement,
+      nextTrackRef: nextTrackRef.current,
+    })
+
     if (activeElement !== element || !duration || !nextTrackRef.current) return
 
     const TIME_THRESHOLD = 0.5 // seconds before end to start transition
