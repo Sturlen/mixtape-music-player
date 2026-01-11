@@ -12,6 +12,7 @@ export const env = createEnv({
     PORT: z.coerce.number().int().default(3000),
     USE_FFMPEG: z.stringbool().default(false),
     MIXTAPES_ENABLED: z.stringbool().default(false),
+    DATA_PATH: z.string().min(1).default("./data"),
   },
 
   client: {

@@ -138,5 +138,5 @@ export async function deletePlaylist(
 }
 
 export function generatePlaylistId(): string {
-  return `playlist_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  return `playlist_${crypto.randomUUID()}`
 }

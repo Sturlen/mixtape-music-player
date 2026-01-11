@@ -15,8 +15,10 @@ import type {
 } from "@/lib/types"
 import { raise } from "@/lib/utils"
 import { $ } from "bun"
-import { parsePlaylists } from "./server/playlist_parser"
+import { parsePlaylists } from "./server/new_playlist_parser"
 import { createPlaylistRoutes } from "./playlist"
+import { mkdirSync, existsSync } from "fs"
+import { fuse_artists, fuse_albums, fuse_playlists } from "./lib/fuse"
 
 if (env.USE_FFMPEG) {
   console.warn(
@@ -49,21 +51,24 @@ const db = {
 }
 
 async function loadPlaylists(): Promise<Playlist[]> {
-  const playlistsArr = await parsePlaylists("./data/playlists")
-  return playlistsArr
+  const playlistsPath = `${env.DATA_PATH}/playlists`
+
+  // Ensure the playlists folder exists
+  if (!existsSync(playlistsPath)) {
+    console.warn(`Playlists folder not found. Creating: ${playlistsPath}`)
+    mkdirSync(playlistsPath, { recursive: true })
+  }
+
+  try {
+    console.log("Loading playlists from:", playlistsPath)
+    const playlistsArr = await parsePlaylists(playlistsPath)
+    console.log("Loaded playlists:", playlistsArr)
+    return playlistsArr
+  } catch (error) {
+    console.error("Failed to load playlists:", error)
+    return []
+  }
 }
-
-export const fuse_artists = new Fuse<Artist>([], {
-  keys: ["name"],
-})
-
-export const fuse_albums = new Fuse<Album>([], {
-  keys: ["name"],
-})
-
-export const fuse_playlists = new Fuse<Playlist>([], {
-  keys: ["name"],
-})
 
 const default_source: Source = {
   id: "source:main",
@@ -162,7 +167,9 @@ const app = new Elysia()
       let artists: Artist[] = []
       if (q) {
         console.log("q", q)
-        artists = fuse_artists.search(q).map((res) => res.item)
+        artists = fuse_artists
+          .search(q)
+          .map((res: { item: Artist }) => res.item)
       } else {
         artists = Array.from(db.artists.values())
       }
@@ -198,7 +205,7 @@ const app = new Elysia()
       let albums: Album[] = []
       if (q) {
         console.log("q", q)
-        albums = fuse_albums.search(q).map((res) => res.item)
+        albums = fuse_albums.search(q).map((res: { item: Album }) => res.item)
       } else {
         albums = Array.from(db.albums.values())
       }

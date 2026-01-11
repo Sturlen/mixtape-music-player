@@ -21,7 +21,7 @@ export function createPlaylistRoutes(context: PlaylistContext) {
 
   return new Elysia({ prefix: "/api/playlists" })
     .get(
-      "/",
+      "",
       async ({ query: { q } }) => {
         let playlists: Playlist[]
         if (q) {
@@ -59,7 +59,7 @@ export function createPlaylistRoutes(context: PlaylistContext) {
       }
     })
     .post(
-      "/",
+      "",
       async ({ body }) => {
         if (!env.MIXTAPES_ENABLED) {
           throw new Error("Mixtape creation is disabled")
