@@ -16,6 +16,7 @@ describe("parsePlaylists", () => {
           { id: "trackeb4d5eaa2d900185", name: "A Proper Story" },
           { id: "track692bf6b99ac61a02", name: "Stained Glass" },
           { id: "trackedb22e9831c7d490", name: "Terminal March" },
+          { id: "trackeb4d5eaa2d900185", name: "A Proper Story" }, // Duplicate track
         ],
       },
     ])
@@ -35,5 +36,20 @@ describe("parsePlaylists", () => {
     const playlists = await parsePlaylists(emptyDir)
 
     expect(playlists).toHaveLength(0)
+  })
+
+  test("should allow duplicate tracks in playlists", async () => {
+    const playlists = await parsePlaylists(playlistsDir)
+
+    expect(playlists).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          tracks: expect.arrayContaining([
+            { id: "trackeb4d5eaa2d900185", name: "A Proper Story" },
+            { id: "trackeb4d5eaa2d900185", name: "A Proper Story" }, // Duplicate track
+          ]),
+        }),
+      ]),
+    )
   })
 })

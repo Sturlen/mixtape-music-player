@@ -149,11 +149,6 @@ export function createPlaylistRoutes(context: PlaylistContext) {
           throw new NotFoundError("Track not found")
         }
 
-        const trackExists = playlist.tracks.some((t) => t.id === body.trackId)
-        if (trackExists) {
-          throw new Error("Track already exists in playlist")
-        }
-
         const updatedPlaylist: Playlist = {
           ...playlist,
           tracks: [...playlist.tracks, { id: track.id, name: track.name }],

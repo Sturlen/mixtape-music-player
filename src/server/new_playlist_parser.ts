@@ -32,14 +32,7 @@ export async function parsePlaylists(
         const content = yaml.parse(rawContent)
 
         // Validate the parsed content
-        if (
-          content.id &&
-          content.name &&
-          Array.isArray(content.tracks) &&
-          content.tracks.every(
-            (track: { id: string; name: string }) => track.id && track.name,
-          )
-        ) {
+        if (content.id && content.name && Array.isArray(content.tracks)) {
           playlists.push({
             id: content.id,
             name: content.name,
