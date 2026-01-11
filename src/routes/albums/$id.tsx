@@ -5,6 +5,7 @@ import { useAudioPlayer } from "@/Player"
 import { EdenClient } from "@/lib/eden"
 import Page from "@/client/components/Page"
 import { usePlayAlbum } from "@/lib/api"
+import { AddToPlaylistButton } from "@/client/components/AddToPlaylistButton"
 
 export const Route = createFileRoute("/albums/$id")({
   component: RouteComponent,
@@ -69,7 +70,7 @@ function RouteComponent() {
         {album.tracks.map((track, i) => (
           <li
             key={track.id}
-            className="hover:bg-accent/50 grid w-full grid-cols-[1fr_auto_auto] items-center gap-2 border-t p-2 pl-8 transition-colors last:border-b"
+            className="hover:bg-accent/50 grid w-full grid-cols-[1fr_auto_auto_auto] items-center gap-2 border-t p-2 pl-8 transition-colors last:border-b"
           >
             <button
               onClick={() => {
@@ -92,6 +93,11 @@ function RouteComponent() {
                 </span>
               ) : null}
             </button>
+            <AddToPlaylistButton
+              trackId={track.id}
+              trackName={track.name}
+              className="hover:bg-accent rounded border border-current px-4 py-2 whitespace-nowrap transition-colors"
+            />
             <button
               className="hover:bg-accent rounded border border-current px-4 py-2 whitespace-nowrap transition-colors"
               onClick={() => {

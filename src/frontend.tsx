@@ -44,7 +44,7 @@ renderApp()
 
 if (import.meta.hot) {
   // Accept updates from router module to trigger re-render
-  import.meta.hot.accept("@/router", () => {
+  import.meta.hot.accept("@/client/router", () => {
     renderApp()
   })
 }

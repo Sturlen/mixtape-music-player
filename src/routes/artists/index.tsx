@@ -6,7 +6,8 @@ import { Link } from "@tanstack/react-router"
 import { GridLayout } from "@/client/components/ui/grid"
 import Page from "@/client/components/Page"
 import { Input } from "@/client/components/ui/input"
-import { useState, useDeferredValue } from "react"
+import { useState } from "react"
+import { useDebouncer } from "@tanstack/react-pacer"
 
 export const Route = createFileRoute("/artists/")({
   component: RouteComponent,
@@ -31,7 +32,12 @@ function useArtists(query: string) {
 
 function RouteComponent() {
   const [searchInput, setSearchInput] = useState("")
-  const deferredSearchTerm = useDeferredValue(searchInput)
+  const [searchQuery, setSearchQuery] = useState("")
+
+  const searchDebouncer = useDebouncer(
+    (query: string) => setSearchQuery(query),
+    { wait: 300 },
+  )
 
   return (
     <Page>
@@ -43,10 +49,13 @@ function RouteComponent() {
           placeholder="🔍 Search for Rick Astley..."
           className="rounded-none md:w-1/2"
           value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
+          onChange={(e) => {
+            setSearchInput(e.target.value)
+            searchDebouncer.maybeExecute(e.target.value)
+          }}
         />
       </div>
-      <Content searchTerm={deferredSearchTerm} />
+      <Content searchTerm={searchQuery} />
     </Page>
   )
 }

@@ -9,11 +9,16 @@ import type {
   ArtAsset,
   Artist,
   AudioAsset,
+  Playlist,
   Source,
   Track,
 } from "@/lib/types"
 import { raise } from "@/lib/utils"
 import { $ } from "bun"
+import { parsePlaylists } from "./server/new_playlist_parser"
+import { createPlaylistRoutes } from "./playlist"
+import { mkdirSync, existsSync, stat } from "fs"
+import { fuse_artists, fuse_albums, fuse_playlists } from "./lib/fuse"
 
 if (env.USE_FFMPEG) {
   console.warn(
@@ -42,15 +47,28 @@ const db = {
   tracks: new Map<string, Track>(),
   artAssets: new Map<string, ArtAsset>(),
   audioAssets: new Map<string, AudioAsset>(),
+  playlists: new Map<string, Playlist>(),
 }
 
-export const fuse_artists = new Fuse<Artist>([], {
-  keys: ["name"],
-})
+async function loadPlaylists(): Promise<Playlist[]> {
+  const playlistsPath = `${env.DATA_PATH}/playlists`
 
-export const fuse_albums = new Fuse<Album>([], {
-  keys: ["name"],
-})
+  // Ensure the playlists folder exists
+  if (!existsSync(playlistsPath)) {
+    console.warn(`Playlists folder not found. Creating: ${playlistsPath}`)
+    mkdirSync(playlistsPath, { recursive: true })
+  }
+
+  try {
+    console.log("Loading playlists from:", playlistsPath)
+    const playlistsArr = await parsePlaylists(playlistsPath)
+    console.log("Loaded playlists:", playlistsArr)
+    return playlistsArr
+  } catch (error) {
+    console.error("Failed to load playlists:", error)
+    return []
+  }
+}
 
 const default_source: Source = {
   id: "source:main",
@@ -74,6 +92,16 @@ async function reloadLibrary() {
   db.tracks.clear()
   db.artAssets.clear()
   db.audioAssets.clear()
+  db.playlists.clear()
+
+  const playlistsArr = await loadPlaylists()
+  for (const playlist of playlistsArr) {
+    db.playlists.set(playlist.id, playlist)
+  }
+  console.log(
+    "playlists",
+    JSON.stringify(Array.from(db.playlists.values()), undefined, 4),
+  )
 
   for (const source of sources) {
     try {
@@ -101,6 +129,7 @@ async function reloadLibrary() {
 
   fuse_artists.setCollection(Array.from(db.artists.values()))
   fuse_albums.setCollection(Array.from(db.albums.values()))
+  fuse_playlists.setCollection(Array.from(db.playlists.values()))
 
   console.log("Library reloaded", {
     artists: db.artists.size,
@@ -108,12 +137,18 @@ async function reloadLibrary() {
     tracks: db.tracks.size,
     artAssets: db.artAssets.size,
     audioAssets: db.audioAssets.size,
+    playlists: db.playlists.size,
   })
 }
 
 await reloadLibrary()
 
 const app = new Elysia()
+  .onError(({ error, set, status }) => {
+    console.error("An error occurred:", error)
+
+    return status(500)
+  })
   .use(
     openapi({
       path: "/openapi",
@@ -123,20 +158,23 @@ const app = new Elysia()
   .get("/*", index, { detail: "hide" })
   .get("/api/*", "418")
   .get("/api", () => redirect("/openapi"))
-  .get("/api/stats", {
+  .get("/api/stats", () => ({
     artists: db.artists.size,
     albums: db.albums.size,
     tracks: db.tracks.size,
     artAssets: db.artAssets.size,
     audioAssets: db.audioAssets.size,
-  })
+    playlists: db.playlists.size,
+  }))
   .get(
     "/api/artists",
     ({ query: { q } }) => {
       let artists: Artist[] = []
       if (q) {
         console.log("q", q)
-        artists = fuse_artists.search(q).map((res) => res.item)
+        artists = fuse_artists
+          .search(q)
+          .map((res: { item: Artist }) => res.item)
       } else {
         artists = Array.from(db.artists.values())
       }
@@ -172,7 +210,7 @@ const app = new Elysia()
       let albums: Album[] = []
       if (q) {
         console.log("q", q)
-        albums = fuse_albums.search(q).map((res) => res.item)
+        albums = fuse_albums.search(q).map((res: { item: Album }) => res.item)
       } else {
         albums = Array.from(db.albums.values())
       }
@@ -381,6 +419,28 @@ const app = new Elysia()
 
     return { album, tracks: albumTracks }
   })
+  .post(
+    "/api/playPlaylist/:playlistId",
+    async ({ params: { playlistId }, status }) => {
+      const playlist = db.playlists.get(playlistId)
+      if (!playlist) {
+        return status(404)
+      }
+      // Map playlist.tracks to full track objects from db.tracks
+      const playlistTracks = playlist.tracks
+        .map((plTrack, i) => {
+          const fullTrack = db.tracks.get(plTrack.id)
+          if (!fullTrack) return undefined
+          return {
+            ...fullTrack,
+            trackNumber: i + 1,
+          }
+        })
+        .filter((t) => !!t)
+      return { playlist, tracks: playlistTracks }
+    },
+  )
+  .use(createPlaylistRoutes({ db, fuse_playlists }))
   .listen(env.PORT, () => {
     console.log(`started in ${(performance.now() - started_at).toFixed(2)} ms`)
   })
