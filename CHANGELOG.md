@@ -2,12 +2,6 @@
 
 Notable changes. Expect proper version numbers when it's actually close to a release version.
 
-## v0.0.0 [19-11-2025]
-
-### Added
-
-- Changelog file
-- (optional) automatic audio file conversion on playback with ffmpeg. (Not recommended right now, since it's way too slow on most servers)
 
 ## v0.0.1 [13-12-2025]
 
@@ -36,3 +30,10 @@ Notable changes. Expect proper version numbers when it's actually close to a rel
 - All mixtape-related API endpoints return 403 Forbidden when feature is disabled
 - Existing mixtapes remain accessible for reading but cannot be modified when disabled
 - Feature flag provides a simple security boundary for shared deployments
+
+## v0.0.0 [19-11-2025]
+
+### Added
+
+- Changelog file
+- (optional) automatic audio file conversion on playback with ffmpeg. (Not recommended right now, since it's way too slow on most servers)
