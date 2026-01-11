@@ -144,6 +144,16 @@ async function reloadLibrary() {
 await reloadLibrary()
 
 const app = new Elysia()
+  .onError(({ error, set }) => {
+    console.error("An error occurred:", error)
+
+    // Optionally set a custom response for unhandled errors
+    set.status = 500
+    return {
+      message: "Internal Server Error",
+      error: "message" in error ? error.message : "Unknown error",
+    }
+  })
   .use(
     openapi({
       path: "/openapi",
