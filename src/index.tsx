@@ -17,7 +17,7 @@ import { raise } from "@/lib/utils"
 import { $ } from "bun"
 import { parsePlaylists } from "./server/new_playlist_parser"
 import { createPlaylistRoutes } from "./playlist"
-import { mkdirSync, existsSync } from "fs"
+import { mkdirSync, existsSync, stat } from "fs"
 import { fuse_artists, fuse_albums, fuse_playlists } from "./lib/fuse"
 
 if (env.USE_FFMPEG) {
@@ -144,15 +144,10 @@ async function reloadLibrary() {
 await reloadLibrary()
 
 const app = new Elysia()
-  .onError(({ error, set }) => {
+  .onError(({ error, set, status }) => {
     console.error("An error occurred:", error)
 
-    // Optionally set a custom response for unhandled errors
-    set.status = 500
-    return {
-      message: "Internal Server Error",
-      error: "message" in error ? error.message : "Unknown error",
-    }
+    return status(500)
   })
   .use(
     openapi({
