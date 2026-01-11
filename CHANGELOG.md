@@ -3,9 +3,11 @@
 Notable changes. Expect proper version numbers when it's actually close to a release version.
 
 
-## v0.0.1 [13-12-2025]
+## v0.1.0 [11-01-2026]
 
 ### Added
+
+- Data folder. All files that MIXTAPE manage, like playlists, will be stored in here. See ENV.
 
 - **Mixtape/Playlist Feature**: Full playlist management system with the following capabilities:
   - Create, read, update, and delete mixtapes
@@ -18,11 +20,9 @@ Notable changes. Expect proper version numbers when it's actually close to a rel
 ### Security & Configuration
 
 - **MIXTAPES_ENABLED Feature Flag**: New environment variable to control mixtape functionality
-  - **Purpose**: Prevents unauthorized file creation on public demo deployments
-  - **Default**: `false` (disabled for security)
+  - **Purpose**: Defaults to false to stop unauthorized file creation on public demo deployments
   - **Usage**: Set `MIXTAPES_ENABLED=true` to enable mixtape creation and modification
   - **Impact**: When disabled, mixtape parsing, creation, modification, and deletion are blocked
-  - **Rationale**: Public demos could become moderation nightmares with random user-created files
 
 ### Technical Details
 
