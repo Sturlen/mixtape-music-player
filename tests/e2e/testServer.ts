@@ -44,7 +44,9 @@ async function waitForServer(port: number, timeout = 15000) {
     try {
       const res = await fetch(`http://localhost:${port}/api/stats`)
       if (res.ok) return
-    } catch {}
+    } catch {
+      // server not ready, retry
+    }
     await new Promise((r) => setTimeout(r, 100))
   }
   throw new Error("Server failed to start")

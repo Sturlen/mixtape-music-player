@@ -7,6 +7,7 @@ export interface DemoMusicData {
   playlists: Playlist[]
 }
 
+//TODO: find a more automated way to generate this expected stats data from the demo library, rather than hardcoding it here and risking it getting out of sync
 export const EXPECTED_STATS = {
   artists: 1,
   albums: 1,
