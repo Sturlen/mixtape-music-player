@@ -17,17 +17,17 @@ End-to-end tests that run against a fully running server instance with real HTTP
 
 ### Phase 1: Test Infrastructure
 
-- [ ] **1.1** Create `tests/e2e/testServer.ts`
+- [x] **1.1** Create `tests/e2e/testServer.ts`
   - Start server as subprocess with custom env vars
   - Use random port to avoid conflicts
   - Provide base URL to tests
   - Clean shutdown after tests
 
-- [ ] **1.2** Create `tests/e2e/testClient.ts`
+- [x] **1.2** Create `tests/e2e/testClient.ts`
   - Simple `fetch` wrapper with base URL
   - Response type helpers
 
-- [ ] **1.3** Create `tests/e2e/fixtures.ts`
+- [x] **1.3** Create `tests/e2e/fixtures.ts`
   - Document known artists/albums/tracks from demo-music
   - Helper functions to find test data by name/pattern
 
@@ -35,58 +35,58 @@ End-to-end tests that run against a fully running server instance with real HTTP
 
 #### 2.1 Stats Endpoint (`tests/e2e/stats.test.ts`)
 
-- [ ] **2.1.1** GET /api/stats returns counts matching demo library
+- [x] **2.1.1** GET /api/stats returns counts matching demo library
 
 #### 2.2 Artist Endpoints (`tests/e2e/artists.test.ts`)
 
-- [ ] **2.2.1** GET /api/artists returns all artists sorted alphabetically
-- [ ] **2.2.2** GET /api/artists?q=<query> returns fuzzy search results
-- [ ] **2.2.3** GET /api/artists/:id returns artist with albums
-- [ ] **2.2.4** GET /api/artists/:id returns empty object for unknown artist
+- [x] **2.2.1** GET /api/artists returns all artists sorted alphabetically
+- [x] **2.2.2** GET /api/artists?q=<query> returns fuzzy search results
+- [x] **2.2.3** GET /api/artists/:id returns artist with albums
+- [x] **2.2.4** GET /api/artists/:id returns empty object for unknown artist
 
 #### 2.3 Album Endpoints (`tests/e2e/albums.test.ts`)
 
-- [ ] **2.3.1** GET /api/albums returns all albums sorted alphabetically
-- [ ] **2.3.2** GET /api/albums?q=<query> returns fuzzy search results
-- [ ] **2.3.3** GET /api/albums/:id returns album with sorted tracks
-- [ ] **2.3.4** GET /api/albums/:id returns empty object for unknown album
+- [x] **2.3.1** GET /api/albums returns all albums sorted alphabetically
+- [x] **2.3.2** GET /api/albums?q=<query> returns fuzzy search results
+- [x] **2.3.3** GET /api/albums/:id returns album with sorted tracks
+- [x] **2.3.4** GET /api/albums/:id returns empty object for unknown album
 
 #### 2.4 Track Endpoints (`tests/e2e/tracks.test.ts`)
 
-- [ ] **2.4.1** GET /api/tracks returns all tracks
-- [ ] **2.4.2** GET /api/tracks/:id returns single track
-- [ ] **2.4.3** GET /api/tracks/:id returns undefined for unknown track
+- [x] **2.4.1** GET /api/tracks returns all tracks
+- [x] **2.4.2** GET /api/tracks/:id returns single track
+- [x] **2.4.3** GET /api/tracks/:id returns undefined for unknown track
 
 #### 2.5 Playlist Endpoints (`tests/e2e/playlists.test.ts`)
 
-- [ ] **2.5.1** GET /api/playlists returns all playlists sorted alphabetically
-- [ ] **2.5.2** GET /api/playlists?q=<query> returns fuzzy search results
-- [ ] **2.5.3** GET /api/playlists/:id returns single playlist
-- [ ] **2.5.4** GET /api/playlists/:id returns 404 for unknown playlist
+- [x] **2.5.1** GET /api/playlists returns all playlists sorted alphabetically
+- [x] **2.5.2** GET /api/playlists?q=<query> returns fuzzy search results
+- [x] **2.5.3** GET /api/playlists/:id returns single playlist
+- [x] **2.5.4** GET /api/playlists/:id returns 404 for unknown playlist
 
 #### 2.6 Player Endpoints (`tests/e2e/player.test.ts`)
 
-- [ ] **2.6.1** POST /api/player with valid trackId returns playback URL
-- [ ] **2.6.2** POST /api/player with missing trackId returns 400
-- [ ] **2.6.3** POST /api/player with unknown trackId returns 404
-- [ ] **2.6.4** POST /api/playAlbum/:id returns album with sorted tracks
-- [ ] **2.6.5** POST /api/playAlbum/:id returns 404 for unknown album
-- [ ] **2.6.6** POST /api/playPlaylist/:id returns playlist with track objects
-- [ ] **2.6.7** POST /api/playPlaylist/:id returns 404 for unknown playlist
+- [x] **2.6.1** POST /api/player with valid trackId returns playback URL
+- [x] **2.6.2** POST /api/player with missing trackId returns 400
+- [x] **2.6.3** POST /api/player with unknown trackId returns 404
+- [x] **2.6.4** POST /api/playAlbum/:id returns album with sorted tracks
+- [x] **2.6.5** POST /api/playAlbum/:id returns 404 for unknown album
+- [x] **2.6.6** POST /api/playPlaylist/:id returns playlist with track objects
+- [x] **2.6.7** POST /api/playPlaylist/:id returns 404 for unknown playlist
 
 #### 2.7 File Endpoints (`tests/e2e/files.test.ts`)
 
-- [ ] **2.7.1** GET /api/files/albumart/:id serves image with correct content-type
-- [ ] **2.7.2** GET /api/files/albumart/:id returns 404 for unknown album
-- [ ] **2.7.3** GET /api/files/artistart/:id serves image with correct content-type
-- [ ] **2.7.4** GET /api/files/artistart/:id returns 404 for unknown artist
-- [ ] **2.7.5** GET /api/files/track/:id serves audio file
-- [ ] **2.7.6** GET /api/assets/:id serves audio asset
+- [x] **2.7.1** GET /api/files/albumart/:id serves image with correct content-type
+- [x] **2.7.2** GET /api/files/albumart/:id returns 404 for unknown album
+- [x] **2.7.3** GET /api/files/artistart/:id serves image with correct content-type
+- [x] **2.7.4** GET /api/files/artistart/:id returns 404 for unknown artist
+- [x] **2.7.5** GET /api/files/track/:id serves audio file
+- [x] **2.7.6** GET /api/assets/:id serves audio asset
 
 ### Phase 3: Test Scripts
 
-- [ ] **3.1** Add `test:e2e` script to package.json
-- [ ] **3.2** Add `test:e2e:watch` for development
+- [x] **3.1** Add `test:e2e` script to package.json
+- [x] **3.2** Add `test:e2e:watch` for development
 
 ```json
 {
