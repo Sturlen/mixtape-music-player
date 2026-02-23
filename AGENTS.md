@@ -26,18 +26,18 @@
 - `bun dev` - Start development server with hot reload
 - `bun run build` - Build for production
 - `bun run start` - Run production server
-- `bun run lint` - Run ESLint
+- `bun run check` - Run ESLint
 - `bun run format` - Run Prettier
 - `bun run generate-routes` - Generate TanStack Router routes
 - `bun run watch-routes` - Watch for route changes
-- `bun run typecheck` - Run TypeScript type checking
+
 
 ## Code Quality Verification
 
-**IMPORTANT:** After making any code changes, always run type checking to verify code correctness:
+**IMPORTANT:** After making any code changes, always run full checking to verify code correctness:
 
 ```bash
-bun run typecheck
+bun run check
 ```
 
 This command validates TypeScript types and catches:

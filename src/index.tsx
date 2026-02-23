@@ -1,5 +1,8 @@
 import Elysia, { NotFoundError, redirect, t } from "elysia"
 import { openapi, fromTypes } from "@elysiajs/openapi"
+import { opentelemetry } from "@elysiajs/opentelemetry"
+import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-node"
+import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-proto"
 import Fuse from "fuse.js"
 import index from "@/index.html"
 import { env } from "@/shared/env"
@@ -149,6 +152,20 @@ const app = new Elysia()
 
     return status(500)
   })
+  .use(
+    opentelemetry({
+      spanProcessors: [
+        new BatchSpanProcessor(
+          new OTLPTraceExporter({
+            url: env.OTEL_EXPORTER_OTLP_ENDPOINT,
+            headers: {
+              Authorization: `Basic ${env.GRAFANA_TOKEN}`,
+            },
+          }),
+        ),
+      ],
+    }),
+  )
   .use(
     openapi({
       path: "/openapi",
