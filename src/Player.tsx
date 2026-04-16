@@ -104,6 +104,7 @@ type PlayerState = {
   duration: number
   queueTracks: (Track & { queueId: string })[]
   queueIndex: number
+  queueShuffle: () => void
   events: MediaEventHandlers
   stop: () => void
   endSeek: () => void
@@ -129,6 +130,17 @@ const createSelectors = <S extends UseBoundStore<StoreApi<object>>>(
 
 function log(message?: string, ...optionalParams: unknown[]) {
   console.log(`[PLAYER] ${message}`, ...optionalParams)
+}
+
+function shuffle<T>(array: T[]) {
+  for (let i = array.length - 1; i > 0; i--) {
+    // Generate a random index from 0 to i
+    const j = Math.floor(Math.random() * (i + 1));
+    // Swap elements array[i] and array[j]
+    // @ts-expect-error - this is valid syntax for swapping elements in an array
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
 }
 
 export const useAudioPlayerBase = create<PlayerState>()(
@@ -273,6 +285,18 @@ export const useAudioPlayerBase = create<PlayerState>()(
             get().stop()
             return
           }
+        },
+        queueShuffle: () => {
+          const player = get()
+          const currentTrack = player.queueTracks[player.queueIndex]
+          if (!currentTrack) {
+            return
+          }
+
+          set({
+            queueTracks: shuffle([...player.queueTracks]),
+            queueIndex: 0,
+          })
         },
         seek: (time) => {
           set({ requestedSeekPosition: time })
