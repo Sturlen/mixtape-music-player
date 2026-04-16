@@ -9,7 +9,11 @@ const formatTime = (s?: number) => {
   return `${min}:${sec < 10 ? "0" : ""}${sec}`
 }
 
-export default function SeekBar() {
+export default function SeekBar({
+  classNameTrack,
+}: {
+  classNameTrack?: string
+}) {
   const duration = useAudioPlayer.use.duration()
   const currentTime = useAudioPlayer.use.currentTime()
   const seek = useAudioPlayer.use.seek()
@@ -46,7 +50,7 @@ export default function SeekBar() {
           onMouseUp={onSeekEnd}
           onTouchEnd={onSeekEnd}
           className="flex-1"
-          classNameTrack="bg-background"
+          classNameTrack={classNameTrack}
         />
         <span className="w-10">{formatTime(duration)}</span>
       </div>

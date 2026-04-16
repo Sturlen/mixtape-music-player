@@ -1,10 +1,33 @@
-import React, { useEffect } from "react"
+// ShuffleButton component with flipped state
+function ShuffleButton({ onClick }: { onClick: () => void }) {
+  const [flipped, setFlipped] = useState(false)
+  const handleClick = () => {
+    setFlipped((f) => !f)
+    onClick()
+  }
+  return (
+    <button
+      onClick={handleClick}
+      aria-label="Shuffle"
+      className="text-primary/60 rounded-full p-2"
+    >
+      <ShuffleIcon
+        size={28}
+        className={
+          flipped ? "-scale-y-100 transition-transform" : "transition-transform"
+        }
+      />
+    </button>
+  )
+}
+import React, { useEffect, useState } from "react"
 import {
   Play as PlayIcon,
   Pause as PauseIcon,
   SkipBack as SkipBackIcon,
   SkipForward as SkipForwardIcon,
   X as XIcon,
+  ShuffleIcon,
 } from "lucide-react"
 import { useAudioPlayer, useCurrentTrack, useIsPlaying } from "@/Player"
 import {
@@ -36,6 +59,7 @@ export default function PlaybackDetails() {
   const duration = useAudioPlayer.use.duration()
   const queueSkip = useAudioPlayer.use.queueSkip()
   const queuePrev = useAudioPlayer.use.queuePrev()
+  const shuffle = useAudioPlayer.use.queueShuffle()
 
   const { open, setOpen } = usePlaybackDrawer()
 
@@ -77,6 +101,9 @@ export default function PlaybackDetails() {
 
             {/* playback controls */}
             <div className="flex items-center justify-center gap-6 pt-2">
+              <button className="invisible rounded-full p-2 transition hover:bg-gray-800">
+                <SkipForwardIcon size={28} />
+              </button>
               <button
                 onClick={queuePrev}
                 aria-label="Previous"
@@ -100,6 +127,7 @@ export default function PlaybackDetails() {
               >
                 <SkipForwardIcon size={28} />
               </button>
+              <ShuffleButton onClick={shuffle} />
             </div>
           </div>
         </DrawerContent>

@@ -35,10 +35,14 @@ export function Controls() {
         <Cassette />
       </div>
       <div className="h-4"></div>
-      <SeekBar />
+      <SeekBar classNameTrack="bg-background" />
       <CurrentTrackScroller />
       <div>VOLUME CONTROLS</div>
-      <VolumeSlider className="mt-4 mb-4 w-full" direction="horizontal" />
+      <VolumeSlider
+        className="mt-4 mb-4 w-full"
+        direction="horizontal"
+        classNameTrack="bg-background"
+      />
       <div className="w-full">
         <div className="grow"></div>
 

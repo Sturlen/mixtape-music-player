@@ -1,12 +1,15 @@
 import { useAudioPlayer } from "@/Player"
 import { Slider } from "@/client/components/ui/slider"
+import { cn } from "./lib/utils"
 
 export function VolumeSlider({
   className,
   direction = "vertical",
+  classNameTrack,
 }: {
   className?: string
   direction?: "horizontal" | "vertical"
+  classNameTrack?: string
 }) {
   const volume = useAudioPlayer.use.volume()
   const setVolume = useAudioPlayer.use.setVolume()
@@ -21,7 +24,7 @@ export function VolumeSlider({
         onValueChange={(val) => setVolume(val[0]!)}
         title="Change Volume"
         orientation={direction}
-        classNameTrack="bg-background"
+        classNameTrack={classNameTrack}
       />
     </>
   )
