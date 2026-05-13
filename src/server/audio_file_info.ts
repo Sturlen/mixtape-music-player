@@ -12,6 +12,10 @@ export type AudioInfo = {
   size: DataSize
   durationSeconds: number
   provider: AudioInfoProvider
+  trackName?: string
+  artistName?: string
+  albumName?: string
+  trackNumber?: number
 }
 
 function assertServerRuntime(): void {
@@ -65,7 +69,11 @@ export async function getAudioInfo(
 ) {
   const { normalizedPath, file } = await resolveInputFile(filePath)
 
-  let durationSeconds: number
+  const info = {
+    provider,
+    path: normalizedPath,
+    size: DataSize.fromBytes(file.size),
+  } as AudioInfo
 
   if (provider === "mediabunny") {
     const input = new Input({
@@ -73,7 +81,13 @@ export async function getAudioInfo(
       formats: ALL_FORMATS,
     })
 
-    durationSeconds = await input.computeDuration()
+    info.durationSeconds = await input.computeDuration()
+    const metadata = await input.getMetadataTags()
+
+    info.trackName = metadata.title
+    info.artistName = metadata.artist || metadata.albumArtist
+    info.albumName = metadata.album
+    info.trackNumber = metadata.trackNumber
   } else {
     const proc =
       await $`ffprobe -v quiet -print_format json -show_format ${normalizedPath}`.quiet()
@@ -95,21 +109,16 @@ export async function getAudioInfo(
       )
     }
 
-    durationSeconds = Number.parseFloat(out.data.format.duration)
+    info.durationSeconds = Number.parseFloat(out.data.format.duration)
 
-    if (!Number.isFinite(durationSeconds)) {
+    if (!Number.isFinite(info.durationSeconds)) {
       throw new Error(
         `Failed to parse ffprobe duration for file: ${normalizedPath}`,
       )
     }
   }
 
-  return {
-    path: normalizedPath,
-    size: DataSize.fromBytes(file.size),
-    durationSeconds,
-    provider,
-  } as AudioInfo
+  return info
 }
 
 export async function main(args: string[]): Promise<void> {
