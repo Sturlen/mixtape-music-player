@@ -62,7 +62,7 @@ export const ffmpeg_format_schema = z.object({
 export async function getAudioInfo(
   filePath: string,
   provider: AudioInfoProvider = "mediabunny",
-): Promise<AudioInfo> {
+) {
   const { normalizedPath, file } = await resolveInputFile(filePath)
 
   let durationSeconds: number
@@ -109,7 +109,7 @@ export async function getAudioInfo(
     size: DataSize.fromBytes(file.size),
     durationSeconds,
     provider,
-  }
+  } as AudioInfo
 }
 
 export async function main(args: string[]): Promise<void> {
