@@ -122,16 +122,9 @@ const app = new Elysia()
   })
   .use(
     opentelemetry({
-      spanProcessors: [
-        new BatchSpanProcessor(
-          new OTLPTraceExporter({
-            url: env.OTEL_EXPORTER_OTLP_ENDPOINT,
-            headers: {
-              Authorization: `Basic ${env.GRAFANA_TOKEN}`,
-            },
-          }),
-        ),
-      ],
+      spanProcessors: env.OTEL_EXPORTER_OTLP_ENDPOINT
+        ? [new BatchSpanProcessor(new OTLPTraceExporter())]
+        : [],
     }),
   )
   .use(

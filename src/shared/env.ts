@@ -13,8 +13,9 @@ export const env = createEnv({
     USE_FFMPEG: z.stringbool().default(false),
     MIXTAPES_ENABLED: z.stringbool().default(false),
     DATA_PATH: z.string().min(1).default("./data"),
-    OTEL_EXPORTER_OTLP_ENDPOINT: z.url().optional(),
-    GRAFANA_TOKEN: z.string().min(1).optional(),
+    OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional(),
+    OTEL_EXPORTER_OTLP_HEADERS: z.string().optional(),
+    OTEL_SERVICE_NAME: z.string().optional(),
   },
 
   client: {
