@@ -3,6 +3,32 @@
 Notable changes. Expect proper version numbers when it's actually close to a release version.
 
 
+## v0.3.0 [14-05-2026]
+
+### Added
+
+- **Persistent database**: PGlite + Drizzle ORM replaces in-memory Maps. Library data survives restarts. File-based persistence at `DATA_PATH/pglite`. Migrations auto-apply on startup.
+- **Album art color extraction**: Dominant color and readable text color extracted from cover art via colorthief MMCQ. Used as tile background before image loads, and on cassette body accent color.
+- **SSE progress endpoint**: `/api/library/progress` streams enrichment status. Frontend auto-refreshes via EventSource as tracks appear.
+- **Art assets system**: Polymorphic `art_assets` table with entity-based FK (`entity_id + entity_type` + `role`). Supports multiple art assets per album/artist (cover, portrait, back, other). Full dimensions and color info stored at insert time.
+- **File-based asset IDs**: Audio and art asset IDs derive from content hash (first 64KB) rather than file path. Survives file renames.
+
+### Changed
+
+- **Library persistence**: Database stores all library state. No more clear-on-restart. New files are discovered incrementally on each scan.
+- **Artist/album art model**: `image_path` and `primary_color` fields removed from artists/albums tables. All art lives in `art_assets`.
+- **Album art URLs**: Computed at response time from album ID (`/api/files/albumart/{id}`) rather than stored on the row.
+- **Artist grouping priority**: Folder name now beats album_artist tag. File in "2 Mello" folder groups under "2 Mello" even if metadata says "2 Mello and Million Sunday".
+- **Cassette component**: SVG converted to React component. Orange accent parts use album art dominant color.
+
+### Fixed
+
+- **Playlist CRUD**: `playlistStore` now populated from database on startup.
+- **TOCTOU race**: Artist/album upsert uses `INSERT … ON CONFLICT DO NOTHING RETURNING` for atomicity under concurrent enrichment.
+- **Artists.name unique constraint**: Removed — two artists can share a name.
+- **ArtImage**: Background color shows before image loads. Fallback label (name on muted bg) shows on error. Images lazy-load with `loading="lazy"` and preserve aspect ratio via `object-contain`.
+- **Metadata enrichment**: No longer clears database on restart. Existing tracks preserved, new ones added incrementally.
+
 ## v0.2.0 [14-05-2026]
 
 ### Added
