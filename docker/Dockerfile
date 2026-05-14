@@ -2,7 +2,7 @@
 FROM oven/bun:1.3-debian
 WORKDIR /app
 # install full deps for build
-COPY package.json bun.lock /app/
+COPY package.json bun.lock patches/ /app/
 RUN bun install --frozen-lockfile
 # copy source and build
 COPY . /app
