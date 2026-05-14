@@ -5,6 +5,7 @@ import { EdenClient } from "@/lib/eden"
 import { Link } from "@tanstack/react-router"
 import { GridLayout } from "@/client/components/ui/grid"
 import Page from "@/client/components/Page"
+import { ArtImage } from "@/client/components/ArtImage"
 import { Input } from "@/client/components/ui/input"
 import { useState } from "react"
 import { useDebouncer } from "@tanstack/react-pacer"
@@ -92,34 +93,12 @@ function Content({ searchTerm }: { searchTerm: string }) {
                 className="relative block w-full transform-gpu transition-transform group-hover:scale-[1.01] group-hover:cursor-pointer"
               >
                 <div className="relative aspect-square w-full origin-center transform-gpu border border-[rgba(0,0,0,0.06)] shadow-[0_8px_20px_rgba(2,6,23,0.12)] transition-transform duration-200 will-change-transform group-hover:[transform:scale(1.03)]">
-                  <picture>
-                    <source
-                      srcSet={
-                        artist.imageURL
-                          ? `${artist.imageURL}?w=200&h=200&q=75&f=avif 1x, ${artist.imageURL}?w=400&h=400&q=75&f=avif 2x`
-                          : "/cassette.webp"
-                      }
-                      type="image/avif"
-                    />
-                    <source
-                      srcSet={
-                        artist.imageURL
-                          ? `${artist.imageURL}?w=150&h=150&q=80&f=webp 1x, ${artist.imageURL}?w=300&h=300&q=80&f=webp 2x`
-                          : "/cassette.webp"
-                      }
-                      type="image/webp"
-                    />
-                    <img
-                      loading="lazy"
-                      src={
-                        artist.imageURL
-                          ? artist.imageURL + "?w=200&h=200&q=85&f=jpeg"
-                          : "/cassette.webp"
-                      }
-                      alt={artist.name}
-                      className="bg-muted h-full w-full rounded-none border-0 object-contain p-0"
-                    />
-                  </picture>
+                  <ArtImage
+                    src={artist.imageURL ? artist.imageURL + "?w=200&h=200&q=85&f=jpeg" : undefined}
+                    name={artist.name}
+                    primaryColor={artist.primaryColor}
+                    className="h-full w-full"
+                  />
                 </div>
               </Link>
             </div>

@@ -8,6 +8,8 @@ export type Track = {
   name: string
   duration: number
   artURL?: string
+  primaryColor?: string
+  textColor?: string
   album?: {
     id: string
     name: string

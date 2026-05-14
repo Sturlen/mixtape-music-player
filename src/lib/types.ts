@@ -21,6 +21,8 @@ export type Album = {
   imagePath?: string
   imageURL?: string
   artAssetId?: string
+  primaryColor?: string
+  textColor?: string
 }
 
 export type Artist = {
@@ -29,6 +31,8 @@ export type Artist = {
   imagePath?: string
   imageURL?: string
   artAssetId?: string
+  primaryColor?: string
+  textColor?: string
 }
 
 export interface Playlist {

@@ -6,6 +6,7 @@ import { EdenClient } from "@/lib/eden"
 import Page from "@/client/components/Page"
 import { usePlayAlbum } from "@/lib/api"
 import { AddToPlaylistButton } from "@/client/components/AddToPlaylistButton"
+import { ArtImage } from "@/client/components/ArtImage"
 
 export const Route = createFileRoute("/albums/$id")({
   component: RouteComponent,
@@ -45,12 +46,16 @@ function RouteComponent() {
 
   return (
     <Page className="px-0">
-      <div className="px-2">
-        <img
-          src={album.imageURL}
-          alt={album.name}
-          className="size-40 bg-[url(cassette.webp)] bg-cover object-cover"
-        />
+        <div
+          className="px-2"
+          style={album.primaryColor ? { backgroundColor: album.primaryColor + "20" } : undefined}
+        >
+          <ArtImage
+            src={album.imageURL}
+            name={album.name}
+            primaryColor={album.primaryColor}
+            className="size-40"
+          />
         <h1 className="text-4xl font-extrabold md:text-6xl lg:text-8xl">
           {album.name}
         </h1>
@@ -118,6 +123,8 @@ function RouteComponent() {
                   name: track.name,
                   duration: track.playtimeSeconds,
                   artURL: track.artURL,
+                  primaryColor: album.primaryColor,
+                  textColor: album.textColor,
                 })
                 play()
               }}

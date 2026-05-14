@@ -4,6 +4,7 @@ import type { Artist, Album, Track, ArtAsset, AudioAsset, Playlist } from "@/lib
 import type { AudioMetadata } from "@/server/audio"
 import { createMetadataProvider } from "@/server/audio"
 import { fuse_artists, fuse_albums, fuse_playlists } from "@/lib/fuse"
+import { dominantColor } from "@/lib/dominant-color"
 import type { ScanResult } from "./scanner"
 
 function hash(type: string, value: string): string {
@@ -87,9 +88,24 @@ export class Library {
         artist.imageURL = `/api/files/artistart/${artist.id}`
       }
     }
+    if (artist.imagePath && !artist.primaryColor) {
+      const dc = await dominantColor(artist.imagePath)
+      if (dc) {
+        artist.primaryColor = dc.hex
+        artist.textColor = dc.textColor
+      }
+    }
 
     const albumArt = artByDir.get(dir)
     const album = this.upsertAlbum(albumName, artist.id, albumArt)
+
+    if (albumArt && !album.primaryColor) {
+      const dc = await dominantColor(albumArt)
+      if (dc) {
+        album.primaryColor = dc.hex
+        album.textColor = dc.textColor
+      }
+    }
 
     const trackId = hash("track", `${artistName}/${albumName}/${title}`)
     if (this.tracks.has(trackId)) return

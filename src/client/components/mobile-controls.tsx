@@ -25,6 +25,9 @@ const MobileControls = ({ className }: { className?: string }) => {
     const sec = Math.floor(seconds % 60)
     return `${min}:${sec < 10 ? "0" : ""}${sec}`
   }
+
+  const primaryColor = currentTrack?.primaryColor
+  const textColor = currentTrack?.textColor
   // TODO: make height a variable
   return (
     <div
@@ -50,11 +53,10 @@ const MobileControls = ({ className }: { className?: string }) => {
           aria-label={isPlaying ? "Pause" : "Play"}
         >
           <div
-            className="flex items-center justify-center rounded-full p-3 transition hover:bg-gray-800"
+            className="flex items-center justify-center rounded-full p-3 transition"
             style={{
-              backgroundImage: currentTrack?.artURL
-                ? `url(${currentTrack.artURL})`
-                : undefined,
+              backgroundColor: primaryColor || undefined,
+              color: textColor || undefined,
             }}
           >
             {isPlaying ? <Pause size={32} /> : <Play size={32} />}

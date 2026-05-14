@@ -4,6 +4,7 @@ import { getArtist, usePlayAlbum } from "@/lib/api"
 import { Link } from "@tanstack/react-router"
 import Page from "@/client/components/Page"
 import { GridLayout } from "@/client/components/ui/grid"
+import { ArtImage } from "@/client/components/ArtImage"
 
 export const Route = createFileRoute("/artists/$id")({
   component: ArtistPage,
@@ -34,33 +35,12 @@ function ArtistPage() {
 
   return (
     <Page>
-      <picture>
-        <source
-          srcSet={
-            artist.imageURL
-              ? `${artist.imageURL}?w=300&h=300&q=75&f=avif 1x, ${artist.imageURL}?w=600&h=600&q=75&f=avif 2x`
-              : "/cassette.webp"
-          }
-          type="image/avif"
-        />
-        <source
-          srcSet={
-            artist.imageURL
-              ? `${artist.imageURL}?w=300&h=300&q=80&f=webp 1x, ${artist.imageURL}?w=600&h=600&q=80&f=webp 2x`
-              : "/cassette.webp"
-          }
-          type="image/webp"
-        />
-        <img
-          src={
-            artist.imageURL
-              ? artist.imageURL + "?w=400&h=400&q=85&f=jpeg"
-              : "/cassette.webp"
-          }
-          alt={artist.name}
-          className="size-40 bg-[url(cassette.webp)] bg-cover object-cover"
-        />
-      </picture>
+      <ArtImage
+        src={artist.imageURL ? artist.imageURL + "?w=400&h=400&q=85&f=jpeg" : undefined}
+        name={artist.name}
+        primaryColor={artist.primaryColor}
+        className="size-40"
+      />
       <h1 className="text-4xl font-extrabold md:text-6xl lg:text-8xl">
         {artist.name}
       </h1>

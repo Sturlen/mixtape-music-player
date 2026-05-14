@@ -201,6 +201,8 @@ const app = new Elysia()
               name: album.name,
               artistId: album.artistId,
               artistName: artist?.name,
+              primaryColor: album.primaryColor,
+              textColor: album.textColor,
               imageURL: album.imageURL,
               artAssetId: album.artAssetId,
             }
@@ -236,6 +238,8 @@ const app = new Elysia()
         name: album.name,
         artistId: album.artistId,
         artistName: artist?.name,
+        primaryColor: album.primaryColor,
+        textColor: album.textColor,
         imageURL: album.imageURL,
         tracks: tracks,
       },
