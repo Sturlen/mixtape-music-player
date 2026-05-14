@@ -195,9 +195,14 @@ const app = new Elysia()
       return {
         albums: albums
           .map((album) => {
+            const artist = library.artists.get(album.artistId)
             return {
-              ...album,
-              imagePath: undefined,
+              id: album.id,
+              name: album.name,
+              artistId: album.artistId,
+              artistName: artist?.name,
+              imageURL: album.imageURL,
+              artAssetId: album.artAssetId,
             }
           })
           .sort((a, b) => a.name.localeCompare(b.name)),
@@ -210,6 +215,7 @@ const app = new Elysia()
     if (!album) {
       return { album: undefined }
     }
+    const artist = library.artists.get(album.artistId)
     const albumTracks = Array.from(library.tracks.values()).filter(
       (t) => t.albumId === albumId,
     )
@@ -226,9 +232,11 @@ const app = new Elysia()
 
     return {
       album: {
-        ...album,
-        imagePath: undefined,
-        imageUrl: `/api/albumArt/${albumId}`,
+        id: album.id,
+        name: album.name,
+        artistId: album.artistId,
+        artistName: artist?.name,
+        imageURL: album.imageURL,
         tracks: tracks,
       },
     }

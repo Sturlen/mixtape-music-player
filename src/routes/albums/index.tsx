@@ -131,9 +131,15 @@ function Content({ searchTerm }: { searchTerm: string }) {
                 {album.name}
               </h2>
             </Link>
-            <p className="text-muted-foreground truncate px-1 text-xs">
-              Artist
-            </p>
+            <Link
+              to="/artists/$id"
+              params={{ id: album.artistId }}
+              className="block hover:underline"
+            >
+              <p className="text-muted-foreground truncate px-1 text-xs">
+                {album.artistName || "Unknown Artist"}
+              </p>
+            </Link>
           </div>
         </li>
       ))}

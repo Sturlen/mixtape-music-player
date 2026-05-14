@@ -353,3 +353,17 @@ export const useIsPlaying = () => {
 export const useEvents = () => {
   return useAudioPlayer((state) => state.events)
 }
+
+export const useQueueProgress = () => {
+  const queueIndex = useAudioPlayer.use.queueIndex()
+  const currentTime = useAudioPlayer.use.currentTime()
+  const tracks = useAudioPlayer.use.queueTracks()
+
+  const elapsedBefore = tracks
+    .slice(0, queueIndex)
+    .reduce((sum, t) => sum + (t.duration || 0), 0)
+  const currentTrackDuration = tracks[queueIndex]?.duration || 0
+  const totalDuration = elapsedBefore + currentTrackDuration
+
+  return totalDuration > 0 ? (elapsedBefore + currentTime) / totalDuration : 0
+}

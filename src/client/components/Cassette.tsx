@@ -1,7 +1,7 @@
 import CasseteImage from "@/assets/cassette_empty.svg"
 import CasseteSpool from "@/assets/cassette_spool.svg"
 import { Circle } from "@/client/components/Circle"
-import { useAudioPlayer, useCurrentTrack, useIsPlaying } from "@/Player"
+import { useCurrentTrack, useIsPlaying, useQueueProgress } from "@/Player"
 import { cn } from "@/lib/utils"
 
 const spoolScaleMin = 1.4
@@ -9,8 +9,7 @@ const spoolScaleMax = 2.3
 
 export function Cassette({ className }: { className?: string }) {
   const isPlaying = useIsPlaying()
-  const progress =
-    useAudioPlayer.use.currentTime() / useAudioPlayer.use.duration()
+  const progress = useQueueProgress()
 
   const current_track = useCurrentTrack()
 

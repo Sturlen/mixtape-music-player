@@ -1,4 +1,4 @@
-import { createFileRoute, useParams } from "@tanstack/react-router"
+import { createFileRoute, Link } from "@tanstack/react-router"
 
 import { useQuery } from "@tanstack/react-query"
 import { useAudioPlayer } from "@/Player"
@@ -54,6 +54,13 @@ function RouteComponent() {
         <h1 className="text-4xl font-extrabold md:text-6xl lg:text-8xl">
           {album.name}
         </h1>
+        <Link
+          to="/artists/$id"
+          params={{ id: album.artistId }}
+          className="text-muted-foreground mt-1 block text-lg hover:underline"
+        >
+          {album.artistName || "Unknown Artist"}
+        </Link>
 
         <div>
           <button

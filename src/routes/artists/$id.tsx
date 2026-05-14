@@ -121,7 +121,15 @@ function ArtistPage() {
                   {album.name}
                 </Link>
               </h2>
-              <p className="text-muted-foreground truncate text-xs">Artist</p>
+              <Link
+                to="/artists/$id"
+                params={{ id: artist.id }}
+                className="block hover:underline"
+              >
+                <p className="text-muted-foreground truncate text-xs">
+                  {artist.name}
+                </p>
+              </Link>
             </div>
           </li>
         ))}
