@@ -22,7 +22,7 @@ const MobileControls = ({ className }: { className?: string }) => {
 
   const formatTime = (seconds: number) => {
     const min = Math.floor(seconds / 60)
-    const sec = Math.floor(seconds % 10)
+    const sec = Math.floor(seconds % 60)
     return `${min}:${sec < 10 ? "0" : ""}${sec}`
   }
   // TODO: make height a variable

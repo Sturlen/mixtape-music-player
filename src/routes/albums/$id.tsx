@@ -76,7 +76,7 @@ function RouteComponent() {
               onClick={() => {
                 playAlbum({ albumId: album.id, trackIndex: i })
               }}
-              className="truncate text-left text-sm font-medium hover:underline md:text-base"
+              className="flex truncate text-left text-sm font-medium hover:underline md:text-base"
             >
               <span className="text-muted-foreground inline-block w-10 font-mono">
                 {track.trackNumber?.toString().padStart(3, "0") || "--"}
@@ -93,6 +93,11 @@ function RouteComponent() {
                 </span>
               ) : null}
             </button>
+            <span className="text-muted-foreground px-2 text-xs font-mono">
+              {track.playtimeSeconds
+                ? `${Math.floor(track.playtimeSeconds / 60)}:${Math.floor(track.playtimeSeconds % 60).toString().padStart(2, "0")}`
+                : "--:--"}
+            </span>
             <AddToPlaylistButton
               trackId={track.id}
               trackName={track.name}

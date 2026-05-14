@@ -4,24 +4,18 @@ import { opentelemetry } from "@elysiajs/opentelemetry"
 import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-node"
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-proto"
 import Fuse from "fuse.js"
+import pLimit from "p-limit"
 import index from "@/index.html"
 import { env } from "@/shared/env"
 import { parse } from "@/parse"
-import type {
-  Album,
-  ArtAsset,
-  Artist,
-  AudioAsset,
-  Playlist,
-  Source,
-  Track,
-} from "@/lib/types"
+import type { Album, Artist, Playlist, Source, Track } from "@/lib/types"
 import { raise } from "@/lib/utils"
 import { $ } from "bun"
 import { parsePlaylists } from "./server/new_playlist_parser"
 import { createPlaylistRoutes } from "./playlist"
-import { mkdirSync, existsSync, stat } from "fs"
+import { mkdirSync, existsSync } from "fs"
 import { fuse_artists, fuse_albums, fuse_playlists } from "./lib/fuse"
+import { Library } from "./server/library"
 
 if (env.USE_FFMPEG) {
   console.warn(
@@ -44,14 +38,7 @@ function compareTracksByNumberName(a: Track, b: Track): number {
 
 const started_at = performance.now()
 
-const db = {
-  artists: new Map<string, Artist>(),
-  albums: new Map<string, Album>(),
-  tracks: new Map<string, Track>(),
-  artAssets: new Map<string, ArtAsset>(),
-  audioAssets: new Map<string, AudioAsset>(),
-  playlists: new Map<string, Playlist>(),
-}
+const library = new Library()
 
 async function loadPlaylists(): Promise<Playlist[]> {
   const playlistsPath = `${env.DATA_PATH}/playlists`
@@ -90,57 +77,38 @@ if (env.MUSIC2_PATH) {
 }
 
 async function reloadLibrary() {
-  db.artists.clear()
-  db.albums.clear()
-  db.tracks.clear()
-  db.artAssets.clear()
-  db.audioAssets.clear()
-  db.playlists.clear()
+  library.clear()
 
   const playlistsArr = await loadPlaylists()
   for (const playlist of playlistsArr) {
-    db.playlists.set(playlist.id, playlist)
+    library.playlists.set(playlist.id, playlist)
   }
-  console.log(
-    "playlists",
-    JSON.stringify(Array.from(db.playlists.values()), undefined, 4),
+  library.rebuildIndex()
+
+  const limit = pLimit(8)
+  const sourceScans = await Promise.all(
+    sources.map(async (source) => {
+      try {
+        return await parse(source)
+      } catch (err) {
+        console.error(
+          `Error scanning source ${source.id} (${source.name}):`,
+          err,
+        )
+        return null
+      }
+    }),
   )
 
-  for (const source of sources) {
-    try {
-      const new_db = await parse(source)
-
-      for (const artist of new_db.artists.values()) {
-        db.artists.set(artist.id, artist)
-      }
-      for (const album of new_db.albums.values()) {
-        db.albums.set(album.id, album)
-      }
-      for (const track of new_db.tracks.values()) {
-        db.tracks.set(track.id, track)
-      }
-      for (const asset of new_db.artAssets.values()) {
-        db.artAssets.set(asset.id, asset)
-      }
-      for (const asset of new_db.audioAssets.values()) {
-        db.audioAssets.set(asset.id, asset)
-      }
-    } catch (err) {
-      console.error(`Error parsing source ${source.id} (${source.name}):`, err)
-    }
+  const validScans = sourceScans.filter(
+    (s): s is NonNullable<typeof s> => s !== null,
+  )
+  if (validScans.length > 0) {
+    library.enrich(limit, validScans)
   }
 
-  fuse_artists.setCollection(Array.from(db.artists.values()))
-  fuse_albums.setCollection(Array.from(db.albums.values()))
-  fuse_playlists.setCollection(Array.from(db.playlists.values()))
-
-  console.log("Library reloaded", {
-    artists: db.artists.size,
-    albums: db.albums.size,
-    tracks: db.tracks.size,
-    artAssets: db.artAssets.size,
-    audioAssets: db.audioAssets.size,
-    playlists: db.playlists.size,
+  console.log("Library reloaded — enrichment in background", {
+    playlists: library.playlists.size,
   })
 }
 
@@ -176,12 +144,12 @@ const app = new Elysia()
   .get("/api/*", "418")
   .get("/api", () => redirect("/openapi"))
   .get("/api/stats", () => ({
-    artists: db.artists.size,
-    albums: db.albums.size,
-    tracks: db.tracks.size,
-    artAssets: db.artAssets.size,
-    audioAssets: db.audioAssets.size,
-    playlists: db.playlists.size,
+    artists: library.artists.size,
+    albums: library.albums.size,
+    tracks: library.tracks.size,
+    artAssets: library.artAssets.size,
+    audioAssets: library.audioAssets.size,
+    playlists: library.playlists.size,
   }))
   .get(
     "/api/artists",
@@ -193,7 +161,7 @@ const app = new Elysia()
           .search(q)
           .map((res: { item: Artist }) => res.item)
       } else {
-        artists = Array.from(db.artists.values())
+        artists = Array.from(library.artists.values())
       }
 
       return artists.sort((a, b) => a.name.localeCompare(b.name))
@@ -204,11 +172,11 @@ const app = new Elysia()
     },
   )
   .get("/api/artists/:artistId", async ({ params: { artistId } }) => {
-    const artist = db.artists.get(artistId)
+    const artist = library.artists.get(artistId)
     if (!artist) {
       return { artist: undefined }
     }
-    const artistAlbums = Array.from(db.albums.values()).filter(
+    const artistAlbums = Array.from(library.albums.values()).filter(
       (a) => a.artistId === artistId,
     )
 
@@ -229,7 +197,7 @@ const app = new Elysia()
         console.log("q", q)
         albums = fuse_albums.search(q).map((res: { item: Album }) => res.item)
       } else {
-        albums = Array.from(db.albums.values())
+        albums = Array.from(library.albums.values())
       }
       return {
         albums: albums
@@ -245,19 +213,20 @@ const app = new Elysia()
     { detail: "Get albums", query: t.Object({ q: t.Optional(t.String()) }) },
   )
   .get("/api/albums/:albumId", async ({ params: { albumId } }) => {
-    const album = db.albums.get(albumId)
+    const album = library.albums.get(albumId)
     if (!album) {
       return { album: undefined }
     }
-    const albumTracks = Array.from(db.tracks.values()).filter(
+    const albumTracks = Array.from(library.tracks.values()).filter(
       (t) => t.albumId === albumId,
     )
 
     const tracks = albumTracks
       .map((tr) => {
-        const track = db.tracks.get(tr.id) ?? raise("Track not found in db") // TODO: actual error management
+        const track =
+          library.tracks.get(tr.id) ?? raise("Track not found in db") // TODO: actual error management
 
-        const assets = db.audioAssets.values().toArray()
+        const assets = library.audioAssets.values().toArray()
         return { ...tr, artURL: album.imageURL, assets }
       })
       .sort(compareTracksByNumberName)
@@ -271,14 +240,14 @@ const app = new Elysia()
       },
     }
   })
-  .get("/api/tracks", () => Array.from(db.tracks.values()))
+  .get("/api/tracks", () => Array.from(library.tracks.values()))
   .get("/api/tracks/:trackId", async ({ params: { trackId } }) => {
-    return db.tracks.get(trackId)
+    return library.tracks.get(trackId)
   })
   .get(
     "/api/files/artistart/:artistId",
     async ({ params: { artistId }, query, set, status }) => {
-      const artist = db.artists.get(artistId)
+      const artist = library.artists.get(artistId)
       if (!artist) {
         console.error("artist", artistId, "not found")
         return status(404)
@@ -303,7 +272,7 @@ const app = new Elysia()
     "/api/files/albumart/:albumId",
     async ({ params: { albumId }, query, set }) => {
       try {
-        const album = db.albums.get(albumId)
+        const album = library.albums.get(albumId)
         if (!album?.imagePath) {
           throw new NotFoundError()
         }
@@ -321,9 +290,10 @@ const app = new Elysia()
   )
   .get("/api/files/track/:trackId", async ({ params: { trackId } }) => {
     try {
-      const track = db.tracks.get(trackId) ?? raise("Track not found in db") // TODO: actual error management
+      const track =
+        library.tracks.get(trackId) ?? raise("Track not found in db") // TODO: actual error management
 
-      const assets = db.audioAssets.values().toArray()
+      const assets = library.audioAssets.values().toArray()
 
       console.log("assets", assets)
 
@@ -335,14 +305,14 @@ const app = new Elysia()
   .get("/api/assets", async () => {
     try {
       /** TODO: audio assets */
-      const assets = Array.from(db.audioAssets.values())
+      const assets = Array.from(library.audioAssets.values())
       return { assets }
     } catch (err) {
       throw new NotFoundError()
     }
   })
   .get("/api/assets/:assetId", async ({ params: { assetId }, set, status }) => {
-    const asset = db.audioAssets.get(assetId)
+    const asset = library.audioAssets.get(assetId)
     if (!asset) {
       return status(404, "Asset not found")
     }
@@ -387,7 +357,7 @@ const app = new Elysia()
         return status("Bad Request")
       }
 
-      const track = db.tracks.get(trackId)
+      const track = library.tracks.get(trackId)
 
       if (!track) {
         return status("Not Found")
@@ -395,7 +365,7 @@ const app = new Elysia()
 
       // TODO: ACCEPTS or codec check
 
-      const audio_assets = [...db.audioAssets.values()].filter(
+      const audio_assets = [...library.audioAssets.values()].filter(
         (asset) => asset.parentId == trackId,
       )
 
@@ -419,11 +389,11 @@ const app = new Elysia()
     { body: t.Object({ trackId: t.String() }) },
   )
   .post("/api/playAlbum/:albumId", async ({ params: { albumId }, status }) => {
-    const album = db.albums.get(albumId)
+    const album = library.albums.get(albumId)
     if (!album) {
       return status(404)
     }
-    const albumTracks = Array.from(db.tracks.values())
+    const albumTracks = Array.from(library.tracks.values())
       .filter((t) => t.albumId === albumId)
       .sort(compareTracksByNumberName)
 
@@ -439,14 +409,14 @@ const app = new Elysia()
   .post(
     "/api/playPlaylist/:playlistId",
     async ({ params: { playlistId }, status }) => {
-      const playlist = db.playlists.get(playlistId)
+      const playlist = library.playlists.get(playlistId)
       if (!playlist) {
         return status(404)
       }
       // Map playlist.tracks to full track objects from db.tracks
       const playlistTracks = playlist.tracks
         .map((plTrack, i) => {
-          const fullTrack = db.tracks.get(plTrack.id)
+          const fullTrack = library.tracks.get(plTrack.id)
           if (!fullTrack) return undefined
           return {
             ...fullTrack,
@@ -457,7 +427,7 @@ const app = new Elysia()
       return { playlist, tracks: playlistTracks }
     },
   )
-  .use(createPlaylistRoutes({ db, fuse_playlists }))
+  .use(createPlaylistRoutes({ db: library, fuse_playlists }))
   .listen(env.PORT, () => {
     console.log(`started in ${(performance.now() - started_at).toFixed(2)} ms`)
   })
