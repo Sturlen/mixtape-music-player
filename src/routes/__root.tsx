@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import MobileControls from "@/client/components/mobile-controls"
 import PlaybackDetails from "@/client/components/PlaybackDetails"
 import ReloadButton from "@/client/components/ReloadButton"
+import { SearchButton } from "@/client/components/SearchButton"
 import { TitleSetter } from "@/client/components/TitleSetter"
 import SeekBar from "@/client/components/SeekBar"
 import Controls from "@/Controls"
@@ -66,7 +67,8 @@ const RootLayout = () => (
         </Link>
       </nav>
 
-      <div title="WIP">
+      <div className="flex items-center gap-2">
+        <SearchButton />
         <ReloadButton />
       </div>
     </header>

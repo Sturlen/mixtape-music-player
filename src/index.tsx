@@ -14,7 +14,7 @@ import { $ } from "bun"
 import { parsePlaylists } from "./server/new_playlist_parser"
 import { createPlaylistRoutes } from "./playlist"
 import { mkdirSync, existsSync } from "fs"
-import { fuse_artists, fuse_albums, fuse_playlists } from "./lib/fuse"
+import { fuse_artists, fuse_albums, fuse_playlists, fuse_tracks } from "./lib/fuse"
 import { Library, enrichmentProgress } from "./server/library"
 import { initDB } from "@/db"
 import { createServer, LogLevel } from "pglite-server"
@@ -143,6 +143,30 @@ const app = new Elysia()
   .get("/api/*", "418")
   .get("/api", () => redirect("/openapi"))
   .get("/api/stats", async () => await library.getStats())
+  .get(
+    "/api/search",
+    async ({ query: { q } }) => {
+      if (!q || q.length < 1) return { artists: [], albums: [], tracks: [] }
+      const [artists, albums, tracks] = await Promise.all([
+        library.getArtists(),
+        library.getAlbums(),
+        library.getAllTracks(),
+      ])
+      const fuseArtists = new Fuse(artists, { keys: ["name"] })
+      const fuseAlbums = new Fuse(albums, { keys: ["name"] })
+      const fuseTracks = new Fuse(tracks, { keys: ["name"] })
+      const searchResults = (fuse: Fuse<unknown>, q: string) =>
+        fuse.search(q).map((r: { item: unknown }) => r.item)
+      const dedup = <T extends { id: string }>(arr: T[]): T[] =>
+        [...new Set(arr.map((i) => i.id))].map((id) => arr.find((i) => i.id === id)!)
+      return {
+        artists: dedup(searchResults(fuseArtists, q) as any).slice(0, 5),
+        albums: dedup(searchResults(fuseAlbums, q) as any).slice(0, 5),
+        tracks: dedup(searchResults(fuseTracks, q) as any).slice(0, 10),
+      }
+    },
+    { detail: "Search artists, albums, tracks", query: t.Object({ q: t.String() }) },
+  )
   .get(
     "/api/artists",
     async ({ query: { q } }) => {
