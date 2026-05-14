@@ -88,11 +88,11 @@ describe("MediabunnyMetadataProvider", () => {
     expect(info.durationSeconds.toJSON()).toBeCloseTo(209.38, 0)
   })
 
-  test(`${p.name} — Metalmania.mp3`, async () => {
+  test(`${p.name} — Metalmania.mp3 (ID3v2.2)`, async () => {
     const info = await p.getMetadata(path.join(DEMO, "Metalmania.mp3"))
     expect(info.provider).toBe(p.name)
-    expect(info.trackName).toBeUndefined()
-    expect(info.artistName).toBeUndefined()
+    expect(info.trackName).toBe("Metalmania")
+    expect(info.artistName).toBe("Kevin MacLeod")
     expect(info.durationSeconds.toJSON()).toBeCloseTo(190.46, 0)
   })
 
