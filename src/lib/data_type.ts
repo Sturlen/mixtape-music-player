@@ -31,3 +31,31 @@ class DataSize {
 }
 
 export { DataSize }
+
+class Duration {
+  constructor(private readonly seconds: number) {
+    if (!Number.isFinite(seconds) || seconds < 0) {
+      throw new Error(`Invalid duration in seconds: ${seconds}`)
+    }
+  }
+
+  static fromSeconds(seconds: number): Duration {
+    return new Duration(seconds)
+  }
+
+  format(): string {
+    const minutes = Math.floor(this.seconds / 60)
+    const remainingSeconds = Math.floor(this.seconds % 60)
+    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`
+  }
+
+  toString(): string {
+    return this.format()
+  }
+
+  toJSON(): number {
+    return this.seconds
+  }
+}
+
+export { Duration }

@@ -2,7 +2,7 @@ import path from "node:path"
 import { $ } from "bun"
 import { ALL_FORMATS, BlobSource, Input } from "mediabunny"
 
-import { DataSize } from "../lib/data_type"
+import { DataSize, Duration } from "../lib/data_type"
 import z from "zod"
 
 export type AudioInfoProvider = "mediabunny" | "ffprobe"
@@ -10,7 +10,7 @@ export type AudioInfoProvider = "mediabunny" | "ffprobe"
 export type AudioInfo = {
   path: string
   size: DataSize
-  durationSeconds: number
+  durationSeconds: Duration
   provider: AudioInfoProvider
   trackName?: string
   artistName?: string
@@ -81,7 +81,7 @@ export async function getAudioInfo(
       formats: ALL_FORMATS,
     })
 
-    info.durationSeconds = await input.computeDuration()
+    info.durationSeconds = Duration.fromSeconds(await input.computeDuration())
     const metadata = await input.getMetadataTags()
 
     info.trackName = metadata.title
@@ -109,13 +109,9 @@ export async function getAudioInfo(
       )
     }
 
-    info.durationSeconds = Number.parseFloat(out.data.format.duration)
-
-    if (!Number.isFinite(info.durationSeconds)) {
-      throw new Error(
-        `Failed to parse ffprobe duration for file: ${normalizedPath}`,
-      )
-    }
+    info.durationSeconds = Duration.fromSeconds(
+      Number.parseFloat(out.data.format.duration),
+    )
   }
 
   return info
