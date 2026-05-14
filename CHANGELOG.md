@@ -7,6 +7,7 @@ Notable changes. Expect proper version numbers when it's actually close to a rel
 
 ### Added
 
+- **Dev PG port**: Set `PG_PORT=5433` to expose PGlite via PostgreSQL wire protocol. Connect with any PG client for direct database inspection during development. Disabled by default.
 - **Persistent database**: PGlite + Drizzle ORM replaces in-memory Maps. Library data survives restarts. File-based persistence at `DATA_PATH/pglite`. Migrations auto-apply on startup.
 - **Album art color extraction**: Dominant color and readable text color extracted from cover art via colorthief MMCQ. Used as tile background before image loads, and on cassette body accent color.
 - **SSE progress endpoint**: `/api/library/progress` streams enrichment status. Frontend auto-refreshes via EventSource as tracks appear.

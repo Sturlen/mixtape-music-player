@@ -17,6 +17,7 @@ import { mkdirSync, existsSync } from "fs"
 import { fuse_artists, fuse_albums, fuse_playlists } from "./lib/fuse"
 import { Library, enrichmentProgress } from "./server/library"
 import { initDB } from "@/db"
+import { createServer, LogLevel } from "pglite-server"
 
 if (env.USE_FFMPEG) {
   console.warn(
@@ -40,7 +41,7 @@ function compareTracksByNumberName(a: Track, b: Track): number {
 const started_at = performance.now()
 
 const pgliteDir = env.DATA_PATH + "/pglite"
-const { db } = await initDB(pgliteDir)
+const { db, pg } = await initDB(pgliteDir)
 const library = new Library(db)
 const playlistStore = {
   tracks: new Map<string, Track>(),
@@ -400,6 +401,13 @@ const app = new Elysia()
   .use(createPlaylistRoutes({ db: playlistStore, fuse_playlists }))
   .listen(env.PORT, () => {
     console.log(`started in ${(performance.now() - started_at).toFixed(2)} ms`)
+
+    if (env.PG_PORT) {
+      const pgServer = createServer(pg, { logLevel: LogLevel.Info })
+      pgServer.listen(env.PG_PORT, () => {
+        console.log("PGlite exposed on port", env.PG_PORT)
+      })
+    }
   })
 
 export type App = typeof app

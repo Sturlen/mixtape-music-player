@@ -16,6 +16,7 @@ export const env = createEnv({
     OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional(),
     OTEL_EXPORTER_OTLP_HEADERS: z.string().optional(),
     OTEL_SERVICE_NAME: z.string().optional(),
+    PG_PORT: z.coerce.number().int().default(0),
   },
 
   client: {
