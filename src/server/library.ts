@@ -10,6 +10,11 @@ function hash(type: string, value: string): string {
   return type + Bun.hash(`${type}_${value}`).toString(16)
 }
 
+async function contentId(prefix: string, filePath: string): Promise<string> {
+  const chunk = await Bun.file(filePath).slice(0, 65536).arrayBuffer()
+  return prefix + Bun.hash(chunk).toString(16)
+}
+
 function trackNameFromFile(filepath: string): string {
   const base = path.basename(filepath).replace(/\.[^/.]+$/, "")
   const numbered = base.match(/^(?:\d+\s)?(.+)$/)
@@ -57,12 +62,12 @@ export class Library {
     return album
   }
 
-  addFromMetadata(
+  async addFromMetadata(
     filePath: string,
     info: AudioMetadata,
     artByDir: Map<string, string>,
     sourceRoot: string,
-  ): void {
+  ): Promise<void> {
     const dir = path.dirname(filePath)
     const relDir = path.relative(sourceRoot, dir)
     const parts = relDir.split(path.sep)
@@ -100,7 +105,7 @@ export class Library {
     this.tracks.set(trackId, track)
 
     const ext = path.extname(filePath).toLowerCase()
-    const assetId = hash("asset", filePath)
+    const assetId = await contentId("asset", filePath)
     this.audioAssets.set(assetId, {
       id: assetId,
       parentId: trackId,
@@ -113,7 +118,7 @@ export class Library {
 
     if (albumArt && album.imagePath) {
       const artExt = path.extname(albumArt).toLowerCase()
-      const artAssetId = hash("asset", albumArt)
+      const artAssetId = await contentId("art", albumArt)
       if (!this.artAssets.has(artAssetId)) {
         this.artAssets.set(artAssetId, {
           id: artAssetId,
@@ -146,7 +151,7 @@ export class Library {
       limit(async () => {
         try {
           const info = await provider.getMetadata(path)
-          this.addFromMetadata(path, info, artByDir, rootPath)
+          await this.addFromMetadata(path, info, artByDir, rootPath)
         } catch {
           // skip unparseable files
         }
