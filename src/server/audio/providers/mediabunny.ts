@@ -31,7 +31,8 @@ export class MediabunnyMetadataProvider implements AudioMetadataProvider {
       durationSeconds: Duration.fromSeconds(duration),
       provider: this.name,
       trackName: metadata.title || undefined,
-      artistName: metadata.artist || metadata.albumArtist || undefined,
+      artistName: metadata.artist || undefined,
+      albumArtistName: metadata.albumArtist || undefined,
       albumName: metadata.album || undefined,
       trackNumber: metadata.trackNumber || undefined,
     }

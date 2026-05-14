@@ -19,6 +19,7 @@ const ffprobe_format_schema = z.object({
         ALBUM: z.string().optional(),
         album_artist: z.string().optional(),
         albumArtist: z.string().optional(),
+        TPE2: z.string().optional(),
         track: z.string().optional(),
         trackNumber: z.string().optional(),
       })
@@ -78,13 +79,8 @@ export class FfprobeMetadataProvider implements AudioMetadataProvider {
       ),
       provider: this.name,
       trackName: tagValue(tags, "title", "TITLE"),
-      artistName: tagValue(
-        tags,
-        "artist",
-        "ARTIST",
-        "albumArtist",
-        "album_artist",
-      ),
+      artistName: tagValue(tags, "artist", "ARTIST"),
+      albumArtistName: tagValue(tags, "album_artist", "albumArtist", "TPE2"),
       albumName: tagValue(tags, "album", "ALBUM"),
       trackNumber: parseTrackNumber(tagValue(tags, "track", "trackNumber")),
     }

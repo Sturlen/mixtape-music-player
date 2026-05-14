@@ -8,9 +8,12 @@ import type { AudioMetadataProvider } from "../src/server/audio"
 
 const DEMO = path.resolve(__dirname, "../demo-music/Kevin MacLeod/Royalty Free")
 
+type FieldName = "trackName" | "artistName" | "albumArtistName" | "albumName"
+
 type Expected = {
   trackName?: string | null
   artistName?: string | null
+  albumArtistName?: string | null
   albumName?: string | null
   duration: number
 }
@@ -26,7 +29,7 @@ function testCase(provider: AudioMetadataProvider, c: Case) {
 
     expect(info.provider).toBe(provider.name)
 
-    for (const field of ["trackName", "artistName", "albumName"] as const) {
+    for (const field of ["trackName", "artistName", "albumArtistName", "albumName"] as FieldName[]) {
       const val = c.expected[field]
       if (val === null) {
         expect(info[field]).toBeUndefined()
@@ -54,18 +57,18 @@ function testError(provider: AudioMetadataProvider) {
 const mp3Cases: Case[] = [
   {
     filename: "Cool Rock.mp3",
-    expected: { trackName: "Cool Rock", artistName: "Kevin MacLeod", albumName: "Royalty Free", duration: 209.38 },
+    expected: { trackName: "Cool Rock", artistName: "Kevin MacLeod", albumArtistName: null, albumName: "Royalty Free", duration: 209.38 },
   },
   {
     filename: "Metalmania.mp3",
-    expected: { trackName: "Metalmania", artistName: "Kevin MacLeod", duration: 190.46 },
+    expected: { trackName: "Metalmania", artistName: "Kevin MacLeod", albumArtistName: null, duration: 190.46 },
   },
 ]
 
 const flacCases: Case[] = [
   {
     filename: "Metalmania.flac",
-    expected: { trackName: "Metalmania", artistName: "Kevin MacLeod", duration: 190.46 },
+    expected: { trackName: "Metalmania", artistName: "Kevin MacLeod", albumArtistName: null, duration: 190.46 },
   },
 ]
 
@@ -84,6 +87,7 @@ describe("MediabunnyMetadataProvider", () => {
     expect(info.provider).toBe(p.name)
     expect(info.trackName).toBe("Cool Rock")
     expect(info.artistName).toBe("Kevin MacLeod")
+    expect(info.albumArtistName).toBeUndefined()
     expect(info.albumName).toBe("Royalty Free")
     expect(info.durationSeconds.toJSON()).toBeCloseTo(209.38, 0)
   })
@@ -93,6 +97,7 @@ describe("MediabunnyMetadataProvider", () => {
     expect(info.provider).toBe(p.name)
     expect(info.trackName).toBe("Metalmania")
     expect(info.artistName).toBe("Kevin MacLeod")
+    expect(info.albumArtistName).toBeUndefined()
     expect(info.durationSeconds.toJSON()).toBeCloseTo(190.46, 0)
   })
 

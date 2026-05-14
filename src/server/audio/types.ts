@@ -7,6 +7,7 @@ export interface AudioMetadata {
   provider: string
   trackName?: string
   artistName?: string
+  albumArtistName?: string
   albumName?: string
   trackNumber?: number
 }
