@@ -143,8 +143,9 @@ export class Library {
     const artistFromList = info.artistName?.split(",")[0]?.trim()
     const artistName =
       dirArtist || info.albumArtistName || artistFromList || "Unknown Artist"
-    const albumName =
+    const rawAlbum =
       info.albumName || (parts.length > 1 ? parts[1] : undefined) || "Unknown Album"
+    const albumName = rawAlbum.split(" - ").at(-1)?.trim() ?? rawAlbum
     const title = info.trackName || trackNameFromFile(filePath)
     const duration = info.durationSeconds.toJSON()
 
