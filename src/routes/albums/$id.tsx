@@ -54,6 +54,7 @@ function RouteComponent() {
             src={album.imageURL}
             name={album.name}
             primaryColor={album.primaryColor}
+            textColor={album.textColor}
             className="size-40"
           />
         <h1 className="text-4xl font-extrabold md:text-6xl lg:text-8xl">
@@ -94,16 +95,6 @@ function RouteComponent() {
                 {track.trackNumber?.toString().padStart(3, "0") || "--"}
               </span>
               <span>{track.name}</span>
-
-              {track.assets.length > 1 ? (
-                <span
-                  className="text-muted-foreground px-2 text-sm"
-                  title={`Several files available`}
-                >
-                  {" "}
-                  ({track.assets.length} assets)
-                </span>
-              ) : null}
             </button>
             <span className="text-muted-foreground px-2 text-xs font-mono">
               {track.playtimeSeconds
@@ -123,8 +114,8 @@ function RouteComponent() {
                   name: track.name,
                   duration: track.playtimeSeconds,
                   artURL: track.artURL,
-                  primaryColor: album.primaryColor,
-                  textColor: album.textColor,
+                  primaryColor: album.primaryColor ?? undefined,
+                  textColor: album.textColor ?? undefined,
                 })
                 play()
               }}

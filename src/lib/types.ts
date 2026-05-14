@@ -18,9 +18,7 @@ export type Album = {
   id: string
   name: string
   artistId: string
-  imagePath?: string
   imageURL?: string
-  artAssetId?: string
   primaryColor?: string
   textColor?: string
 }
@@ -28,12 +26,12 @@ export type Album = {
 export type Artist = {
   id: string
   name: string
-  imagePath?: string
   imageURL?: string
-  artAssetId?: string
   primaryColor?: string
   textColor?: string
 }
+
+export type ArtAssetRole = "cover" | "portrait" | "back" | "other"
 
 export interface Playlist {
   name: string
@@ -51,15 +49,21 @@ export type AssetBase = {
   fileExt: string
 }
 
-export type ArtAsset = AssetBase & {
-  filetype: "image"
+export type ArtAsset = {
+  id: string
+  entityId: string
+  entityType: "album" | "artist"
+  role: ArtAssetRole
+  path: string
+  mimeType?: string
   width: number
   height: number
-  // fileExt: "png" | "webp" | "jpeg" | "avif" | "bmp"
+  primaryColor?: string
+  textColor?: string
+  fileExt: string
 }
 
 export type AudioAsset = AssetBase & {
   filetype: "audio"
-  duration: number
-  // fileExt: "mp3" | "flac" | "ogg"
+  duration: number | null
 }

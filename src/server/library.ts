@@ -1,19 +1,17 @@
 import type { LimitFunction } from "p-limit"
 import path from "path"
-import type { Artist, Album, Track, ArtAsset, AudioAsset, Playlist } from "@/lib/types"
+import { eq, and, sql } from "drizzle-orm"
+import type { DB } from "@/db"
+import { artists, albums, tracks, audioAssets, artAssets, playlists, playlistTracks } from "@/db/schema"
 import type { AudioMetadata } from "@/server/audio"
+import type { Artist, Album, Track, AudioAsset, ArtAsset, Playlist } from "@/lib/types"
 import { createMetadataProvider } from "@/server/audio"
+import { artInfo } from "@/lib/dominant-color"
 import { fuse_artists, fuse_albums, fuse_playlists } from "@/lib/fuse"
-import { dominantColor } from "@/lib/dominant-color"
 import type { ScanResult } from "./scanner"
 
-function hash(type: string, value: string): string {
-  return type + Bun.hash(`${type}_${value}`).toString(16)
-}
-
-async function contentId(prefix: string, filePath: string): Promise<string> {
-  const chunk = await Bun.file(filePath).slice(0, 65536).arrayBuffer()
-  return prefix + Bun.hash(chunk).toString(16)
+function stableId(prefix: string, value: string): string {
+  return prefix + Bun.hash(`${prefix}_${value}`).toString(16)
 }
 
 function trackNameFromFile(filepath: string): string {
@@ -22,45 +20,113 @@ function trackNameFromFile(filepath: string): string {
   return numbered ? numbered[1]!.trim() : base
 }
 
+export class EnrichmentProgress {
+  completed = 0
+  total = 0
+  private listeners: Set<() => void> = new Set()
+
+  listen(cb: () => void) {
+    this.listeners.add(cb)
+    return () => this.listeners.delete(cb)
+  }
+
+  private notify() {
+    for (const cb of this.listeners) cb()
+  }
+
+  reset(total: number) {
+    this.completed = 0
+    this.total = total
+    this.notify()
+  }
+
+  tick() {
+    this.completed++
+    this.notify()
+  }
+}
+
+export const enrichmentProgress = new EnrichmentProgress()
+
 export class Library {
-  artists = new Map<string, Artist>()
-  albums = new Map<string, Album>()
-  tracks = new Map<string, Track>()
-  artAssets = new Map<string, ArtAsset>()
-  audioAssets = new Map<string, AudioAsset>()
-  playlists = new Map<string, Playlist>()
+  constructor(private db: DB) {}
 
-  clear() {
-    this.artists.clear()
-    this.albums.clear()
-    this.tracks.clear()
-    this.artAssets.clear()
-    this.audioAssets.clear()
-    this.playlists.clear()
+  async clear() {
+    await this.db.delete(playlistTracks)
+    await this.db.delete(playlists)
+    await this.db.delete(audioAssets)
+    await this.db.delete(artAssets)
+    await this.db.delete(tracks)
+    await this.db.delete(albums)
+    await this.db.delete(artists)
   }
 
-  private upsertArtist(name: string): Artist {
-    const id = hash("artist", name)
-    let artist = this.artists.get(id)
-    if (!artist) {
-      artist = { id, name }
-      this.artists.set(id, artist)
-    }
-    return artist
+  private async upsertArtist(name: string): Promise<string> {
+    const sid = stableId("artist", name)
+    const [row] = await this.db
+      .insert(artists)
+      .values({ stableId: sid, name })
+      .onConflictDoNothing({ target: artists.stableId })
+      .returning({ id: artists.id })
+    if (row) return row.id
+
+    const [existing] = await this.db
+      .select({ id: artists.id })
+      .from(artists)
+      .where(eq(artists.stableId, sid))
+      .limit(1)
+    return existing!.id
   }
 
-  private upsertAlbum(name: string, artistId: string, imagePath?: string): Album {
-    const id = hash("album", `${name}_${artistId}`)
-    let album = this.albums.get(id)
-    if (!album) {
-      album = { id, name, artistId }
-      this.albums.set(id, album)
-    }
-    if (imagePath && !album.imagePath) {
-      album.imagePath = imagePath
-      album.imageURL = `/api/files/albumart/${id}`
-    }
-    return album
+  private async upsertAlbum(name: string, artistId: string): Promise<{ id: string }> {
+    const sid = stableId("album", `${name}_${artistId}`)
+    const albumId = crypto.randomUUID()
+
+    const [row] = await this.db
+      .insert(albums)
+      .values({ id: albumId, stableId: sid, name, artistId })
+      .onConflictDoNothing({ target: albums.stableId })
+      .returning({ id: albums.id })
+    if (row) return { id: row.id }
+
+    const [existing] = await this.db
+      .select({ id: albums.id })
+      .from(albums)
+      .where(eq(albums.stableId, sid))
+      .limit(1)
+    return { id: existing!.id }
+  }
+
+  private async insertArt(
+    entityId: string,
+    entityType: "album" | "artist",
+    role: "cover" | "portrait",
+    filePath: string,
+  ): Promise<void> {
+    const existing = await this.db
+      .select({ id: artAssets.id })
+      .from(artAssets)
+      .where(and(eq(artAssets.entityId, entityId), eq(artAssets.entityType, entityType), eq(artAssets.role, role)))
+      .limit(1)
+      .then((r) => r[0])
+    if (existing) return
+
+    const info = await artInfo(filePath)
+    if (!info) return
+
+    await this.db.insert(artAssets).values({
+      id: crypto.randomUUID(),
+      entityId,
+      entityType,
+      role,
+      path: filePath,
+      mimeType: `image/${path.extname(filePath).slice(1)}`,
+      width: info.width,
+      height: info.height,
+      primaryColor: info.hex,
+      textColor: info.textColor,
+      fileExt: path.extname(filePath).toLowerCase(),
+    })
   }
 
   async addFromMetadata(
@@ -75,77 +141,60 @@ export class Library {
 
     const dirArtist = parts.length > 0 ? parts[0] : undefined
     const artistFromList = info.artistName?.split(",")[0]?.trim()
-    const artistName = dirArtist || info.albumArtistName || artistFromList || "Unknown Artist"
-    const albumName = info.albumName || (parts.length > 1 ? parts[1] : undefined) || "Unknown Album"
+    const artistName =
+      dirArtist || info.albumArtistName || artistFromList || "Unknown Artist"
+    const albumName =
+      info.albumName || (parts.length > 1 ? parts[1] : undefined) || "Unknown Album"
     const title = info.trackName || trackNameFromFile(filePath)
     const duration = info.durationSeconds.toJSON()
 
-    const artist = this.upsertArtist(artistName)
-    if (!artist.imagePath && parts.length > 0) {
-      const artistArt = artByDir.get(path.join(sourceRoot, parts[0]!))
-      if (artistArt) {
-        artist.imagePath = artistArt
-        artist.imageURL = `/api/files/artistart/${artist.id}`
-      }
-    }
-    if (artist.imagePath && !artist.primaryColor) {
-      const dc = await dominantColor(artist.imagePath)
-      if (dc) {
-        artist.primaryColor = dc.hex
-        artist.textColor = dc.textColor
-      }
-    }
+    const artistId = await this.upsertArtist(artistName)
+
+    const album = await this.upsertAlbum(albumName, artistId)
+
+    const trackSid = stableId("track", `${artistName}/${albumName}/${title}`)
+    const existingTrack = await this.db
+      .select({ id: tracks.id })
+      .from(tracks)
+      .where(eq(tracks.stableId, trackSid))
+      .limit(1)
+      .then((r) => r[0])
+    if (existingTrack) return
+
+    const [trackRow] = await this.db
+      .insert(tracks)
+      .values({
+        stableId: trackSid,
+        name: title,
+        albumId: album.id,
+        trackNumber: info.trackNumber,
+        playtimeSeconds: duration,
+        path: filePath,
+      })
+      .returning({ id: tracks.id })
+
+    const assetSid = stableId("asset", filePath)
+    await this.db
+      .insert(audioAssets)
+      .values({
+        stableId: assetSid,
+        parentId: trackRow!.id,
+        path: filePath,
+        name: path.basename(filePath),
+        fileExt: path.extname(filePath).toLowerCase(),
+        duration,
+      })
+      .onConflictDoNothing({ target: audioAssets.stableId })
 
     const albumArt = artByDir.get(dir)
-    const album = this.upsertAlbum(albumName, artist.id, albumArt)
-
-    if (albumArt && !album.primaryColor) {
-      const dc = await dominantColor(albumArt)
-      if (dc) {
-        album.primaryColor = dc.hex
-        album.textColor = dc.textColor
-      }
+    if (albumArt) {
+      await this.insertArt(album.id, "album", "cover", albumArt)
     }
 
-    const trackId = hash("track", `${artistName}/${albumName}/${title}`)
-    if (this.tracks.has(trackId)) return
-
-    const track: Track = {
-      id: trackId,
-      name: title,
-      albumId: album.id,
-      trackNumber: info.trackNumber,
-      playtimeSeconds: duration,
-      path: filePath,
-    }
-    this.tracks.set(trackId, track)
-
-    const ext = path.extname(filePath).toLowerCase()
-    const assetId = await contentId("asset", filePath)
-    this.audioAssets.set(assetId, {
-      id: assetId,
-      parentId: trackId,
-      path: filePath,
-      name: path.basename(filePath),
-      filetype: "audio",
-      fileExt: ext,
-      duration,
-    })
-
-    if (albumArt && album.imagePath) {
-      const artExt = path.extname(albumArt).toLowerCase()
-      const artAssetId = await contentId("art", albumArt)
-      if (!this.artAssets.has(artAssetId)) {
-        this.artAssets.set(artAssetId, {
-          id: artAssetId,
-          parentId: album.id,
-          path: albumArt,
-          name: path.basename(albumArt),
-          filetype: "image",
-          fileExt: artExt,
-          width: 0,
-          height: 0,
-        })
+    if (dirArtist) {
+      const aArt = artByDir.get(path.join(sourceRoot, dirArtist))
+      if (aArt) {
+        await this.insertArt(artistId, "artist", "portrait", aArt)
       }
     }
   }
@@ -163,6 +212,8 @@ export class Library {
       }
     }
 
+    enrichmentProgress.reset(allFiles.length)
+
     const jobs = allFiles.map(({ path, rootPath }) =>
       limit(async () => {
         try {
@@ -171,24 +222,146 @@ export class Library {
         } catch {
           // skip unparseable files
         }
+        enrichmentProgress.tick()
       }),
     )
 
     Promise.allSettled(jobs).then(() => {
       this.rebuildIndex()
       console.log(
-        "Metadata complete: %d tracks, %d artists, %d albums (from %d files)",
-        this.tracks.size,
-        this.artists.size,
-        this.albums.size,
+        "Metadata complete: from %d files",
         allFiles.length,
       )
     })
   }
 
-  rebuildIndex() {
-    fuse_artists.setCollection(Array.from(this.artists.values()))
-    fuse_albums.setCollection(Array.from(this.albums.values()))
-    fuse_playlists.setCollection(Array.from(this.playlists.values()))
+  // Convert DB rows (with null) to domain types (with undefined)
+  private fix<T>(row: T): T {
+    if (!row || typeof row !== 'object') return row
+    const out = {} as T
+    for (const [k, v] of Object.entries(row)) {
+      ;(out as any)[k] = v ?? undefined
+    }
+    return out
+  }
+
+  private fixMany<T>(rows: T[]): T[] {
+    return rows.map(r => this.fix(r))
+  }
+
+  async getStats() {
+    const [artistCount, albumCount, trackCount, audioCount, artCount, playlistCount] =
+      await Promise.all([
+        this.db.select({ count: sql<number>`count(*)::int` }).from(artists).then(r => Number(r[0]?.count ?? 0)),
+        this.db.select({ count: sql<number>`count(*)::int` }).from(albums).then(r => Number(r[0]?.count ?? 0)),
+        this.db.select({ count: sql<number>`count(*)::int` }).from(tracks).then(r => Number(r[0]?.count ?? 0)),
+        this.db.select({ count: sql<number>`count(*)::int` }).from(audioAssets).then(r => Number(r[0]?.count ?? 0)),
+        this.db.select({ count: sql<number>`count(*)::int` }).from(artAssets).then(r => Number(r[0]?.count ?? 0)),
+        this.db.select({ count: sql<number>`count(*)::int` }).from(playlists).then(r => Number(r[0]?.count ?? 0)),
+      ])
+    return {
+      artists: artistCount,
+      albums: albumCount,
+      tracks: trackCount,
+      artAssets: artCount,
+      audioAssets: audioCount,
+      playlists: playlistCount,
+    }
+  }
+
+  async getArtists() {
+    return this.fixMany(await this.db.select().from(artists).orderBy(artists.name)) as any as Artist[]
+  }
+
+  async getArtist(id: string) {
+    const [row] = await this.db.select().from(artists).where(eq(artists.id, id)).limit(1)
+    return (row ? this.fix(row) : null) as any as Artist | null
+  }
+
+  async getArtistAlbums(artistId: string) {
+    return this.fixMany(await this.db.select().from(albums).where(eq(albums.artistId, artistId))) as any as Album[]
+  }
+
+  async getAlbums() {
+    return this.fixMany(await this.db.select().from(albums).orderBy(albums.name)) as any as Album[]
+  }
+
+  async getAlbum(id: string) {
+    const [row] = await this.db.select().from(albums).where(eq(albums.id, id)).limit(1)
+    return (row ? this.fix(row) : null) as any as Album | null
+  }
+
+  async getAlbumTracks(albumId: string) {
+    return this.fixMany(await this.db.select().from(tracks).where(eq(tracks.albumId, albumId))) as any as Track[]
+  }
+
+  async getAllTracks() {
+    return this.fixMany(await this.db.select().from(tracks)) as any as Track[]
+  }
+
+  async getTrack(id: string) {
+    const [row] = await this.db.select().from(tracks).where(eq(tracks.id, id)).limit(1)
+    return (row ? this.fix(row) : null) as any as Track | null
+  }
+
+  async getAudioAssetsByParent(parentId: string) {
+    return this.fixMany(await this.db.select().from(audioAssets).where(eq(audioAssets.parentId, parentId))) as any as AudioAsset[]
+  }
+
+  async getAudioAssets() {
+    return this.fixMany(await this.db.select().from(audioAssets)) as any as AudioAsset[]
+  }
+
+  async getAudioAsset(id: string) {
+    const [row] = await this.db.select().from(audioAssets).where(eq(audioAssets.id, id)).limit(1)
+    return (row ? this.fix(row) : null) as any as AudioAsset | null
+  }
+
+  async getPlaylist(id: string) {
+    const [row] = await this.db.select().from(playlists).where(eq(playlists.id, id)).limit(1)
+    return (row ? this.fix(row) : null) as any as Playlist | null
+  }
+
+  async getAllPlaylists() {
+    return this.fixMany(await this.db.select().from(playlists)) as any as Playlist[]
+  }
+
+  async setPlaylists(entries: { id: string; name: string; imageUrl?: string | null }[]) {
+    await this.db.delete(playlists)
+    for (const p of entries) {
+      const sid = stableId("playlist", p.name)
+      await this.db
+        .insert(playlists)
+        .values({ stableId: sid, name: p.name, imageUrl: p.imageUrl ?? null })
+        .onConflictDoNothing({ target: playlists.stableId })
+    }
+  }
+
+  async getArt(entityId: string, entityType: "album" | "artist", role: "cover" | "portrait" = "cover") {
+    const [row] = await this.db
+      .select()
+      .from(artAssets)
+      .where(and(eq(artAssets.entityId, entityId), eq(artAssets.entityType, entityType), eq(artAssets.role, role)))
+      .limit(1)
+    return row ? this.fix(row) as any as ArtAsset : null
+  }
+
+  async getArtById(id: string) {
+    const [row] = await this.db.select().from(artAssets).where(eq(artAssets.id, id)).limit(1)
+    return row ? this.fix(row) as any as ArtAsset : null
+  }
+
+  async getAllArt(entityId: string, entityType: "album" | "artist") {
+    return this.db.select().from(artAssets).where(and(eq(artAssets.entityId, entityId), eq(artAssets.entityType, entityType))) as any as ArtAsset[]
+  }
+
+  async rebuildIndex() {
+    const allArtists = await this.db.select().from(artists)
+    const allAlbums = await this.db.select().from(albums)
+    const allPlaylists = await this.db.select().from(playlists)
+
+    fuse_artists.setCollection(allArtists as any)
+    fuse_albums.setCollection(allAlbums as any)
+    fuse_playlists.setCollection(allPlaylists as any)
   }
 }

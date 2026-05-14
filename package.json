@@ -21,9 +21,12 @@
     "test:watch": "bun test --watch",
     "test:e2e": "bun test tests/e2e",
     "test:e2e:watch": "bun test --watch tests/e2e",
-    "check": "npm-run-all --parallel lint typecheck format"
+    "check": "npm-run-all --parallel lint typecheck format",
+    "db:generate": "drizzle-kit generate",
+    "db:up": "drizzle-kit migrate"
   },
   "dependencies": {
+    "@electric-sql/pglite": "^0.4.5",
     "@elysiajs/eden": "^1.4.3",
     "@elysiajs/openapi": "^1.4.11",
     "@elysiajs/opentelemetry": "^1.4.10",
@@ -41,6 +44,7 @@
     "clsx": "^2.1.1",
     "colorthief": "^3.3.1",
     "concurrently": "^9.2.1",
+    "drizzle-orm": "^0.45.2",
     "elysia": "^1.4.11",
     "fuse.js": "^7.1.0",
     "lucide-react": "^0.546.0",
@@ -66,6 +70,7 @@
     "@types/react-dom": "^19",
     "@typescript-eslint/eslint-plugin": "^8.46.3",
     "@typescript-eslint/parser": "^8.46.3",
+    "drizzle-kit": "^0.31.10",
     "eslint": "^9.39.1",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",

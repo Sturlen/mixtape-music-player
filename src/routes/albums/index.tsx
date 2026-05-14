@@ -93,6 +93,7 @@ function Content({ searchTerm }: { searchTerm: string }) {
                     src={album.imageURL ? album.imageURL + "?w=200&h=200&q=85&f=jpeg" : undefined}
                     name={album.name}
                     primaryColor={album.primaryColor}
+                    textColor={album.textColor}
                     className="h-full w-full"
                   />
                 </div>

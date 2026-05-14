@@ -1,4 +1,4 @@
-import CasseteImage from "@/assets/cassette_empty.svg"
+import { CassetteBody } from "@/client/components/CassetteBody"
 import CasseteSpool from "@/assets/cassette_spool.svg"
 import { Circle } from "@/client/components/Circle"
 import { useCurrentTrack, useIsPlaying, useQueueProgress } from "@/Player"
@@ -35,22 +35,17 @@ export function Cassette({ className }: { className?: string }) {
       >
         <Circle />
       </div>
-      {/* spool extender fix */}
       <div
         className="absolute top-[44.5%] left-[23.3%] w-[16%] text-white"
         style={{ scale: spool_size }}
       >
         <Circle />
       </div>
-      {/* cover */}
       <div className="absolute top-[44.5%] left-[23.3%] w-[16%] text-gray-400">
         <Circle />
       </div>
       <img
-        className={cn(
-          { reel: isPlaying },
-          "absolute top-[44.5%] left-[23.3%] w-[16%]",
-        )}
+        className={cn({ reel: isPlaying }, "absolute top-[44.5%] left-[23.3%] w-[16%]")}
         style={{ animationDuration: durationSupply.toFixed() + "s" }}
         src={CasseteSpool}
       />
@@ -60,14 +55,12 @@ export function Cassette({ className }: { className?: string }) {
       >
         <Circle />
       </div>
-      {/* spool extender fix */}
       <div
         className="absolute top-[44.5%] right-[23.6%] w-[16%] text-white"
         style={{ scale: spool_size }}
       >
         <Circle />
       </div>
-      {/* cover */}
       <div className="absolute top-[44.5%] right-[23.6%] w-[16%] text-gray-400">
         <Circle />
       </div>
@@ -81,7 +74,9 @@ export function Cassette({ className }: { className?: string }) {
         src={CasseteSpool}
         style={{ animationDuration: durationTakeUp.toFixed() + "s" }}
       />
-      <img className="absolute my-auto w-full" src={CasseteImage} />
+      <div className="absolute my-auto w-full">
+        <CassetteBody color={current_track?.primaryColor || undefined} />
+      </div>
       <div className="font-inter absolute top-[24%] right-[12.1%] left-[10.9%] h-[16%] overflow-hidden bg-white px-2 text-sm text-nowrap overflow-ellipsis text-black">
         <span>{currentTrackName}</span>
       </div>

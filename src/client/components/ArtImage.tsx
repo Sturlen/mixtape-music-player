@@ -2,31 +2,42 @@ import { useState } from "react"
 import { cn } from "@/lib/utils"
 
 type Props = {
-  src?: string
+  src?: string | null
   name: string
-  primaryColor?: string
+  primaryColor?: string | null
+  textColor?: string | null
   className?: string
   imgClassName?: string
 }
 
-export function ArtImage({ src, name, primaryColor, className, imgClassName }: Props) {
+export function ArtImage({ src, name, primaryColor, textColor, className, imgClassName }: Props) {
+  const [loaded, setLoaded] = useState(false)
   const [errored, setErrored] = useState(false)
-  const fallback = !src || errored
+  const showImage = !errored && src
+  const showFallback = !loaded || errored || !src
 
   return (
     <div
-      className={cn("relative overflow-hidden", className)}
+      className={cn("relative overflow-hidden", !primaryColor && "bg-muted", className)}
       style={primaryColor ? { backgroundColor: primaryColor } : undefined}
     >
-      {fallback ? (
-        <div className="bg-muted flex h-full w-full items-center justify-center p-2 text-center text-xs font-semibold text-muted-foreground">
-          <span className="line-clamp-3 break-words">{name}</span>
+      {showFallback && (
+        <div
+          className="absolute inset-0 flex items-center justify-center p-2 text-center text-xs font-semibold"
+          style={textColor ? { color: textColor } : undefined}
+        >
+          <span className={cn("line-clamp-3 break-words", !textColor && "text-muted-foreground")}>
+            {name}
+          </span>
         </div>
-      ) : (
+      )}
+      {showImage && (
         <img
           src={src}
           alt={name}
-          className={cn("h-full w-full object-cover", imgClassName)}
+          loading="lazy"
+          className={cn("h-full w-full object-contain", imgClassName)}
+          onLoad={() => setLoaded(true)}
           onError={() => setErrored(true)}
         />
       )}

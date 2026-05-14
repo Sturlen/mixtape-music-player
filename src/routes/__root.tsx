@@ -1,3 +1,5 @@
+import { useEffect } from "react"
+import { useQueryClient } from "@tanstack/react-query"
 import MobileControls from "@/client/components/mobile-controls"
 import PlaybackDetails from "@/client/components/PlaybackDetails"
 import ReloadButton from "@/client/components/ReloadButton"
@@ -13,8 +15,23 @@ import { TanStackRouterDevtools } from "@tanstack/react-router-devtools"
 import { TextScroller } from "@/client/components/ui/TextScroller"
 import { CurrentTrackScroller } from "@/client/components/CurrentTrackScroller"
 
+function LibraryProgressWatcher() {
+  const queryClient = useQueryClient()
+
+  useEffect(() => {
+    const es = new EventSource("/api/library/progress")
+    es.onmessage = () => {
+      queryClient.invalidateQueries()
+    }
+    return () => es.close()
+  }, [queryClient])
+
+  return null
+}
+
 const RootLayout = () => (
   <div className="to-background min-h-full bg-gradient-to-b from-amber-800 from-[20vh] to-[100vh]">
+    <LibraryProgressWatcher />
     <header className="fixed top-0 right-0 left-0 z-10 flex h-30 items-center justify-between bg-black p-2 md:p-10 xl:left-[25rem]">
       <Link to="/">
         <h1 className="font-battle font-serif text-2xl whitespace-nowrap italic md:text-3xl">

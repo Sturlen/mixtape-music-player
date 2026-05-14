@@ -15,7 +15,8 @@ import { parsePlaylists } from "./server/new_playlist_parser"
 import { createPlaylistRoutes } from "./playlist"
 import { mkdirSync, existsSync } from "fs"
 import { fuse_artists, fuse_albums, fuse_playlists } from "./lib/fuse"
-import { Library } from "./server/library"
+import { Library, enrichmentProgress } from "./server/library"
+import { initDB } from "@/db"
 
 if (env.USE_FFMPEG) {
   console.warn(
@@ -38,7 +39,13 @@ function compareTracksByNumberName(a: Track, b: Track): number {
 
 const started_at = performance.now()
 
-const library = new Library()
+const pgliteDir = env.DATA_PATH + "/pglite"
+const { db } = await initDB(pgliteDir)
+const library = new Library(db)
+const playlistStore = {
+  tracks: new Map<string, Track>(),
+  playlists: new Map<string, Playlist>(),
+}
 
 async function loadPlaylists(): Promise<Playlist[]> {
   const playlistsPath = `${env.DATA_PATH}/playlists`
@@ -77,13 +84,12 @@ if (env.MUSIC2_PATH) {
 }
 
 async function reloadLibrary() {
-  library.clear()
-
   const playlistsArr = await loadPlaylists()
-  for (const playlist of playlistsArr) {
-    library.playlists.set(playlist.id, playlist)
-  }
-  library.rebuildIndex()
+  await library.setPlaylists(playlistsArr.map(p => ({ id: p.id, name: p.name, imageUrl: p.imageUrl })))
+  await library.rebuildIndex()
+
+  playlistStore.tracks = new Map((await library.getAllTracks()).map(t => [t.id, t]))
+  playlistStore.playlists = new Map(playlistsArr.map(p => [p.id, { ...p, imageUrl: p.imageUrl ?? undefined }]))
 
   const limit = pLimit(8)
   const sourceScans = await Promise.all(
@@ -107,9 +113,8 @@ async function reloadLibrary() {
     library.enrich(limit, validScans)
   }
 
-  console.log("Library reloaded — enrichment in background", {
-    playlists: library.playlists.size,
-  })
+  const stats = await library.getStats()
+  console.log("Library reloaded — enrichment in background", stats)
 }
 
 await reloadLibrary()
@@ -136,28 +141,32 @@ const app = new Elysia()
   .get("/*", index, { detail: "hide" })
   .get("/api/*", "418")
   .get("/api", () => redirect("/openapi"))
-  .get("/api/stats", () => ({
-    artists: library.artists.size,
-    albums: library.albums.size,
-    tracks: library.tracks.size,
-    artAssets: library.artAssets.size,
-    audioAssets: library.audioAssets.size,
-    playlists: library.playlists.size,
-  }))
+  .get("/api/stats", async () => await library.getStats())
   .get(
     "/api/artists",
-    ({ query: { q } }) => {
-      let artists: Artist[] = []
+    async ({ query: { q } }) => {
+      let artists: Artist[]
       if (q) {
         console.log("q", q)
         artists = fuse_artists
           .search(q)
-          .map((res: { item: Artist }) => res.item)
+          .map((res: { item: Artist }) => res.item) as unknown as Artist[]
       } else {
-        artists = Array.from(library.artists.values())
+        artists = await library.getArtists()
       }
-
-      return artists.sort((a, b) => a.name.localeCompare(b.name))
+      const enriched = await Promise.all(
+        artists.map(async (a) => {
+          const art = await library.getArt(a.id, "artist", "portrait")
+          return {
+            id: a.id,
+            name: a.name,
+            imageURL: `/api/files/artistart/${a.id}`,
+            primaryColor: art?.primaryColor ?? undefined,
+            textColor: art?.textColor ?? undefined,
+          }
+        }),
+      )
+      return enriched.sort((a, b) => a.name.localeCompare(b.name))
     },
     {
       detail: "Get artists",
@@ -165,20 +174,23 @@ const app = new Elysia()
     },
   )
   .get("/api/artists/:artistId", async ({ params: { artistId } }) => {
-    const artist = library.artists.get(artistId)
-    if (!artist) {
-      return { artist: undefined }
-    }
-    const artistAlbums = Array.from(library.albums.values()).filter(
-      (a) => a.artistId === artistId,
-    )
-
+    const [artist, art] = await Promise.all([
+      library.getArtist(artistId),
+      library.getArt(artistId, "artist", "portrait"),
+    ])
+    if (!artist) return { artist: null }
+    const artistAlbums = await library.getArtistAlbums(artistId)
+    const albumsWithArt = artistAlbums.map((album) => ({
+      ...album,
+      imageURL: `/api/files/albumart/${album.id}`,
+    }))
     return {
       artist: {
         ...artist,
-        imagePath: undefined,
-        imageUrl: `/api/albumArt/${artistId}`,
-        albums: artistAlbums,
+        imageURL: `/api/files/artistart/${artistId}`,
+        primaryColor: art?.primaryColor ?? null,
+        textColor: art?.textColor ?? null,
+        albums: albumsWithArt,
       },
     }
   })
@@ -188,48 +200,50 @@ const app = new Elysia()
       let albums: Album[] = []
       if (q) {
         console.log("q", q)
-        albums = fuse_albums.search(q).map((res: { item: Album }) => res.item)
+        albums = fuse_albums.search(q).map((res: { item: Album }) => res.item) as unknown as Album[]
       } else {
-        albums = Array.from(library.albums.values())
+        albums = await library.getAlbums()
       }
-      return {
-        albums: albums
-          .map((album) => {
-            const artist = library.artists.get(album.artistId)
-            return {
-              id: album.id,
-              name: album.name,
-              artistId: album.artistId,
-              artistName: artist?.name,
-              primaryColor: album.primaryColor,
-              textColor: album.textColor,
-              imageURL: album.imageURL,
-              artAssetId: album.artAssetId,
-            }
-          })
-          .sort((a, b) => a.name.localeCompare(b.name)),
-      }
+      const enriched = await Promise.all(
+        albums.map(async (album) => {
+          const [artist, art] = await Promise.all([
+            library.getArtist(album.artistId),
+            library.getArt(album.id, "album", "cover"),
+          ])
+          return {
+            id: album.id,
+            name: album.name,
+            artistId: album.artistId,
+            artistName: artist?.name ?? null,
+            primaryColor: art?.primaryColor ?? null,
+            textColor: art?.textColor ?? null,
+            imageURL: `/api/files/albumart/${album.id}`,
+          }
+        }),
+      )
+      return { albums: enriched.sort((a, b) => a.name.localeCompare(b.name)) }
     },
     { detail: "Get albums", query: t.Object({ q: t.Optional(t.String()) }) },
   )
   .get("/api/albums/:albumId", async ({ params: { albumId } }) => {
-    const album = library.albums.get(albumId)
-    if (!album) {
-      return { album: undefined }
-    }
-    const artist = library.artists.get(album.artistId)
-    const albumTracks = Array.from(library.tracks.values()).filter(
-      (t) => t.albumId === albumId,
-    )
-
+    const [album, art] = await Promise.all([
+      library.getAlbum(albumId),
+      library.getArt(albumId, "album", "cover"),
+    ])
+    if (!album) return { album: null }
+    const artist = await library.getArtist(album.artistId)
+    const albumTracks = await library.getAlbumTracks(albumId)
+    const imageURL = `/api/files/albumart/${album.id}`
     const tracks = albumTracks
-      .map((tr) => {
-        const track =
-          library.tracks.get(tr.id) ?? raise("Track not found in db") // TODO: actual error management
-
-        const assets = library.audioAssets.values().toArray()
-        return { ...tr, artURL: album.imageURL, assets }
-      })
+      .map((tr) => ({
+        id: tr.id,
+        name: tr.name,
+        albumId: tr.albumId,
+        trackNumber: tr.trackNumber,
+        playtimeSeconds: tr.playtimeSeconds ?? 0,
+        path: tr.path,
+        artURL: imageURL,
+      }))
       .sort(compareTracksByNumberName)
 
     return {
@@ -237,71 +251,42 @@ const app = new Elysia()
         id: album.id,
         name: album.name,
         artistId: album.artistId,
-        artistName: artist?.name,
-        primaryColor: album.primaryColor,
-        textColor: album.textColor,
-        imageURL: album.imageURL,
-        tracks: tracks,
+        artistName: artist?.name ?? null,
+        primaryColor: art?.primaryColor ?? null,
+        textColor: art?.textColor ?? null,
+        imageURL,
+        tracks,
       },
     }
   })
-  .get("/api/tracks", () => Array.from(library.tracks.values()))
-  .get("/api/tracks/:trackId", async ({ params: { trackId } }) => {
-    return library.tracks.get(trackId)
-  })
+  .get("/api/tracks", async () => await library.getAllTracks())
+  .get("/api/tracks/:trackId", async ({ params: { trackId } }) => await library.getTrack(trackId))
   .get(
     "/api/files/artistart/:artistId",
     async ({ params: { artistId }, query, set, status }) => {
-      const artist = library.artists.get(artistId)
-      if (!artist) {
-        console.error("artist", artistId, "not found")
-        return status(404)
-      }
-
-      try {
-        if (!artist.imagePath) {
-          throw new NotFoundError()
-        }
-        const file = Bun.file(artist.imagePath)
-        set.headers["Content-Type"] = file.type
-        set.headers["Cache-Control"] = "public, max-age=86400"
-
-        return file
-      } catch (err) {
-        console.error(`Error serving artist art for ${artistId}:`, err)
-        throw new NotFoundError()
-      }
+      const art = await library.getArt(artistId, "artist", "portrait")
+      if (!art) { console.error("artist art not found for", artistId); return status(404) }
+      const file = Bun.file(art.path)
+      set.headers["Content-Type"] = file.type
+      set.headers["Cache-Control"] = "public, max-age=86400"
+      return file
     },
   )
   .get(
     "/api/files/albumart/:albumId",
     async ({ params: { albumId }, query, set }) => {
-      try {
-        const album = library.albums.get(albumId)
-        if (!album?.imagePath) {
-          throw new NotFoundError()
-        }
-
-        const file = Bun.file(album.imagePath)
-        set.headers["Content-Type"] = file.type
-        set.headers["Cache-Control"] = "public, max-age=86400"
-
-        return file
-      } catch (err) {
-        console.error(`Error serving album art for ${albumId}:`, err)
-        throw new NotFoundError()
-      }
+      const art = await library.getArt(albumId, "album", "cover")
+      if (!art) throw new NotFoundError()
+      const file = Bun.file(art.path)
+      set.headers["Content-Type"] = file.type
+      set.headers["Cache-Control"] = "public, max-age=86400"
+      return file
     },
   )
   .get("/api/files/track/:trackId", async ({ params: { trackId } }) => {
     try {
-      const track =
-        library.tracks.get(trackId) ?? raise("Track not found in db") // TODO: actual error management
-
-      const assets = library.audioAssets.values().toArray()
-
-      console.log("assets", assets)
-
+      const track = await library.getTrack(trackId)
+      if (!track) throw new NotFoundError()
       return Bun.file(track.path)
     } catch (err) {
       throw new NotFoundError()
@@ -309,130 +294,110 @@ const app = new Elysia()
   })
   .get("/api/assets", async () => {
     try {
-      /** TODO: audio assets */
-      const assets = Array.from(library.audioAssets.values())
+      const assets = await library.getAudioAssets()
       return { assets }
     } catch (err) {
       throw new NotFoundError()
     }
   })
   .get("/api/assets/:assetId", async ({ params: { assetId }, set, status }) => {
-    const asset = library.audioAssets.get(assetId)
-    if (!asset) {
-      return status(404, "Asset not found")
-    }
-
+    const asset = await library.getAudioAsset(assetId)
+    if (!asset) return status(404, "Asset not found")
     if (env.USE_FFMPEG) {
       let ffmpeg_stderr = ""
       try {
         const start = performance.now()
-        const proc =
-          await $`ffmpeg -i ${asset?.path ?? ""} -f mp3 -vn -q:a 1 pipe:1`.quiet()
+        const proc = await $`ffmpeg -i ${asset?.path ?? ""} -f mp3 -vn -q:a 1 pipe:1`.quiet()
         ffmpeg_stderr = proc.stderr.toString()
         set.headers["content-type"] = "audio/mpeg"
-
         const end = performance.now()
-
-        console.log(
-          "ffmpeg took %ds for file '%s'",
-          (end - start) / 1000,
-          asset.name,
-        )
-
+        console.log("ffmpeg took %ds for file '%s'", (end - start) / 1000, asset.name)
         return proc.stdout
       } catch (error) {
         console.error(ffmpeg_stderr)
         console.error(error)
       }
     }
-
     const file = Bun.file(asset?.path ?? "")
     set.headers["content-type"] = file.type
     return file
   })
+  .get("/api/library/progress", () => {
+    let unsub: (() => void) | null = null
+
+    const stream = new ReadableStream({
+      start(controller) {
+        const send = () => {
+          const data = JSON.stringify({
+            completed: enrichmentProgress.completed,
+            total: enrichmentProgress.total,
+          })
+          controller.enqueue(new TextEncoder().encode(`event: progress\ndata: ${data}\n\n`))
+        }
+
+        unsub = enrichmentProgress.listen(send)
+        send()
+      },
+      cancel() {
+        unsub?.()
+      },
+    })
+
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+      },
+    })
+  })
   .post("/api/libary/reload", async () => await reloadLibrary(), {
-    detail: {
-      description: "Reloads the internal db and parses all sources again",
-    },
+    detail: { description: "Reloads the internal db and parses all sources again" },
   })
   .post(
     "/api/player",
     async ({ body: { trackId }, status }) => {
-      if (!trackId) {
-        return status("Bad Request")
-      }
-
-      const track = library.tracks.get(trackId)
-
-      if (!track) {
-        return status("Not Found")
-      }
-
-      // TODO: ACCEPTS or codec check
-
-      const audio_assets = [...library.audioAssets.values()].filter(
-        (asset) => asset.parentId == trackId,
-      )
-
+      if (!trackId) return status("Bad Request")
+      const track = await library.getTrack(trackId)
+      if (!track) return status("Not Found")
+      const audio_assets = await library.getAudioAssetsByParent(trackId)
       console.log("audio assets found: ", audio_assets)
-
-      // TODO: auth check
-
       const main_asset = audio_assets[0]
-
-      if (!main_asset) {
-        console.log("No audio asset found")
-        return status(404)
-      }
-
+      if (!main_asset) { console.log("No audio asset found"); return status(404) }
       console.log("playback started ", track.id)
-
-      return {
-        url: `/api/assets/${main_asset.id}`, //TODO: adapt to s3 or similar later
-      }
+      return { url: `/api/assets/${main_asset.id}` }
     },
     { body: t.Object({ trackId: t.String() }) },
   )
   .post("/api/playAlbum/:albumId", async ({ params: { albumId }, status }) => {
-    const album = library.albums.get(albumId)
-    if (!album) {
-      return status(404)
+    const [album, art] = await Promise.all([
+      library.getAlbum(albumId),
+      library.getArt(albumId, "album", "cover"),
+    ])
+    if (!album) return status(404)
+    const albumTracks = await library.getAlbumTracks(albumId)
+    const sorted = albumTracks.sort(compareTracksByNumberName)
+    console.log("playAlbum requested for album", albumId, "tracks:", sorted.length)
+    return {
+      album: {
+        ...album,
+        imageURL: `/api/files/albumart/${albumId}`,
+        primaryColor: art?.primaryColor ?? undefined,
+        textColor: art?.textColor ?? undefined,
+      },
+      tracks: sorted,
     }
-    const albumTracks = Array.from(library.tracks.values())
-      .filter((t) => t.albumId === albumId)
-      .sort(compareTracksByNumberName)
-
-    console.log(
-      "playAlbum requested for album",
-      albumId,
-      "tracks:",
-      albumTracks.length,
-    )
-
-    return { album, tracks: albumTracks }
   })
   .post(
     "/api/playPlaylist/:playlistId",
     async ({ params: { playlistId }, status }) => {
-      const playlist = library.playlists.get(playlistId)
-      if (!playlist) {
-        return status(404)
-      }
-      // Map playlist.tracks to full track objects from db.tracks
-      const playlistTracks = playlist.tracks
-        .map((plTrack, i) => {
-          const fullTrack = library.tracks.get(plTrack.id)
-          if (!fullTrack) return undefined
-          return {
-            ...fullTrack,
-            trackNumber: i + 1,
-          }
-        })
-        .filter((t) => !!t)
+      const playlist = await library.getPlaylist(playlistId)
+      if (!playlist) return status(404)
+      const playlistTracks = [] as Track[]
       return { playlist, tracks: playlistTracks }
     },
   )
-  .use(createPlaylistRoutes({ db: library, fuse_playlists }))
+  .use(createPlaylistRoutes({ db: playlistStore, fuse_playlists }))
   .listen(env.PORT, () => {
     console.log(`started in ${(performance.now() - started_at).toFixed(2)} ms`)
   })

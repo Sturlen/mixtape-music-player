@@ -5,6 +5,7 @@ import { Link } from "@tanstack/react-router"
 import Page from "@/client/components/Page"
 import { GridLayout } from "@/client/components/ui/grid"
 import { ArtImage } from "@/client/components/ArtImage"
+import type { Album } from "@/lib/types"
 
 export const Route = createFileRoute("/artists/$id")({
   component: ArtistPage,
@@ -39,6 +40,7 @@ function ArtistPage() {
         src={artist.imageURL ? artist.imageURL + "?w=400&h=400&q=85&f=jpeg" : undefined}
         name={artist.name}
         primaryColor={artist.primaryColor}
+        textColor={artist.textColor as string | undefined}
         className="size-40"
       />
       <h1 className="text-4xl font-extrabold md:text-6xl lg:text-8xl">
@@ -59,33 +61,13 @@ function ArtistPage() {
                   className="relative block w-full transform-gpu transition-transform group-hover:scale-[1.01] group-hover:cursor-pointer"
                 >
                   <div className="relative aspect-square w-full origin-center transform-gpu border border-[rgba(0,0,0,0.06)] shadow-[0_8px_20px_rgba(2,6,23,0.12)] transition-transform duration-200 will-change-transform group-hover:[transform:scale(1.03)]">
-                    <picture>
-                      <source
-                        srcSet={
-                          album.imageURL
-                            ? `${album.imageURL}?w=300&h=300&q=75&f=avif 1x, ${album.imageURL}?w=300&h=300&q=75&f=avif 2x`
-                            : "/cassette.webp"
-                        }
-                        type="image/avif"
-                      />
-                      <source
-                        srcSet={
-                          album.imageURL
-                            ? `${album.imageURL}?w=300&h=300&q=80&f=webp 1x, ${album.imageURL}?w=300&h=300&q=80&f=webp 2x`
-                            : "/cassette.webp"
-                        }
-                        type="image/webp"
-                      />
-                      <img
-                        src={
-                          album.imageURL
-                            ? album.imageURL + "?w=200&h=200&q=85&f=jpeg"
-                            : "/cassette.webp"
-                        }
-                        alt={album.name}
-                        className="bg-muted h-full w-full rounded-none border-0 object-contain p-0"
-                      />
-                    </picture>
+                    <ArtImage
+                      src={(album as any).imageURL ? (album as any).imageURL + "?w=200&h=200&q=85&f=jpeg" : undefined}
+                      name={album.name}
+                      primaryColor={(album as any).primaryColor}
+                      textColor={(album as any).textColor}
+                      className="h-full w-full"
+                    />
                   </div>
                 </button>
               </div>
