@@ -2,7 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router"
 
 import { useQuery } from "@tanstack/react-query"
 import { EdenClient } from "@/lib/eden"
+import { useCurrentTrack, useAudioPlayer } from "@/Player"
 import { usePlayAlbum } from "@/lib/api"
+import { PauseIcon, PlayIcon } from "lucide-react"
 import { ArtImage } from "@/client/components/ArtImage"
 import { EntityHeader } from "@/client/components/EntityHeader"
 import { TrackRow } from "@/client/components/TrackRow"
@@ -32,6 +34,13 @@ function RouteComponent() {
   const { id } = Route.useParams()
   const { data } = useAlbum(id)
   const playAlbum = usePlayAlbum()
+  const pause = useAudioPlayer.use.pause()
+  const currentTrack = useCurrentTrack()
+  const requestedPlaybackState = useAudioPlayer.use.requestedPlaybackState()
+  const currentTime = useAudioPlayer.use.currentTime()
+  const currentlyPlayingTrackId = currentTrack?.id
+  const isPlaying = requestedPlaybackState === "playing"
+  const isThisAlbumPlaying = isPlaying && currentTrack?.album?.id === id
 
   useEffect(() => {
     if (!data?.album) return
@@ -55,7 +64,7 @@ function RouteComponent() {
     <section>
       <div className="w-full">
         <div className="md:grid md:grid-cols-[1fr_2fr] md:gap-12">
-          <div className="p-6 md:p-10 md:flex md:flex-col">
+          <div className="p-6 md:flex md:flex-col md:p-10">
             <EntityHeader
               image={
                 <ArtImage
@@ -85,14 +94,18 @@ function RouteComponent() {
               </div>
               <div className="mt-4 flex gap-3">
                 <button
-                  onClick={() => playAlbum({ albumId: album.id })}
-                  className="flex items-center gap-2 px-6 py-3 text-sm font-bold tracking-widest uppercase transition hover:opacity-80"
+                  onClick={() =>
+                    isThisAlbumPlaying
+                      ? pause()
+                      : playAlbum({ albumId: album.id })
+                  }
+                  className="w-24 items-center gap-2 px-6 py-3 text-center text-sm font-bold tracking-widest uppercase transition hover:opacity-80"
                   style={{
                     backgroundColor: album.primaryColor ?? undefined,
                     color: album.textColor ?? undefined,
                   }}
                 >
-                  Play
+                  {isThisAlbumPlaying ? "Pause" : "Play"}
                 </button>
               </div>
             </EntityHeader>
@@ -108,6 +121,9 @@ function RouteComponent() {
                   textColor: album.textColor ?? undefined,
                 }}
                 index={i}
+                isActive={track.id === currentlyPlayingTrackId}
+                isPlaying={isPlaying}
+                currentTime={currentTime}
                 onPlay={() => playAlbum({ albumId: album.id, trackIndex: i })}
               />
             ))}
