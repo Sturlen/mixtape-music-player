@@ -94,9 +94,9 @@ function Sidebar({ className }: { className?: string }) {
         className,
       )}
     >
-      <section className="overflow-hidden">
-        <h2 className="font-inter-400 pb-2 text-center text-2xl">QUEUE</h2>
-        <PlaybackQueue className="h-full" />
+      <section className="flex min-h-0 flex-col overflow-hidden">
+        <h2 className="font-inter-400 shrink-0 pb-2 text-center text-2xl">QUEUE</h2>
+        <PlaybackQueue className="min-h-0 flex-1" />
       </section>
       <section className="">
         <h2 className="font-inter-400 pb-2 text-center text-2xl">
