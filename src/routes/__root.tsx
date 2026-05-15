@@ -31,7 +31,7 @@ function LibraryProgressWatcher() {
 }
 
 const RootLayout = () => (
-  <div className="to-background min-h-full bg-gradient-to-b from-amber-800 from-[20vh] to-[100vh]">
+  <div className="min-h-full bg-background">
     <LibraryProgressWatcher />
     <header className="fixed top-0 right-0 left-0 z-10 flex h-30 items-center justify-between bg-black p-2 md:p-10 xl:left-[25rem]">
       <Link to="/">

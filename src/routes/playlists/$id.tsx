@@ -1,11 +1,10 @@
 import { createFileRoute, useParams } from "@tanstack/react-router"
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { useAudioPlayer } from "@/Player"
 import { EdenClient } from "@/lib/eden"
 import Page from "@/client/components/Page"
 import { usePlayPlaylist } from "@/lib/api"
-import { AddToPlaylistButton } from "@/client/components/AddToPlaylistButton"
+import { TrackRow } from "@/client/components/TrackRow"
 
 export const Route = createFileRoute("/playlists/$id")({
   component: RouteComponent,
@@ -31,8 +30,6 @@ function usePlaylist(playlistId: string) {
 function RouteComponent() {
   const { id } = Route.useParams()
   const { data } = usePlaylist(id)
-  const play = useAudioPlayer((s) => s.play)
-  const queuePush = useAudioPlayer.use.queuePush()
   const playPlaylist = usePlayPlaylist()
   const queryClient = useQueryClient()
 
@@ -124,7 +121,7 @@ function RouteComponent() {
         <h2 className="mt-8 mb-4 text-2xl font-bold">TRACKS</h2>
       </div>
 
-      <ol className="bg-background flex w-full flex-col">
+      <ol className="px-4 md:px-8">
         {data.tracks.map(
           (
             track: {
@@ -135,58 +132,24 @@ function RouteComponent() {
             },
             i: number,
           ) => (
-            <li
+            <TrackRow
               key={track.id}
-              className="hover:bg-accent/50 grid w-full grid-cols-[1fr_auto_auto_auto_auto] items-center gap-2 border-t p-2 pl-8 transition-colors last:border-b"
-            >
-              <button
-                onClick={() => {
-                  playPlaylist({ playlistId: playlist.id, trackIndex: i })
-                }}
-                className="flex truncate text-left text-sm font-medium hover:underline md:text-base"
-              >
-                <span className="text-muted-foreground inline-block w-10 font-mono">
-                  {track.trackNumber?.toString().padStart(3, "0") || "--"}
-                </span>
-                <span>{track.name}</span>
-              </button>
-              <span className="text-muted-foreground px-2 text-xs font-mono">
-                {track.playtimeSeconds
-                  ? `${Math.floor(track.playtimeSeconds / 60)}:${Math.floor(track.playtimeSeconds % 60).toString().padStart(2, "0")}`
-                  : "--:--"}
-              </span>
-              <button
-                onClick={() => {
-                  if (
-                    confirm(`Remove "${track.name}" from "${playlist.name}"?`)
-                  ) {
-                    removeTrackMutation.mutate({ trackId: track.id })
-                  }
-                }}
-                disabled={removeTrackMutation.isPending}
-                className="hover:bg-destructive hover:text-destructive-foreground border-destructive/20 rounded border px-4 py-2 whitespace-nowrap transition-colors disabled:opacity-50"
-              >
-                {removeTrackMutation.isPending ? "Removing..." : "Remove"}
-              </button>
-              <AddToPlaylistButton
-                trackId={track.id}
-                trackName={track.name}
-                className="hover:bg-accent rounded border border-current px-4 py-2 whitespace-nowrap transition-colors"
-              />
-              <button
-                className="hover:bg-accent rounded border border-current px-4 py-2 whitespace-nowrap transition-colors"
-                onClick={() => {
-                  queuePush({
-                    id: track.id,
-                    name: track.name,
-                    duration: track.playtimeSeconds,
-                  })
-                  play()
-                }}
-              >
-                <span>Queue</span>
-              </button>
-            </li>
+              track={track}
+              index={i}
+              onPlay={() => playPlaylist({ playlistId: playlist.id, trackIndex: i })}
+              actions={
+                <button
+                  className="font-mono text-sm font-medium uppercase tracking-wider text-destructive opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 hover:underline"
+                  onClick={() => {
+                    if (confirm(`Remove "${track.name}" from "${playlist.name}"?`))
+                      removeTrackMutation.mutate({ trackId: track.id })
+                  }}
+                  disabled={removeTrackMutation.isPending}
+                >
+                  {removeTrackMutation.isPending ? "Removing..." : "Remove"}
+                </button>
+              }
+            />
           ),
         )}
       </ol>

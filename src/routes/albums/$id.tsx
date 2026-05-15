@@ -1,12 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
 
 import { useQuery } from "@tanstack/react-query"
-import { useAudioPlayer } from "@/Player"
 import { EdenClient } from "@/lib/eden"
-import Page from "@/client/components/Page"
 import { usePlayAlbum } from "@/lib/api"
-import { AddToPlaylistButton } from "@/client/components/AddToPlaylistButton"
 import { ArtImage } from "@/client/components/ArtImage"
+import { EntityHeader } from "@/client/components/EntityHeader"
+import { TrackRow } from "@/client/components/TrackRow"
+import { formatTime } from "@/lib/utils"
 import { useEffect } from "react"
 
 export const Route = createFileRoute("/albums/$id")({
@@ -31,8 +31,6 @@ function useAlbum(albumId: string) {
 function RouteComponent() {
   const { id } = Route.useParams()
   const { data } = useAlbum(id)
-  const play = useAudioPlayer((s) => s.play)
-  const queuePush = useAudioPlayer.use.queuePush()
   const playAlbum = usePlayAlbum()
 
   useEffect(() => {
@@ -40,101 +38,82 @@ function RouteComponent() {
     const hash = window.location.hash
     if (!hash) return
     const el = document.getElementById(hash.slice(1))
-            el?.scrollIntoView({ behavior: "smooth", block: "start" })
+    el?.scrollIntoView({ behavior: "smooth", block: "start" })
   }, [data])
 
-  if (!data) {
-    return <div></div>
-  }
+  if (!data) return <div></div>
 
   const album = data.album
+  if (!album) return <div>album not found</div>
 
-  if (!album) {
-    return <div>album not found</div>
-  }
+  const totalSeconds = album.tracks.reduce(
+    (sum, t) => sum + t.playtimeSeconds,
+    0,
+  )
 
   return (
-    <Page className="px-0">
-        <div
-          className="px-2"
-          style={album.primaryColor ? { backgroundColor: album.primaryColor + "20" } : undefined}
-        >
-          <ArtImage
-            src={album.imageURL}
-            name={album.name}
-            primaryColor={album.primaryColor}
-            textColor={album.textColor}
-            className="size-40"
-          />
-        <h1 className="text-4xl font-extrabold md:text-6xl lg:text-8xl">
-          {album.name}
-        </h1>
-        <Link
-          to="/artists/$id"
-          params={{ id: album.artistId }}
-          className="text-muted-foreground mt-1 block text-lg hover:underline"
-        >
-          {album.artistName || "Unknown Artist"}
-        </Link>
-
-        <div>
-          <button
-            className="hover:bg-accent bg-background mb-4 rounded-md border p-4"
-            onClick={() => playAlbum({ albumId: album.id })}
-          >
-            Play Album
-          </button>
-        </div>
-        <h2 className="mt-8 mb-4 text-2xl font-bold">TRACKS</h2>
-      </div>
-
-      <ol className="bg-background flex w-full flex-col">
-        {album.tracks.map((track, i) => (
-          <li
-            key={track.id}
-            id={`track-${track.id}`}
-            className="hover:bg-accent/50 scroll-mt-30 grid w-full grid-cols-[1fr_auto_auto_auto] items-center gap-2 border-t p-2 pl-8 transition-colors last:border-b"
-          >
-            <button
-              onClick={() => {
-                playAlbum({ albumId: album.id, trackIndex: i })
-              }}
-              className="flex truncate text-left text-sm font-medium hover:underline md:text-base"
+    <section>
+      <div className="w-full">
+        <div className="md:grid md:grid-cols-[1fr_2fr] md:gap-12">
+          <div className="p-6 md:p-10 md:flex md:flex-col">
+            <EntityHeader
+              image={
+                <ArtImage
+                  src={album.imageURL}
+                  name={album.name}
+                  primaryColor={album.primaryColor}
+                  textColor={album.textColor}
+                  className="size-full"
+                />
+              }
+              title={album.name}
+              primaryColor={album.primaryColor}
             >
-              <span className="text-muted-foreground inline-block w-10 font-mono">
-                {track.trackNumber?.toString().padStart(3, "0") || "--"}
-              </span>
-              <span>{track.name}</span>
-            </button>
-            <span className="text-muted-foreground px-2 text-xs font-mono">
-              {track.playtimeSeconds
-                ? `${Math.floor(track.playtimeSeconds / 60)}:${Math.floor(track.playtimeSeconds % 60).toString().padStart(2, "0")}`
-                : "--:--"}
-            </span>
-            <AddToPlaylistButton
-              trackId={track.id}
-              trackName={track.name}
-              className="hover:bg-accent rounded border border-current px-4 py-2 whitespace-nowrap transition-colors"
-            />
-            <button
-              className="hover:bg-accent rounded border border-current px-4 py-2 whitespace-nowrap transition-colors"
-              onClick={() => {
-                queuePush({
-                  id: track.id,
-                  name: track.name,
-                  duration: track.playtimeSeconds,
-                  artURL: track.artURL,
+              <Link
+                to="/artists/$id"
+                params={{ id: album.artistId }}
+                className="mt-1 text-lg font-medium opacity-70 hover:opacity-100"
+              >
+                {album.artistName || "Unknown Artist"}
+              </Link>
+              <div className="mt-2 flex items-center gap-2 font-mono text-sm opacity-60">
+                <span className="tracking-[0.2em] uppercase">Album</span>
+                <span className="opacity-40">·</span>
+                <span>{album.tracks.length} tracks</span>
+                <span className="opacity-40">·</span>
+                <span>{formatTime(totalSeconds)}</span>
+              </div>
+              <div className="mt-4 flex gap-3">
+                <button
+                  onClick={() => playAlbum({ albumId: album.id })}
+                  className="flex items-center gap-2 px-6 py-3 text-sm font-bold tracking-widest uppercase transition hover:opacity-80"
+                  style={{
+                    backgroundColor: album.primaryColor ?? undefined,
+                    color: album.textColor ?? undefined,
+                  }}
+                >
+                  Play
+                </button>
+              </div>
+            </EntityHeader>
+          </div>
+          <ol className="px-6 pb-6 md:px-0 md:pb-0">
+            {album.tracks.map((track, i) => (
+              <TrackRow
+                key={track.id}
+                id={`track-${track.id}`}
+                track={{
+                  ...track,
                   primaryColor: album.primaryColor ?? undefined,
                   textColor: album.textColor ?? undefined,
-                })
-                play()
-              }}
-            >
-              <span>Queue</span>
-            </button>
-          </li>
-        ))}
-      </ol>
-    </Page>
+                }}
+                index={i}
+                onPlay={() => playAlbum({ albumId: album.id, trackIndex: i })}
+              />
+            ))}
+          </ol>
+        </div>
+      </div>
+    </section>
   )
 }
