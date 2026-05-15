@@ -332,12 +332,19 @@ export const useAudioPlayerBase = create<PlayerState>()(
     },
     {
       name: "audio-player-storage",
-      partialize: (state) => ({
-        volume: state.volume,
-        queueTracks: state.queueTracks,
-        queueIndex: state.queueIndex,
-        isShuffled: state.isShuffled,
-      }),
+      partialize: (state) => {
+        const base = {
+          volume: state.volume,
+          queueTracks: state.queueTracks,
+          queueIndex: state.queueIndex,
+          isShuffled: state.isShuffled,
+          currentTime: state.currentTime,
+          duration: state.duration,
+        }
+        return import.meta.env.DEV
+          ? { ...base, requestedPlaybackState: state.requestedPlaybackState }
+          : base
+      },
     },
   ),
 )

@@ -38,6 +38,8 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
   const gain_node_ref = React.useRef<GainNode | null>(null)
   const keepalive_ref = React.useRef<OscillatorNode | null>(null)
 
+  const saved_current_time = useAudioPlayer.use.currentTime()
+
   const { data: src } = useQuery({
     queryKey: ["playback", currentTrack?.id],
     enabled: !!currentTrack,
@@ -46,6 +48,15 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
     },
     staleTime: Infinity,
   })
+
+  // Restore playback position after reload
+  const initial_seek_ref = React.useRef(false)
+  useEffect(() => {
+    if (initial_seek_ref.current) return
+    if (!currentTrack || saved_current_time <= 0) return
+    initial_seek_ref.current = true
+    useAudioPlayer.getState().seek(saved_current_time)
+  }, [currentTrack, saved_current_time])
 
   function initAudio() {
     if (audio_ctx_ref.current || !audio_ref.current) return
@@ -74,10 +85,14 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
     source.connect(gain)
   }
 
-  // Initialize audio context on first play request
+  // Initialize audio context on mount (gain node available immediately for volume)
+  useEffect(() => {
+    initAudio()
+  }, [])
+
+  // Resume context on play
   useEffect(() => {
     if (requested_playback_state !== "playing") return
-    initAudio()
 
     const ctx = audio_ctx_ref.current
     if (ctx?.state === "suspended") {
@@ -127,8 +142,6 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
   // Auto-play after loading completes
   useEffect(() => {
     if (!audio_ref.current) return
-
-    console.log("is_loading", [is_loading, requested_playback_state])
 
     if (is_loading === false && requested_playback_state == "playing") {
       audio_ref.current
