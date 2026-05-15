@@ -106,6 +106,7 @@ type PlayerState = {
   duration: number
   queueTracks: (Track & { queueId: string })[]
   queueIndex: number
+  isShuffled: boolean
   queueShuffle: () => void
   events: MediaEventHandlers
   stop: () => void
@@ -251,9 +252,8 @@ export const useAudioPlayerBase = create<PlayerState>()(
           return track
         },
         queueRemove: (deleteIndex) => {
-          log("deleteindex", 0, get().queueTracks)
-          const exitsts = get().queueTracks[deleteIndex]
-          if (!exitsts) {
+          const exists = get().queueTracks[deleteIndex]
+          if (!exists) {
             return
           }
           const queueTracks = [...get().queueTracks]
@@ -262,11 +262,11 @@ export const useAudioPlayerBase = create<PlayerState>()(
           if (deleteIndex < get().queueIndex) {
             set({ queueIndex: get().queueIndex - 1, queueTracks })
           } else if (deleteIndex === get().queueIndex) {
-            if (deleteIndex === 0) {
-              // TODO: handle when user deletes last track
+            if (queueTracks.length === 0) {
+              get().stop()
             } else {
-              get().queueSkip()
-              set({ queueTracks })
+              const newIndex = Math.min(get().queueIndex, queueTracks.length - 1)
+              set({ queueIndex: newIndex, queueTracks })
             }
           } else {
             set({ queueTracks })
@@ -288,6 +288,7 @@ export const useAudioPlayerBase = create<PlayerState>()(
             return
           }
         },
+        isShuffled: false,
         queueShuffle: () => {
           const player = get()
           const currentTrack = player.queueTracks[player.queueIndex]
@@ -298,6 +299,7 @@ export const useAudioPlayerBase = create<PlayerState>()(
           set({
             queueTracks: shuffle([...player.queueTracks]),
             queueIndex: 0,
+            isShuffled: !player.isShuffled,
           })
         },
         seek: (time) => {
@@ -334,6 +336,7 @@ export const useAudioPlayerBase = create<PlayerState>()(
         volume: state.volume,
         queueTracks: state.queueTracks,
         queueIndex: state.queueIndex,
+        isShuffled: state.isShuffled,
       }),
     },
   ),

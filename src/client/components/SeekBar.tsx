@@ -1,13 +1,7 @@
-import { useState, useMemo, useDeferredValue } from "react"
+import { useState, useDeferredValue } from "react"
 import { useAudioPlayer } from "@/Player"
+import { formatTime } from "@/lib/utils"
 import { Slider } from "./ui/slider"
-
-const formatTime = (s?: number) => {
-  if (!s || !isFinite(s)) return "0:00"
-  const min = Math.floor(s / 60)
-  const sec = Math.floor(s % 60)
-  return `${min}:${sec < 10 ? "0" : ""}${sec}`
-}
 
 export default function SeekBar({
   classNameTrack,
@@ -19,13 +13,8 @@ export default function SeekBar({
   const seek = useAudioPlayer.use.seek()
   const [seeking, setSeeking] = useState<number | null>(null)
 
-  // Defer the seeking state to smooth out the UI
   const deferredSeeking = useDeferredValue(seeking)
-
-  const seekValue: [number] = useMemo(
-    () => [deferredSeeking ?? currentTime ?? 0],
-    [deferredSeeking, currentTime],
-  )
+  const seekValue: [number] = [deferredSeeking ?? currentTime ?? 0]
 
   const onSeekStart = () => setSeeking(currentTime ?? 0)
   const onSeekChange = (val: [number]) => setSeeking(val[0])

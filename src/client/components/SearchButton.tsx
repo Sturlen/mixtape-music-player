@@ -1,29 +1,36 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useNavigate } from "@tanstack/react-router"
-import { Search, User, Disc, Music } from "lucide-react"
+import { Search } from "lucide-react"
 import { Button } from "@/client/components/ui/button"
+import { ArtImage } from "@/client/components/ArtImage"
+import { useDebouncer } from "@tanstack/react-pacer"
 import {
   CommandDialog,
   CommandEmpty,
-  CommandGroup,
   CommandInput,
   CommandItem,
   CommandList,
 } from "@/client/components/ui/command"
 
 interface SearchResponse {
-  artists: { id: string; name: string }[]
-  albums: { id: string; name: string; artistId: string }[]
-  tracks: { id: string; name: string; albumId: string }[]
+  artists: { id: string; name: string; primaryColor: string | null; textColor: string | null; imageURL: string }[]
+  albums: { id: string; name: string; artistId: string; artistName: string | null; primaryColor: string | null; textColor: string | null; imageURL: string }[]
+  tracks: { id: string; name: string; albumId: string; albumName: string | null; primaryColor: string | null; textColor: string | null; imageURL: string }[]
 }
 
 export function SearchButton() {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState("")
+  const [debouncedQuery, setDebouncedQuery] = useState("")
   const [results, setResults] = useState<SearchResponse | null>(null)
   const navigate = useNavigate()
+
+  const searchDebouncer = useDebouncer(
+    useCallback((q: string) => setDebouncedQuery(q), []),
+    { wait: 300 },
+  )
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -36,19 +43,24 @@ export function SearchButton() {
     return () => document.removeEventListener("keydown", down)
   }, [])
 
-  const handleSearch = async (q: string) => {
-    setQuery(q)
-    if (q.length < 1) {
+  useEffect(() => {
+    if (debouncedQuery.length < 1) {
       setResults(null)
       return
     }
-    try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`)
-      const data = await res.json()
-      setResults(data)
-    } catch (err) {
-      console.error("search error", err)
-    }
+    let cancelled = false
+    fetch(`/api/search?q=${encodeURIComponent(debouncedQuery)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!cancelled) setResults(data)
+      })
+      .catch((err) => console.error("search error", err))
+    return () => { cancelled = true }
+  }, [debouncedQuery])
+
+  const handleSearch = (q: string) => {
+    setQuery(q)
+    searchDebouncer.maybeExecute(q)
   }
 
   const handleSelect = (type: string, id: string) => {
@@ -73,6 +85,7 @@ export function SearchButton() {
       <CommandDialog
         open={open}
         onOpenChange={setOpen}
+        shouldFilter={false}
         className="flex h-[450px] w-full items-start justify-center p-4"
       >
         <CommandInput
@@ -87,50 +100,69 @@ export function SearchButton() {
             results.tracks.length === 0) ? (
             <CommandEmpty>No results found.</CommandEmpty>
           ) : (
-            <>
-              {results.artists.length > 0 && (
-                <CommandGroup heading="Artists">
-                  {results.artists.map((artist) => (
-                    <CommandItem
-                      key={artist.id}
-                      value={artist.name}
-                      onSelect={() => handleSelect("artist", artist.id)}
-                    >
-                      <User className="mr-2 h-4 w-4" />
-                      {artist.name}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              )}
-              {results.albums.length > 0 && (
-                <CommandGroup heading="Albums">
-                  {results.albums.map((album) => (
-                    <CommandItem
-                      key={album.id}
-                      value={album.name}
-                      onSelect={() => handleSelect("album", album.id)}
-                    >
-                      <Disc className="mr-2 h-4 w-4" />
-                      {album.name}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              )}
-              {results.tracks.length > 0 && (
-                <CommandGroup heading="Tracks">
-                  {results.tracks.map((track) => (
-                    <CommandItem
-                      key={track.id}
-                      value={track.name}
-                      onSelect={() => handleSelect("track", track.albumId)}
-                    >
-                      <Music className="mr-2 h-4 w-4" />
-                      {track.name}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              )}
-            </>
+            [
+              ...results.artists.map((artist) => (
+                  <CommandItem
+                  key={`artist:${artist.id}`}
+                  value={`artist:${artist.id}:${artist.name}`}
+                  onSelect={() => handleSelect("artist", artist.id)}
+                >
+                  <ArtImage
+                    src={artist.imageURL}
+                    name={artist.name}
+                    primaryColor={artist.primaryColor}
+                    textColor={artist.textColor}
+                    className="mr-3 size-14 shrink-0"
+                    noFallback
+                  />
+                  <span>{artist.name}</span>
+                </CommandItem>
+              )),
+              ...results.albums.map((album) => (
+                <CommandItem
+                  key={`album:${album.id}`}
+                  value={`album:${album.id}:${album.name}`}
+                  onSelect={() => handleSelect("album", album.id)}
+                >
+                  <ArtImage
+                    src={album.imageURL}
+                    name={album.name}
+                    primaryColor={album.primaryColor}
+                    textColor={album.textColor}
+                    className="mr-3 size-14 shrink-0"
+                    noFallback
+                  />
+                  <div className="flex flex-col">
+                    <span>{album.name}</span>
+                    <span className="text-muted-foreground text-xs">
+                      ALBUM<span className="mx-1">·</span>{album.artistName}
+                    </span>
+                  </div>
+                </CommandItem>
+              )),
+              ...results.tracks.map((track) => (
+                <CommandItem
+                  key={`track:${track.id}`}
+                  value={`track:${track.id}:${track.name}`}
+                  onSelect={() => handleSelect("track", track.albumId)}
+                >
+                  <ArtImage
+                    src={track.imageURL}
+                    name={track.name}
+                    primaryColor={track.primaryColor}
+                    textColor={track.textColor}
+                    className="mr-3 size-14 shrink-0"
+                    noFallback
+                  />
+                  <div className="flex flex-col">
+                    <span>{track.name}</span>
+                    <span className="text-muted-foreground text-xs">
+                      TRACK<span className="mx-1">·</span>{track.albumName}
+                    </span>
+                  </div>
+                </CommandItem>
+              )),
+            ]
           )}
         </CommandList>
       </CommandDialog>

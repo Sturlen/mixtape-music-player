@@ -1,25 +1,3 @@
-// ShuffleButton component with flipped state
-function ShuffleButton({ onClick }: { onClick: () => void }) {
-  const [flipped, setFlipped] = useState(false)
-  const handleClick = () => {
-    setFlipped((f) => !f)
-    onClick()
-  }
-  return (
-    <button
-      onClick={handleClick}
-      aria-label="Shuffle"
-      className="text-primary/60 rounded-full p-2"
-    >
-      <ShuffleIcon
-        size={28}
-        className={
-          flipped ? "-scale-y-100 transition-transform" : "transition-transform"
-        }
-      />
-    </button>
-  )
-}
 import React, { useEffect, useState } from "react"
 import {
   Play as PlayIcon,
@@ -30,6 +8,7 @@ import {
   ShuffleIcon,
 } from "lucide-react"
 import { useAudioPlayer, useCurrentTrack, useIsPlaying } from "@/Player"
+import { formatTime } from "@/lib/utils"
 import {
   Drawer,
   DrawerContent,
@@ -43,11 +22,22 @@ import { usePlaybackDrawer } from "@/contexts/PlaybackDrawerContext"
 import VolumeSlider from "@/VolumeControl"
 import { Cassette } from "@/client/components/Cassette"
 
-const formatTime = (s?: number) => {
-  if (!s || !isFinite(s)) return "0:00"
-  const min = Math.floor(s / 60)
-  const sec = Math.floor(s % 60)
-  return `${min}:${sec < 10 ? "0" : ""}${sec}`
+function ShuffleButton({ onClick }: { onClick: () => void }) {
+  const isShuffled = useAudioPlayer.use.isShuffled()
+  return (
+    <button
+      onClick={onClick}
+      aria-label="Shuffle"
+      className="text-primary/60 rounded-full p-2"
+    >
+      <ShuffleIcon
+        size={28}
+        className={
+          isShuffled ? "-scale-y-100 transition-transform" : "transition-transform"
+        }
+      />
+    </button>
+  )
 }
 
 export default function PlaybackDetails() {
@@ -73,7 +63,7 @@ export default function PlaybackDetails() {
       <Drawer open={open} onOpenChange={setOpen}>
         <DrawerContent className="p flex h-[900px] pb-10">
           <PlaybackQueue className="mt-3 min-h-0 flex-1 overflow-y-auto" />
-          <div className="h-70 flex-col gap-4 p-4">
+          <div className="flex-col gap-4 p-4">
             <div className="flex w-full shrink-0 items-center gap-4">
               <div
                 className="aspect-square h-36 w-36 shrink-0 bg-gray-800 bg-cover bg-center"

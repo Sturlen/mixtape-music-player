@@ -1,44 +1,14 @@
 import { XIcon } from "lucide-react"
 import { useAudioPlayer } from "@/Player"
 import { cn } from "@/lib/utils"
-import { ScrollArea } from "@/client/components/ui/scroll-area"
 import { useEffect, useRef } from "react"
 
-// Check if target element is fully visible within the container's scroll view
 function scrollIntoViewIfNeeded(
   container: HTMLElement,
   element: HTMLElement,
   behavior: ScrollBehavior = "smooth",
 ) {
-  const cRect = container.getBoundingClientRect()
-  const eRect = element.getBoundingClientRect()
-
-  const overTop = eRect.top < cRect.top
-  const overBottom = eRect.bottom > cRect.bottom
-
-  console.log("scrollIntoViewIfNeeded:", {
-    overTop,
-    overBottom,
-    eRect: { top: eRect.top, bottom: eRect.bottom },
-    cRect: { top: cRect.top, bottom: cRect.bottom },
-    scrollTop: container.scrollTop,
-  })
-
-  if (overTop) {
-    const newScroll = container.scrollTop + (eRect.top - cRect.top) - 8
-    console.log("Scrolling up to:", newScroll)
-    container.scrollTo({
-      top: newScroll,
-      behavior,
-    })
-  } else if (overBottom) {
-    const newScroll = container.scrollTop + (eRect.bottom - cRect.bottom) + 8
-    console.log("Scrolling down to:", newScroll)
-    container.scrollTo({
-      top: newScroll,
-      behavior,
-    })
-  }
+  element.scrollIntoView({ behavior, block: "nearest" })
 }
 
 export function PlaybackQueue({ className }: { className?: string }) {
@@ -65,7 +35,7 @@ export function PlaybackQueue({ className }: { className?: string }) {
   return (
     <ol
       className={cn(
-        "flex w-full flex-col justify-stretch overflow-y-auto rounded-md border",
+        "flex w-full flex-col overflow-y-auto rounded-md border",
         className,
       )}
       ref={container_ref}
@@ -97,16 +67,6 @@ export function PlaybackQueue({ className }: { className?: string }) {
       )}
     </ol>
   )
-}
-
-function toMinutes(seconds: number) {
-  const mins = Math.floor(seconds / 60)
-    .toFixed(0)
-    .padStart(2, "0")
-  const secs = Math.floor(seconds % 60)
-    .toString()
-    .padStart(2, "0")
-  return `${mins}:${secs}`
 }
 
 export default PlaybackQueue

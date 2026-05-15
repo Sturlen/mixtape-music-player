@@ -1,7 +1,7 @@
 import React from "react"
 import { Play, Pause, SkipForwardIcon } from "lucide-react"
 import { useAudioPlayer, useCurrentTrack, useIsPlaying } from "@/Player"
-import { cn } from "@/lib/utils"
+import { cn, formatTime } from "@/lib/utils"
 import { useSwipeable } from "react-swipeable"
 import { usePlaybackDrawer } from "@/contexts/PlaybackDrawerContext"
 
@@ -17,14 +17,8 @@ const MobileControls = ({ className }: { className?: string }) => {
     onSwipedLeft: queueSkip,
     onSwipedRight: queuePrev,
     onSwipedUp: openPlaybackDetails,
-    trackMouse: true, // Enable mouse swipes for testing
+    trackMouse: true,
   })
-
-  const formatTime = (seconds: number) => {
-    const min = Math.floor(seconds / 60)
-    const sec = Math.floor(seconds % 60)
-    return `${min}:${sec < 10 ? "0" : ""}${sec}`
-  }
 
   const primaryColor = currentTrack?.primaryColor
   const textColor = currentTrack?.textColor

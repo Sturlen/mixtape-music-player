@@ -1,5 +1,4 @@
 import {
-  CrosshairIcon,
   PauseIcon,
   PlayIcon,
   ShuffleIcon,
@@ -7,13 +6,13 @@ import {
   SkipForwardIcon,
 } from "lucide-react"
 import { useAudioPlayer, useCurrentTrack } from "@/Player"
-import { cn } from "@/lib/utils"
+import { cn, formatTime } from "@/lib/utils"
 import VolumeSlider from "@/VolumeControl"
 import { Cassette } from "@/client/components/Cassette"
 import { CurrentTrackScroller } from "@/client/components/CurrentTrackScroller"
 import SeekBar from "@/client/components/SeekBar"
-import { useState } from "react"
-import { set } from "zod"
+import { Button } from "@/client/components/ui/button"
+import type { ReactNode } from "react"
 
 export function Controls() {
   const play = useAudioPlayer.use.play()
@@ -26,8 +25,7 @@ export function Controls() {
 
   const is_play_button_down = requestedPlaybackState === "playing"
 
-  const [flipped, setFlipped] = useState(false)
-  const flip = () => setFlipped((f) => !f)
+  const isShuffled = useAudioPlayer.use.isShuffled()
 
   return (
     <div className="flex w-full flex-col items-center">
@@ -53,18 +51,15 @@ export function Controls() {
           </div>
         </div>
         <div className="flex h-20 justify-stretch gap-2 pt-4">
-          <Btn onClick={() => prev()}>
+          <PlayerButton onClick={() => prev()}>
             <SkipBackIcon />
-          </Btn>
-          <Btn
+          </PlayerButton>
+          <PlayerButton
             data-active={is_play_button_down}
-            className={cn(
-              "bg-primary text-primary-foreground hover:bg-primary/90",
-              {
-                "text-foreground bg-amber-400 hover:bg-amber-400/90":
-                  is_play_button_down,
-              },
-            )}
+            className={cn({
+              "bg-amber-400 text-foreground hover:bg-amber-400/90":
+                is_play_button_down,
+            })}
             onClick={() => togglePlayback()}
           >
             {requestedPlaybackState === "playing" ? (
@@ -72,23 +67,18 @@ export function Controls() {
             ) : (
               <PlayIcon />
             )}
-          </Btn>
+          </PlayerButton>
 
-          <Btn onClick={() => skip()}>
+          <PlayerButton onClick={() => skip()}>
             <SkipForwardIcon />
-          </Btn>
+          </PlayerButton>
         </div>
         <div className="flex h-10 justify-stretch gap-2 pt-2">
-          <Btn
-            onClick={() => {
-              shuffle()
-              flip()
-            }}
-          >
+          <PlayerButton onClick={() => shuffle()}>
             <ShuffleIcon
-              className={cn("transition", { "scale-y-[-1]": flipped })}
+              className={cn("transition", { "scale-y-[-1]": isShuffled })}
             />
-          </Btn>
+          </PlayerButton>
         </div>
       </div>
     </div>
@@ -103,7 +93,7 @@ function CurrentTime() {
     return <span>--:--</span>
   }
 
-  return <span>{toMinutes(time)}</span>
+  return <span>{formatTime(time)}</span>
 }
 
 function Duration() {
@@ -112,31 +102,19 @@ function Duration() {
     return <span>--:--</span>
   }
 
-  return <span className="text-muted-foreground">{toMinutes(duration)}</span>
-}
-
-function toMinutes(seconds: number) {
-  const mins = Math.floor(seconds / 60)
-    .toFixed(0)
-    .padStart(2, "0")
-  const secs = Math.floor(seconds % 60)
-    .toString()
-    .padStart(2, "0")
-  return `${mins}:${secs}`
+  return <span className="text-muted-foreground">{formatTime(duration)}</span>
 }
 
 export default Controls
 
-function Btn({
+function PlayerButton({
   children,
   className,
   onClick,
-  onMouseUp,
 }: {
-  children: React.ReactNode
+  children: ReactNode
   className?: string
   onClick?: () => void
-  onMouseUp?: () => void
 }) {
   return (
     <button
@@ -145,7 +123,6 @@ function Btn({
         className,
       )}
       onClick={onClick}
-      onMouseUp={onMouseUp}
     >
       {children}
     </button>

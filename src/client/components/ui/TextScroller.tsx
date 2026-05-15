@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils"
+import { cn, formatTime } from "@/lib/utils"
 import { useAudioPlayer, useCurrentTrack } from "@/Player"
 
 import React, { useState, useEffect } from "react"
@@ -68,7 +68,7 @@ function CurrentTime() {
     return <span>--:--</span>
   }
 
-  return <span>{toMinutes(time)}</span>
+  return <span>{formatTime(time)}</span>
 }
 
 function Duration() {
@@ -77,15 +77,5 @@ function Duration() {
     return <span>--:--</span>
   }
 
-  return <span className="text-muted-foreground">{toMinutes(duration)}</span>
-}
-
-function toMinutes(seconds: number) {
-  const mins = Math.floor(seconds / 60)
-    .toFixed(0)
-    .padStart(2, "0")
-  const secs = Math.floor(seconds % 60)
-    .toString()
-    .padStart(2, "0")
-  return `${mins}:${secs}`
+  return <span className="text-muted-foreground">{formatTime(duration)}</span>
 }
