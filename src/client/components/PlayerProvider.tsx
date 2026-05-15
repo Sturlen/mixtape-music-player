@@ -34,6 +34,9 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
   const currentTrack = useCurrentTrack()
 
   const audio_ref = React.useRef<HTMLAudioElement>(null)
+  const audio_ctx_ref = React.useRef<AudioContext | null>(null)
+  const gain_node_ref = React.useRef<GainNode | null>(null)
+  const keepalive_ref = React.useRef<OscillatorNode | null>(null)
 
   const { data: src } = useQuery({
     queryKey: ["playback", currentTrack?.id],
@@ -44,15 +47,52 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
     staleTime: Infinity,
   })
 
-  // on mount, set the audio element in the player store
+  function initAudio() {
+    if (audio_ctx_ref.current || !audio_ref.current) return
+
+    const ctx = new AudioContext()
+    audio_ctx_ref.current = ctx
+
+    // Silent keepalive oscillator — keeps AudioContext in "running" state
+    // so mobile browsers don't suspend the page between tracks
+    const osc = ctx.createOscillator()
+    const silent = ctx.createGain()
+    silent.gain.value = 0
+    osc.connect(silent)
+    silent.connect(ctx.destination)
+    osc.start()
+    keepalive_ref.current = osc
+
+    // Master gain node
+    // Future: insert EQ nodes (BiquadFilterNode, etc.) between source and gain
+    const gain = ctx.createGain()
+    gain.connect(ctx.destination)
+    gain_node_ref.current = gain
+
+    // Connect audio element through Web Audio pipeline
+    const source = ctx.createMediaElementSource(audio_ref.current)
+    source.connect(gain)
+  }
+
+  // Initialize audio context on first play request
   useEffect(() => {
-    if (audio_ref.current) {
-      audio_ref.current.volume = volume
+    if (requested_playback_state !== "playing") return
+    initAudio()
+
+    const ctx = audio_ctx_ref.current
+    if (ctx?.state === "suspended") {
+      ctx.resume()
+    }
+  }, [requested_playback_state])
+
+  // Volume through gain node
+  useEffect(() => {
+    if (gain_node_ref.current) {
+      gain_node_ref.current.gain.value = volume
     }
   }, [volume])
 
-  // this is how we send commands to the audio element
-
+  // Seek
   useEffect(() => {
     if (audio_ref.current && requestedSeekPosition != undefined) {
       audio_ref.current.currentTime = requestedSeekPosition
@@ -60,6 +100,7 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
     }
   }, [requestedSeekPosition])
 
+  // Load new src
   useEffect(() => {
     if (audio_ref.current) {
       audio_ref.current.src = src ?? ""
@@ -67,6 +108,7 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
     }
   }, [src])
 
+  // Play/pause
   useEffect(() => {
     if (!audio_ref.current) return
 
@@ -82,6 +124,7 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
     }
   }, [requested_playback_state])
 
+  // Auto-play after loading completes
   useEffect(() => {
     if (!audio_ref.current) return
 
