@@ -12,15 +12,19 @@ export type Track = {
   trackNumber?: number
   path: string
   artURL?: string
+  albumName?: string
+  artistName?: string
 }
 
 export type Album = {
   id: string
   name: string
   artistId: string
+  year?: number
   imageURL?: string
   primaryColor?: string
   textColor?: string
+  artistName?: string
 }
 
 export type Artist = {

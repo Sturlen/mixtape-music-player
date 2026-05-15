@@ -14,10 +14,66 @@ import {
   CommandList,
 } from "@/client/components/ui/command"
 
+interface SearchResultItem {
+  type: "artist" | "album" | "track"
+  id: string
+  name: string
+  artistId?: string
+  albumId?: string
+  artistName: string | null
+  albumName: string | null
+  year: number | null
+  primaryColor: string | null
+  textColor: string | null
+  imageURL: string
+  related: boolean
+}
+
 interface SearchResponse {
-  artists: { id: string; name: string; primaryColor: string | null; textColor: string | null; imageURL: string }[]
-  albums: { id: string; name: string; artistId: string; artistName: string | null; primaryColor: string | null; textColor: string | null; imageURL: string }[]
-  tracks: { id: string; name: string; albumId: string; albumName: string | null; primaryColor: string | null; textColor: string | null; imageURL: string }[]
+  results: SearchResultItem[]
+  related: SearchResultItem[]
+}
+
+function SearchItem({
+  item,
+  onSelect,
+}: {
+  item: SearchResultItem
+  onSelect: (type: string, id: string, albumId?: string, trackId?: string) => void
+}) {
+  const subtitle = () => {
+    if (item.type === "artist") return "ARTIST"
+    if (item.type === "album") {
+      const parts = ["ALBUM", item.year, item.artistName].filter(Boolean)
+      return parts.join(" · ")
+    }
+    const parts = ["TRACK", item.albumName].filter(Boolean)
+    return parts.join(" · ")
+  }
+
+  return (
+    <CommandItem
+      value={`${item.type}:${item.id}:${item.name}`}
+      onSelect={() => {
+        if (item.type === "track") onSelect("track", item.id, item.albumId, item.id)
+        else onSelect(item.type, item.id)
+      }}
+      className={item.related ? "opacity-60" : undefined}
+    >
+      <ArtImage
+        src={item.imageURL}
+        name={item.name}
+        primaryColor={item.primaryColor}
+        textColor={item.textColor}
+        className="mr-3 size-9 shrink-0"
+        noFallback
+      />
+      <div className="flex flex-col">
+        <span>{item.name}</span>
+        <span className="text-muted-foreground text-xs">{subtitle()}</span>
+      </div>
+    </CommandItem>
+  )
 }
 
 export function SearchButton() {
@@ -55,7 +111,9 @@ export function SearchButton() {
         if (!cancelled) setResults(data)
       })
       .catch((err) => console.error("search error", err))
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [debouncedQuery])
 
   const handleSearch = (q: string) => {
@@ -63,12 +121,16 @@ export function SearchButton() {
     searchDebouncer.maybeExecute(q)
   }
 
-  const handleSelect = (type: string, id: string) => {
+  const handleSelect = (type: string, id: string, albumId?: string, trackId?: string) => {
     setOpen(false)
     if (type === "artist") navigate({ to: "/artists/$id", params: { id } })
     else if (type === "album") navigate({ to: "/albums/$id", params: { id } })
     else if (type === "track") {
-      navigate({ to: "/albums/$id", params: { id } })
+      navigate({
+        to: "/albums/$id",
+        params: { id: albumId ?? id },
+        hash: `track-${trackId ?? id}`,
+      })
     }
   }
 
@@ -94,74 +156,30 @@ export function SearchButton() {
           onValueChange={handleSearch}
         />
         <CommandList>
-          {!results ||
-          (results.artists.length === 0 &&
-            results.albums.length === 0 &&
-            results.tracks.length === 0) ? (
+          {!results || (results.results.length === 0 && results.related.length === 0) ? (
             <CommandEmpty>No results found.</CommandEmpty>
           ) : (
             [
-              ...results.artists.map((artist) => (
-                  <CommandItem
-                  key={`artist:${artist.id}`}
-                  value={`artist:${artist.id}:${artist.name}`}
-                  onSelect={() => handleSelect("artist", artist.id)}
-                >
-                  <ArtImage
-                    src={artist.imageURL}
-                    name={artist.name}
-                    primaryColor={artist.primaryColor}
-                    textColor={artist.textColor}
-                    className="mr-3 size-14 shrink-0"
-                    noFallback
-                  />
-                  <span>{artist.name}</span>
-                </CommandItem>
+              ...results.results.map((item) => (
+                <SearchItem key={`${item.type}:${item.id}`} item={item} onSelect={handleSelect} />
               )),
-              ...results.albums.map((album) => (
-                <CommandItem
-                  key={`album:${album.id}`}
-                  value={`album:${album.id}:${album.name}`}
-                  onSelect={() => handleSelect("album", album.id)}
-                >
-                  <ArtImage
-                    src={album.imageURL}
-                    name={album.name}
-                    primaryColor={album.primaryColor}
-                    textColor={album.textColor}
-                    className="mr-3 size-14 shrink-0"
-                    noFallback
-                  />
-                  <div className="flex flex-col">
-                    <span>{album.name}</span>
-                    <span className="text-muted-foreground text-xs">
-                      ALBUM<span className="mx-1">·</span>{album.artistName}
-                    </span>
-                  </div>
-                </CommandItem>
-              )),
-              ...results.tracks.map((track) => (
-                <CommandItem
-                  key={`track:${track.id}`}
-                  value={`track:${track.id}:${track.name}`}
-                  onSelect={() => handleSelect("track", track.albumId)}
-                >
-                  <ArtImage
-                    src={track.imageURL}
-                    name={track.name}
-                    primaryColor={track.primaryColor}
-                    textColor={track.textColor}
-                    className="mr-3 size-14 shrink-0"
-                    noFallback
-                  />
-                  <div className="flex flex-col">
-                    <span>{track.name}</span>
-                    <span className="text-muted-foreground text-xs">
-                      TRACK<span className="mx-1">·</span>{track.albumName}
-                    </span>
-                  </div>
-                </CommandItem>
-              )),
+              ...results.related.length > 0
+                ? [
+                    <div
+                      key="related-divider"
+                      className="text-muted-foreground px-2 pt-2 pb-1 text-xs font-medium"
+                    >
+                      Related
+                    </div>,
+                    ...results.related.map((item) => (
+                      <SearchItem
+                        key={`related:${item.type}:${item.id}`}
+                        item={item}
+                        onSelect={handleSelect}
+                      />
+                    )),
+                  ]
+                : [],
             ]
           )}
         </CommandList>

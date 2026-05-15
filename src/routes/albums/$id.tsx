@@ -7,6 +7,7 @@ import Page from "@/client/components/Page"
 import { usePlayAlbum } from "@/lib/api"
 import { AddToPlaylistButton } from "@/client/components/AddToPlaylistButton"
 import { ArtImage } from "@/client/components/ArtImage"
+import { useEffect } from "react"
 
 export const Route = createFileRoute("/albums/$id")({
   component: RouteComponent,
@@ -33,6 +34,14 @@ function RouteComponent() {
   const play = useAudioPlayer((s) => s.play)
   const queuePush = useAudioPlayer.use.queuePush()
   const playAlbum = usePlayAlbum()
+
+  useEffect(() => {
+    if (!data?.album) return
+    const hash = window.location.hash
+    if (!hash) return
+    const el = document.getElementById(hash.slice(1))
+            el?.scrollIntoView({ behavior: "smooth", block: "start" })
+  }, [data])
 
   if (!data) {
     return <div></div>
@@ -83,7 +92,8 @@ function RouteComponent() {
         {album.tracks.map((track, i) => (
           <li
             key={track.id}
-            className="hover:bg-accent/50 grid w-full grid-cols-[1fr_auto_auto_auto] items-center gap-2 border-t p-2 pl-8 transition-colors last:border-b"
+            id={`track-${track.id}`}
+            className="hover:bg-accent/50 scroll-mt-30 grid w-full grid-cols-[1fr_auto_auto_auto] items-center gap-2 border-t p-2 pl-8 transition-colors last:border-b"
           >
             <button
               onClick={() => {

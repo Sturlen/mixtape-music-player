@@ -10,6 +10,7 @@ export interface AudioMetadata {
   albumArtistName?: string
   albumName?: string
   trackNumber?: number
+  year?: number
 }
 
 export interface AudioMetadataProvider {

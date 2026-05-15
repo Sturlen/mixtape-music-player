@@ -17,6 +17,7 @@ export const albums = pgTable(
     stableId: text("stable_id").notNull().unique(),
     name: text("name").notNull(),
     artistId: uuid("artist_id").notNull().references(() => artists.id, { onDelete: "cascade" }),
+    year: integer("year"),
   },
   (t) => [uniqueIndex("idx_albums_name_artist").on(t.name, t.artistId)],
 )

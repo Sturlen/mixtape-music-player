@@ -49,6 +49,8 @@ export class EnrichmentProgress {
 export const enrichmentProgress = new EnrichmentProgress()
 
 export class Library {
+  onIndexRebuilt?: () => Promise<void>
+
   constructor(private db: DB) {}
 
   async clear() {
@@ -78,15 +80,15 @@ export class Library {
     return existing!.id
   }
 
-  private async upsertAlbum(name: string, artistId: string): Promise<{ id: string }> {
+  private async upsertAlbum(name: string, artistId: string, year?: number): Promise<{ id: string }> {
     const sid = stableId("album", `${name}_${artistId}`)
     const albumId = crypto.randomUUID()
 
     const [row] = await this.db
       .insert(albums)
-      .values({ id: albumId, stableId: sid, name, artistId })
+      .values({ id: albumId, stableId: sid, name, artistId, year: year ?? null })
       .onConflictDoNothing({ target: albums.stableId })
-      .returning({ id: albums.id })
+      .returning({ id: albums.id, year: albums.year })
     if (row) return { id: row.id }
 
     const [existing] = await this.db
@@ -151,7 +153,7 @@ export class Library {
 
     const artistId = await this.upsertArtist(artistName)
 
-    const album = await this.upsertAlbum(albumName, artistId)
+    const album = await this.upsertAlbum(albumName, artistId, info.year)
 
     const trackSid = stableId("track", `${artistName}/${albumName}/${title}`)
     const existingTrack = await this.db
@@ -364,5 +366,7 @@ export class Library {
     fuse_artists.setCollection(allArtists as any)
     fuse_albums.setCollection(allAlbums as any)
     fuse_playlists.setCollection(allPlaylists as any)
+
+    await this.onIndexRebuilt?.()
   }
 }

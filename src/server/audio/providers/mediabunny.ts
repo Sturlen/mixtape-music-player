@@ -35,6 +35,7 @@ export class MediabunnyMetadataProvider implements AudioMetadataProvider {
       albumArtistName: metadata.albumArtist || undefined,
       albumName: metadata.album || undefined,
       trackNumber: metadata.trackNumber || undefined,
+      year: metadata.date?.getFullYear() || undefined,
     }
   }
 }

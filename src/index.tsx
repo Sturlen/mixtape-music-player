@@ -16,6 +16,7 @@ import { createPlaylistRoutes } from "./playlist"
 import { mkdirSync, existsSync } from "fs"
 import { fuse_artists, fuse_albums, fuse_playlists, fuse_tracks } from "./lib/fuse"
 import { Library, enrichmentProgress } from "./server/library"
+import { SearchService } from "./server/search"
 import { initDB } from "@/db"
 import { createServer, LogLevel } from "pglite-server"
 
@@ -43,6 +44,8 @@ const started_at = performance.now()
 const pgliteDir = env.DATA_PATH + "/pglite"
 const { db, pg } = await initDB(pgliteDir)
 const library = new Library(db)
+const searchService = new SearchService(library)
+library.onIndexRebuilt = () => searchService.buildIndex()
 const playlistStore = {
   tracks: new Map<string, Track>(),
   playlists: new Map<string, Playlist>(),
@@ -146,72 +149,7 @@ const app = new Elysia()
   .get(
     "/api/search",
     async ({ query: { q } }) => {
-      if (!q || q.length < 1) return { artists: [], albums: [], tracks: [] }
-      const [allArtists, allAlbums, allTracks] = await Promise.all([
-        library.getArtists(),
-        library.getAlbums(),
-        library.getAllTracks(),
-      ])
-      const fuseArtists = new Fuse(allArtists, { keys: ["name"] })
-      const fuseAlbums = new Fuse(allAlbums, { keys: ["name"] })
-      const fuseTracks = new Fuse(allTracks, { keys: ["name"] })
-      const searchResults = (fuse: Fuse<unknown>, q: string) =>
-        fuse.search(q).map((r: { item: unknown }) => r.item)
-      const dedup = <T extends { id: string }>(arr: T[]): T[] =>
-        [...new Set(arr.map((i) => i.id))].map((id) => arr.find((i) => i.id === id)!)
-
-      const matchedArtists = (dedup(searchResults(fuseArtists, q) as any) as Artist[]).slice(0, 5)
-      const matchedAlbums = (dedup(searchResults(fuseAlbums, q) as any) as Album[]).slice(0, 5)
-      const matchedTracks = (dedup(searchResults(fuseTracks, q) as any) as Track[]).slice(0, 10)
-
-      const enrichedArtists = await Promise.all(
-        matchedArtists.map(async (artist) => {
-          const art = await library.getArt(artist.id, "artist", "portrait")
-          return {
-            id: artist.id,
-            name: artist.name,
-            primaryColor: art?.primaryColor ?? null,
-            textColor: art?.textColor ?? null,
-            imageURL: `/api/files/artistart/${artist.id}`,
-          }
-        }),
-      )
-
-      const enrichedAlbums = await Promise.all(
-        matchedAlbums.map(async (album) => {
-          const [artist, art] = await Promise.all([
-            library.getArtist(album.artistId),
-            library.getArt(album.id, "album", "cover"),
-          ])
-          return {
-            id: album.id,
-            name: album.name,
-            artistId: album.artistId,
-            artistName: artist?.name ?? null,
-            primaryColor: art?.primaryColor ?? null,
-            textColor: art?.textColor ?? null,
-            imageURL: `/api/files/albumart/${album.id}`,
-          }
-        }),
-      )
-
-      const enrichedTracks = await Promise.all(
-        matchedTracks.map(async (track) => {
-          const album = await library.getAlbum(track.albumId)
-          const art = album ? await library.getArt(album.id, "album", "cover") : null
-          return {
-            id: track.id,
-            name: track.name,
-            albumId: track.albumId,
-            albumName: album?.name ?? null,
-            primaryColor: art?.primaryColor ?? null,
-            textColor: art?.textColor ?? null,
-            imageURL: `/api/files/albumart/${track.albumId}`,
-          }
-        }),
-      )
-
-      return { artists: enrichedArtists, albums: enrichedAlbums, tracks: enrichedTracks }
+      return searchService.search(q ?? "")
     },
     { detail: "Search artists, albums, tracks", query: t.Object({ q: t.String() }) },
   )

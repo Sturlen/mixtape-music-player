@@ -22,6 +22,8 @@ const ffprobe_format_schema = z.object({
         TPE2: z.string().optional(),
         track: z.string().optional(),
         trackNumber: z.string().optional(),
+        date: z.string().optional(),
+        DATE: z.string().optional(),
       })
       .optional(),
   }),
@@ -36,6 +38,13 @@ function tagValue(
     const val = tags[key]
     if (val) return val
   }
+}
+
+function parseYear(val: string | undefined): number | undefined {
+  if (!val) return undefined
+  const match = val.match(/\b(\d{4})\b/)
+  if (!match) return undefined
+  return Number.parseInt(match[1]!, 10)
 }
 
 function parseTrackNumber(val: string | undefined): number | undefined {
@@ -83,6 +92,7 @@ export class FfprobeMetadataProvider implements AudioMetadataProvider {
       albumArtistName: tagValue(tags, "album_artist", "albumArtist", "TPE2"),
       albumName: tagValue(tags, "album", "ALBUM"),
       trackNumber: parseTrackNumber(tagValue(tags, "track", "trackNumber")),
+      year: parseYear(tagValue(tags, "date", "DATE")),
     }
   }
 }
