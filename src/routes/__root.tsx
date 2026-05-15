@@ -21,9 +21,12 @@ function LibraryProgressWatcher() {
 
   useEffect(() => {
     const es = new EventSource("/api/library/progress")
-    es.onmessage = () => {
+    es.addEventListener("progress", () => {
       queryClient.invalidateQueries()
-    }
+    })
+    es.addEventListener("done", () => {
+      es.close()
+    })
     return () => es.close()
   }, [queryClient])
 

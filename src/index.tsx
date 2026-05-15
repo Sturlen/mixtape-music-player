@@ -335,22 +335,52 @@ const app = new Elysia()
   })
   .get("/api/library/progress", () => {
     let unsub: (() => void) | null = null
+    let heartbeat: ReturnType<typeof setInterval> | null = null
 
     const stream = new ReadableStream({
       start(controller) {
+        const cleanup = () => {
+          if (heartbeat) {
+            clearInterval(heartbeat)
+            heartbeat = null
+          }
+          if (unsub) {
+            unsub()
+            unsub = null
+          }
+        }
+
         const send = () => {
-          const data = JSON.stringify({
-            completed: enrichmentProgress.completed,
-            total: enrichmentProgress.total,
-          })
-          controller.enqueue(new TextEncoder().encode(`event: progress\ndata: ${data}\n\n`))
+          try {
+            const { completed, total } = enrichmentProgress
+            controller.enqueue(
+              new TextEncoder().encode(`event: progress\ndata: ${JSON.stringify({ completed, total })}\n\n`),
+            )
+
+            if (completed === total) {
+              controller.enqueue(new TextEncoder().encode(`event: done\ndata: {}\n\n`))
+              cleanup()
+              controller.close()
+            }
+          } catch {
+            cleanup()
+          }
         }
 
         unsub = enrichmentProgress.listen(send)
         send()
+
+        heartbeat = setInterval(() => {
+          try {
+            controller.enqueue(new TextEncoder().encode(": heartbeat\n\n"))
+          } catch {
+            cleanup()
+          }
+        }, 10000)
       },
       cancel() {
-        unsub?.()
+        if (unsub) unsub()
+        if (heartbeat) clearInterval(heartbeat)
       },
     })
 
@@ -358,7 +388,6 @@ const app = new Elysia()
       headers: {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
-        Connection: "keep-alive",
       },
     })
   })
