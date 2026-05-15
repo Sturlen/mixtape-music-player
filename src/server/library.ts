@@ -2,7 +2,7 @@ import type { LimitFunction } from "p-limit"
 import path from "path"
 import { eq, and, sql } from "drizzle-orm"
 import type { DB } from "@/db"
-import { artists, albums, tracks, audioAssets, artAssets, playlists, playlistTracks } from "@/db/schema"
+import { artists, albums, tracks, audioAssets, artAssets, playlists, playlistTracks, sources } from "@/db/schema"
 import type { AudioMetadata } from "@/server/audio"
 import type { Artist, Album, Track, AudioAsset, ArtAsset, Playlist } from "@/lib/types"
 import { createMetadataProvider } from "@/server/audio"
@@ -136,6 +136,7 @@ export class Library {
     info: AudioMetadata,
     artByDir: Map<string, string>,
     sourceRoot: string,
+    sourceId?: string,
   ): Promise<void> {
     const dir = path.dirname(filePath)
     const relDir = path.relative(sourceRoot, dir)
@@ -170,6 +171,7 @@ export class Library {
         stableId: trackSid,
         name: title,
         albumId: album.id,
+        sourceId: sourceId ?? null,
         trackNumber: info.trackNumber,
         playtimeSeconds: duration,
         path: filePath,
@@ -202,14 +204,14 @@ export class Library {
     }
   }
 
-  enrich(limit: LimitFunction, sources: { scan: ScanResult; rootPath: string }[]) {
+  enrich(limit: LimitFunction, sources: { scan: ScanResult; rootPath: string; sourceId: string }[]) {
     const provider = createMetadataProvider()
 
-    const allFiles: { path: string; rootPath: string }[] = []
+    const allFiles: { path: string; rootPath: string; sourceId: string }[] = []
     const artByDir = new Map<string, string>()
 
-    for (const { scan, rootPath } of sources) {
-      for (const f of scan.audioFiles) allFiles.push({ path: f.path, rootPath })
+    for (const { scan, rootPath, sourceId } of sources) {
+      for (const f of scan.audioFiles) allFiles.push({ path: f.path, rootPath, sourceId })
       for (const [dir, img] of scan.artByDir) {
         if (!artByDir.has(dir)) artByDir.set(dir, img)
       }
@@ -217,11 +219,11 @@ export class Library {
 
     enrichmentProgress.reset(allFiles.length)
 
-    const jobs = allFiles.map(({ path, rootPath }) =>
+    const jobs = allFiles.map(({ path, rootPath, sourceId }) =>
       limit(async () => {
         try {
           const info = await provider.getMetadata(path)
-          await this.addFromMetadata(path, info, artByDir, rootPath)
+          await this.addFromMetadata(path, info, artByDir, rootPath, sourceId)
         } catch {
           // skip unparseable files
         }
@@ -253,7 +255,7 @@ export class Library {
   }
 
   async getStats() {
-    const [artistCount, albumCount, trackCount, audioCount, artCount, playlistCount] =
+    const [artistCount, albumCount, trackCount, audioCount, artCount, playlistCount, libraryCount] =
       await Promise.all([
         this.db.select({ count: sql<number>`count(*)::int` }).from(artists).then(r => Number(r[0]?.count ?? 0)),
         this.db.select({ count: sql<number>`count(*)::int` }).from(albums).then(r => Number(r[0]?.count ?? 0)),
@@ -261,6 +263,7 @@ export class Library {
         this.db.select({ count: sql<number>`count(*)::int` }).from(audioAssets).then(r => Number(r[0]?.count ?? 0)),
         this.db.select({ count: sql<number>`count(*)::int` }).from(artAssets).then(r => Number(r[0]?.count ?? 0)),
         this.db.select({ count: sql<number>`count(*)::int` }).from(playlists).then(r => Number(r[0]?.count ?? 0)),
+        this.db.select({ count: sql<number>`count(*)::int` }).from(sources).then(r => Number(r[0]?.count ?? 0)),
       ])
     return {
       artists: artistCount,
@@ -269,7 +272,12 @@ export class Library {
       artAssets: artCount,
       audioAssets: audioCount,
       playlists: playlistCount,
+      libraries: libraryCount,
     }
+  }
+
+  async deleteTracksBySource(sourceId: string) {
+    await this.db.delete(tracks).where(eq(tracks.sourceId, sourceId))
   }
 
   async getArtists() {
@@ -356,6 +364,15 @@ export class Library {
 
   async getAllArt(entityId: string, entityType: "album" | "artist") {
     return this.db.select().from(artAssets).where(and(eq(artAssets.entityId, entityId), eq(artAssets.entityType, entityType))) as any as ArtAsset[]
+  }
+
+  async getAllSources() {
+    return await this.db.select().from(sources).orderBy(sources.name)
+  }
+
+  async getSource(id: string) {
+    const [row] = await this.db.select().from(sources).where(eq(sources.id, id)).limit(1)
+    return row ?? null
   }
 
   async rebuildIndex() {

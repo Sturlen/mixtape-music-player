@@ -2,7 +2,7 @@ import Page from "@/client/components/Page"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { useQuery } from "@tanstack/react-query"
 import { EdenClient } from "@/lib/eden"
-import { Mic2, Disc3, Music } from "lucide-react"
+import { Mic2, Disc3, Music, Library } from "lucide-react"
 
 export const Route = createFileRoute("/")({
   component: RouteComponent,
@@ -78,6 +78,14 @@ function Content() {
           label="MIXTAPES"
           icon={Music}
           className="bg-green-500"
+        />
+      </Link>
+      <Link to="/libraries">
+        <StatCard
+          number={data.libraries ?? 0}
+          label="LIBRARIES"
+          icon={Library}
+          className="bg-amber-600"
         />
       </Link>
       <Link to="/">

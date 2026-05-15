@@ -1,4 +1,4 @@
-import { pgTable, text, uuid, real, integer, index, uniqueIndex } from "drizzle-orm/pg-core"
+import { pgTable, text, uuid, real, integer, boolean, timestamp, index, uniqueIndex } from "drizzle-orm/pg-core"
 
 export const artists = pgTable(
   "artists",
@@ -22,6 +22,18 @@ export const albums = pgTable(
   (t) => [uniqueIndex("idx_albums_name_artist").on(t.name, t.artistId)],
 )
 
+export const sources = pgTable(
+  "sources",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    name: text("name").notNull(),
+    rootPath: text("root_path").notNull().unique(),
+    enabled: boolean("enabled").notNull().default(true),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+)
+
 export const tracks = pgTable(
   "tracks",
   {
@@ -29,6 +41,7 @@ export const tracks = pgTable(
     stableId: text("stable_id").notNull().unique(),
     name: text("name").notNull(),
     albumId: uuid("album_id").notNull().references(() => albums.id, { onDelete: "cascade" }),
+    sourceId: uuid("source_id").references(() => sources.id, { onDelete: "cascade" }),
     trackNumber: integer("track_number"),
     playtimeSeconds: real("playtime_seconds").default(0),
     path: text("path").notNull().unique(),

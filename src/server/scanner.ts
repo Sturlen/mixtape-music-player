@@ -1,6 +1,5 @@
 import { readdir } from "fs/promises"
 import path from "path"
-import type { Source } from "@/lib/types"
 
 export type FileInfo = {
   path: string
@@ -38,9 +37,9 @@ async function walk(dir: string, files: FileInfo[], artByDir: Map<string, string
   }
 }
 
-export async function scan(source: Source): Promise<ScanResult> {
+export async function scan(rootPath: string): Promise<ScanResult> {
   const audioFiles: FileInfo[] = []
   const artByDir = new Map<string, string>()
-  await walk(source.rootPath, audioFiles, artByDir)
+  await walk(rootPath, audioFiles, artByDir)
   return { audioFiles, artByDir }
 }

@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import MobileControls from "@/client/components/mobile-controls"
 import PlaybackDetails from "@/client/components/PlaybackDetails"
@@ -18,16 +18,32 @@ import { CurrentTrackScroller } from "@/client/components/CurrentTrackScroller"
 
 function LibraryProgressWatcher() {
   const queryClient = useQueryClient()
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     const es = new EventSource("/api/library/progress")
+
     es.addEventListener("progress", () => {
-      queryClient.invalidateQueries()
+      if (timerRef.current) return
+      timerRef.current = setTimeout(() => {
+        timerRef.current = null
+        queryClient.invalidateQueries()
+      }, 5000)
     })
+
     es.addEventListener("done", () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current)
+        timerRef.current = null
+      }
+      queryClient.invalidateQueries()
       es.close()
     })
-    return () => es.close()
+
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current)
+      es.close()
+    }
   }, [queryClient])
 
   return null
@@ -61,6 +77,12 @@ const RootLayout = () => (
           className="[&.active]:bg-secondary [&.active]:font-bold"
         >
           Mixtapes
+        </Link>
+        <Link
+          to="/libraries"
+          className="[&.active]:bg-secondary [&.active]:font-bold"
+        >
+          Libraries
         </Link>
         <Link
           to="/about"

@@ -15,6 +15,13 @@
       "when": 1778871042250,
       "tag": "0001_bored_blockbuster",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1778882287991,
+      "tag": "0002_acoustic_triathlon",
+      "breakpoints": true
     }
   ]
 }

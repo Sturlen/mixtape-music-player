@@ -8,7 +8,7 @@ import pLimit from "p-limit"
 import index from "@/index.html"
 import { env } from "@/shared/env"
 import { parse } from "@/parse"
-import type { Album, Artist, Playlist, Source, Track } from "@/lib/types"
+import type { Album, Artist, Playlist, Track } from "@/lib/types"
 import { raise } from "@/lib/utils"
 import { $ } from "bun"
 import { parsePlaylists } from "./server/new_playlist_parser"
@@ -18,6 +18,8 @@ import { fuse_artists, fuse_albums, fuse_playlists, fuse_tracks } from "./lib/fu
 import { Library, enrichmentProgress } from "./server/library"
 import { SearchService } from "./server/search"
 import { initDB } from "@/db"
+import { sources } from "@/db/schema"
+import { createLibraryRoutes } from "./server/libraries"
 import { createServer, LogLevel } from "pglite-server"
 
 if (env.USE_FFMPEG) {
@@ -71,23 +73,40 @@ async function loadPlaylists(): Promise<Playlist[]> {
   }
 }
 
-const default_source: Source = {
-  id: "source:main",
-  name: "Default Source",
-  rootPath: env.MUSIC_PATH,
-}
+async function seedLibraries() {
+  const existing = await library.getAllSources()
+  if (existing.length > 0) return existing
 
-const sources: Source[] = [default_source]
+  const rows = []
+  const row1 = await db
+    .insert(sources)
+    .values({ name: "Default Library", rootPath: env.MUSIC_PATH, enabled: true })
+    .returning()
+    .then((r) => r[0])
+  if (row1) {
+    rows.push(row1)
+    console.log("Seeded library:", row1.name, row1.rootPath)
+  }
 
-if (env.MUSIC2_PATH) {
-  sources.push({
-    id: "source:2",
-    name: "Secondary Source",
-    rootPath: env.MUSIC2_PATH,
-  })
+  if (env.MUSIC2_PATH) {
+    const row = await db
+      .insert(sources)
+      .values({ name: "Secondary Library", rootPath: env.MUSIC2_PATH, enabled: true })
+      .returning()
+      .then((r) => r[0])
+    if (row) {
+      rows.push(row)
+      console.log("Seeded library:", row.name, row.rootPath)
+    }
+  }
+
+  return rows
 }
 
 async function reloadLibrary() {
+  const libRows = await library.getAllSources()
+  const enabledLibraries = libRows.filter((r) => r.enabled)
+
   const playlistsArr = await loadPlaylists()
   await library.setPlaylists(playlistsArr.map(p => ({ id: p.id, name: p.name, imageUrl: p.imageUrl })))
   await library.rebuildIndex()
@@ -97,14 +116,11 @@ async function reloadLibrary() {
 
   const limit = pLimit(8)
   const sourceScans = await Promise.all(
-    sources.map(async (source) => {
+    enabledLibraries.map(async (lib) => {
       try {
-        return await parse(source)
+        return await parse(lib.rootPath, lib.id)
       } catch (err) {
-        console.error(
-          `Error scanning source ${source.id} (${source.name}):`,
-          err,
-        )
+        console.error(`Error scanning library ${lib.id} (${lib.name}):`, err)
         return null
       }
     }),
@@ -121,6 +137,7 @@ async function reloadLibrary() {
   console.log("Library reloaded — enrichment in background", stats)
 }
 
+await seedLibraries()
 await reloadLibrary()
 
 const app = new Elysia()
@@ -438,6 +455,7 @@ const app = new Elysia()
     },
   )
   .use(createPlaylistRoutes({ db: playlistStore, fuse_playlists }))
+  .use(createLibraryRoutes({ library, db }))
   .listen(env.PORT, () => {
     console.log(`started in ${(performance.now() - started_at).toFixed(2)} ms`)
 

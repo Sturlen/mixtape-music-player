@@ -1,13 +1,17 @@
-export type Source = {
+export type Library = {
   id: string
-  name: string // user displayed
+  name: string
   rootPath: string
+  enabled: boolean
+  createdAt?: string
+  updatedAt?: string
 }
 
 export type Track = {
   id: string
   name: string
   albumId: string
+  sourceId?: string
   playtimeSeconds: number
   trackNumber?: number
   path: string
