@@ -92,15 +92,10 @@ const RootLayout = () => (
         >
           About
         </Link>
-        <Link
-          to="/listen"
-          className="[&.active]:bg-secondary [&.active]:font-bold"
-        >
-          Listen Together
-        </Link>
       </nav>
 
       <div className="flex items-center gap-2">
+        <ListenTogetherDialog />
         <SearchButton />
         <ReloadButton />
       </div>
@@ -141,9 +136,7 @@ function Sidebar({ className }: { className?: string }) {
           <div className="flex items-center justify-items-center">
             <Controls />
           </div>
-          <div className="mt-4 flex justify-center">
-            <ListenTogetherDialog />
-          </div>
+
         </div>
       </section>
     </div>

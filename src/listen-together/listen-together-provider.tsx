@@ -7,8 +7,26 @@ import { useAudioPlayerBase } from "@/Player"
 
 const PARTYKIT_HOST = "localhost:1999"
 
+function getRoomParam(): string | null {
+  return new URLSearchParams(window.location.search).get("room_id")
+}
+
 export function ListenTogetherProvider() {
   const roomId = useListenTogetherStore((s) => s.roomId)
+
+  useEffect(() => {
+    const sync = () => {
+      const param = getRoomParam()
+      if (param) {
+        useListenTogetherStore.getState().setRoomId(param)
+      } else {
+        useListenTogetherStore.getState().clear()
+      }
+    }
+    sync()
+    window.addEventListener("popstate", sync)
+    return () => window.removeEventListener("popstate", sync)
+  }, [])
 
   useEffect(() => {
     if (!roomId) return
