@@ -7,10 +7,20 @@ type TrackRef = {
 
 type PlaybackState = "playing" | "paused"
 
+type PlayerSnapshot = {
+  track?: TrackRef
+  queue: TrackRef[]
+  queueIndex: number
+  playbackState: PlaybackState
+  positionMs: number
+}
+
 type RoomState = {
   version: number
   hostClientId: string | null
   track: TrackRef | null
+  queue: TrackRef[]
+  queueIndex: number
   playbackState: PlaybackState
   positionMs: number
   positionCapturedAtMs: number
@@ -19,8 +29,8 @@ type RoomState = {
 }
 
 type ClientMessage =
-  | { type: "join"; clientId: string }
-  | { type: "play"; clientId: string; track?: TrackRef }
+  | { type: "join"; clientId: string; initialState?: PlayerSnapshot }
+  | { type: "play"; clientId: string; track?: TrackRef; queue?: TrackRef[]; queueIndex?: number; positionMs?: number }
   | { type: "pause"; clientId: string }
   | { type: "seek"; clientId: string; positionMs: number }
   | { type: "ping"; clientTimeMs: number }
@@ -40,6 +50,8 @@ const defaultState = (): RoomState => ({
   version: 0,
   hostClientId: null,
   track: null,
+  queue: [],
+  queueIndex: 0,
   playbackState: "paused",
   positionMs: 0,
   positionCapturedAtMs: Date.now(),
@@ -72,13 +84,15 @@ export default class RoomServer implements Party.PartyServer {
   }
 
   async onConnect(connection: Party.Connection) {
-    connection.send(
-      JSON.stringify({
-        type: "snapshot",
-        state: this.state,
-        serverTimeMs: Date.now(),
-      } satisfies ServerMessage),
-    )
+    if (this.state.hostClientId !== null) {
+      connection.send(
+        JSON.stringify({
+          type: "snapshot",
+          state: this.state,
+          serverTimeMs: Date.now(),
+        } satisfies ServerMessage),
+      )
+    }
   }
 
   async onMessage(raw: string, sender: Party.Connection) {
@@ -97,6 +111,14 @@ export default class RoomServer implements Party.PartyServer {
         this.connectionToClientId.set(id, msg.clientId)
         if (this.state.hostClientId === null || this.state.hostClientId === msg.clientId) {
           this.state.hostClientId = msg.clientId
+          if (msg.initialState) {
+            this.state.track = msg.initialState.track ?? null
+            this.state.queue = msg.initialState.queue
+            this.state.queueIndex = msg.initialState.queueIndex
+            this.state.playbackState = msg.initialState.playbackState
+            this.state.positionMs = msg.initialState.positionMs
+            this.state.positionCapturedAtMs = now
+          }
           await this.persistAndBroadcast(now)
         }
         sender.send(
@@ -122,7 +144,13 @@ export default class RoomServer implements Party.PartyServer {
         }
         if (msg.track) {
           this.state.track = msg.track
-          this.state.positionMs = 0
+          this.state.positionMs = msg.positionMs ?? 0
+        }
+        if (msg.queue) {
+          this.state.queue = msg.queue
+        }
+        if (msg.queueIndex !== undefined) {
+          this.state.queueIndex = msg.queueIndex
         }
         this.state.playbackState = "playing"
         this.state.positionCapturedAtMs = now

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react"
+import { useEffect } from "react"
 import { useListenTogetherStore } from "./store"
 import { ListenTogetherClient } from "./sync-client"
 import { createPlayerAdapter } from "./player-adapter"
@@ -75,7 +75,6 @@ export function ListenTogetherProvider() {
     return () => {
       unsub()
       client.disconnect()
-      useListenTogetherStore.getState().clear()
     }
   }, [roomId])
 

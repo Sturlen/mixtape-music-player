@@ -1,6 +1,6 @@
 import PartySocket from "partysocket"
 import type { PlayerAdapter } from "./player-adapter"
-import type { RoomState, TrackRef } from "./types"
+import type { RoomState, TrackRef, PlayerSnapshot } from "./types"
 
 export type ListenTogetherCallbacks = {
   onState?: (state: RoomState) => void
@@ -51,7 +51,13 @@ export class ListenTogetherClient {
     this.socket.onopen = () => {
       this.connected = true
       this.callbacks.onConnectionChange?.(true)
-      this.socket?.send(JSON.stringify({ type: "join", clientId: this.clientId }))
+      this.socket?.send(
+        JSON.stringify({
+          type: "join",
+          clientId: this.clientId,
+          initialState: this.buildSnapshot(),
+        }),
+      )
       this.startPingInterval()
       this.startDriftCorrection()
     }
@@ -98,11 +104,13 @@ export class ListenTogetherClient {
 
   play(track?: TrackRef): void {
     if (!this.socket || !this.isHost() || this.isEnded()) return
+    const snapshot = this.player.getSnapshot()
+    const queue = this.buildQueue()
     this.socket.send(
       JSON.stringify({
         type: "play",
         clientId: this.clientId,
-        ...(track ? { track } : {}),
+        ...(track ? { track, queue, queueIndex: this.buildQueueIndex(), positionMs: Math.round(snapshot.positionMs) } : {}),
       }),
     )
   }
@@ -119,6 +127,25 @@ export class ListenTogetherClient {
     this.socket.send(
       JSON.stringify({ type: "seek", clientId: this.clientId, positionMs }),
     )
+  }
+
+  private buildSnapshot(): PlayerSnapshot {
+    const s = this.player.getSnapshot()
+    return {
+      track: s.track ?? undefined,
+      queue: this.buildQueue(),
+      queueIndex: this.buildQueueIndex(),
+      playbackState: s.playbackState,
+      positionMs: s.positionMs,
+    }
+  }
+
+  private buildQueue(): TrackRef[] {
+    return this.player.getSnapshot().queue
+  }
+
+  private buildQueueIndex(): number {
+    return this.player.getSnapshot().queueIndex
   }
 
   private handleMessage(msg: unknown): void {
@@ -205,9 +232,11 @@ export class ListenTogetherClient {
     executeAtMs: number | undefined,
   ): void {
     const serverNow = this.getEstimatedServerNow()
-    const trackChanged =
-      state.track &&
-      this.player.getSnapshot().track?.trackId !== state.track.trackId
+    const localSnapshot = this.player.getSnapshot()
+
+    const needsQueueLoad =
+      state.queue.length > 0 &&
+      localSnapshot.track?.trackId !== state.track?.trackId
 
     const apply = () => {
       const serverNow = this.getEstimatedServerNow()
@@ -217,24 +246,24 @@ export class ListenTogetherClient {
             (serverNow - state.positionCapturedAtMs) * state.playbackRate
           : state.positionMs
 
+      this.player.seek(Math.round(targetPositionMs))
+
       if (state.playbackState === "playing") {
-        this.player.seek(Math.round(targetPositionMs))
         this.player.play()
       } else {
-        this.player.seek(Math.round(targetPositionMs))
         this.player.pause()
       }
     }
 
     if (executeAtMs !== undefined) {
       const delay = Math.max(0, executeAtMs - this.getEstimatedServerNow())
-      if (state.track && trackChanged) {
-        this.player.loadTrack(state.track)
+      if (needsQueueLoad) {
+        this.player.loadQueue(state.queue, state.queueIndex)
       }
       setTimeout(apply, delay)
     } else {
-      if (state.track && trackChanged) {
-        this.player.loadTrack(state.track).then(apply)
+      if (needsQueueLoad) {
+        this.player.loadQueue(state.queue, state.queueIndex).then(apply)
       } else {
         apply()
       }
