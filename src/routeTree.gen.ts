@@ -13,9 +13,11 @@ import { Route as LibrariesRouteImport } from './routes/libraries'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PlaylistsIndexRouteImport } from './routes/playlists/index'
+import { Route as ListenIndexRouteImport } from './routes/listen/index'
 import { Route as ArtistsIndexRouteImport } from './routes/artists/index'
 import { Route as AlbumsIndexRouteImport } from './routes/albums/index'
 import { Route as PlaylistsIdRouteImport } from './routes/playlists/$id'
+import { Route as ListenRoomIdRouteImport } from './routes/listen/$roomId'
 import { Route as ArtistsIdRouteImport } from './routes/artists/$id'
 import { Route as AlbumsIdRouteImport } from './routes/albums/$id'
 
@@ -39,6 +41,11 @@ const PlaylistsIndexRoute = PlaylistsIndexRouteImport.update({
   path: '/playlists/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ListenIndexRoute = ListenIndexRouteImport.update({
+  id: '/listen/',
+  path: '/listen/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ArtistsIndexRoute = ArtistsIndexRouteImport.update({
   id: '/artists/',
   path: '/artists/',
@@ -52,6 +59,11 @@ const AlbumsIndexRoute = AlbumsIndexRouteImport.update({
 const PlaylistsIdRoute = PlaylistsIdRouteImport.update({
   id: '/playlists/$id',
   path: '/playlists/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ListenRoomIdRoute = ListenRoomIdRouteImport.update({
+  id: '/listen/$roomId',
+  path: '/listen/$roomId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ArtistsIdRoute = ArtistsIdRouteImport.update({
@@ -71,9 +83,11 @@ export interface FileRoutesByFullPath {
   '/libraries': typeof LibrariesRoute
   '/albums/$id': typeof AlbumsIdRoute
   '/artists/$id': typeof ArtistsIdRoute
+  '/listen/$roomId': typeof ListenRoomIdRoute
   '/playlists/$id': typeof PlaylistsIdRoute
   '/albums': typeof AlbumsIndexRoute
   '/artists': typeof ArtistsIndexRoute
+  '/listen': typeof ListenIndexRoute
   '/playlists': typeof PlaylistsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -82,9 +96,11 @@ export interface FileRoutesByTo {
   '/libraries': typeof LibrariesRoute
   '/albums/$id': typeof AlbumsIdRoute
   '/artists/$id': typeof ArtistsIdRoute
+  '/listen/$roomId': typeof ListenRoomIdRoute
   '/playlists/$id': typeof PlaylistsIdRoute
   '/albums': typeof AlbumsIndexRoute
   '/artists': typeof ArtistsIndexRoute
+  '/listen': typeof ListenIndexRoute
   '/playlists': typeof PlaylistsIndexRoute
 }
 export interface FileRoutesById {
@@ -94,9 +110,11 @@ export interface FileRoutesById {
   '/libraries': typeof LibrariesRoute
   '/albums/$id': typeof AlbumsIdRoute
   '/artists/$id': typeof ArtistsIdRoute
+  '/listen/$roomId': typeof ListenRoomIdRoute
   '/playlists/$id': typeof PlaylistsIdRoute
   '/albums/': typeof AlbumsIndexRoute
   '/artists/': typeof ArtistsIndexRoute
+  '/listen/': typeof ListenIndexRoute
   '/playlists/': typeof PlaylistsIndexRoute
 }
 export interface FileRouteTypes {
@@ -107,9 +125,11 @@ export interface FileRouteTypes {
     | '/libraries'
     | '/albums/$id'
     | '/artists/$id'
+    | '/listen/$roomId'
     | '/playlists/$id'
     | '/albums'
     | '/artists'
+    | '/listen'
     | '/playlists'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -118,9 +138,11 @@ export interface FileRouteTypes {
     | '/libraries'
     | '/albums/$id'
     | '/artists/$id'
+    | '/listen/$roomId'
     | '/playlists/$id'
     | '/albums'
     | '/artists'
+    | '/listen'
     | '/playlists'
   id:
     | '__root__'
@@ -129,9 +151,11 @@ export interface FileRouteTypes {
     | '/libraries'
     | '/albums/$id'
     | '/artists/$id'
+    | '/listen/$roomId'
     | '/playlists/$id'
     | '/albums/'
     | '/artists/'
+    | '/listen/'
     | '/playlists/'
   fileRoutesById: FileRoutesById
 }
@@ -141,9 +165,11 @@ export interface RootRouteChildren {
   LibrariesRoute: typeof LibrariesRoute
   AlbumsIdRoute: typeof AlbumsIdRoute
   ArtistsIdRoute: typeof ArtistsIdRoute
+  ListenRoomIdRoute: typeof ListenRoomIdRoute
   PlaylistsIdRoute: typeof PlaylistsIdRoute
   AlbumsIndexRoute: typeof AlbumsIndexRoute
   ArtistsIndexRoute: typeof ArtistsIndexRoute
+  ListenIndexRoute: typeof ListenIndexRoute
   PlaylistsIndexRoute: typeof PlaylistsIndexRoute
 }
 
@@ -177,6 +203,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlaylistsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/listen/': {
+      id: '/listen/'
+      path: '/listen'
+      fullPath: '/listen'
+      preLoaderRoute: typeof ListenIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/artists/': {
       id: '/artists/'
       path: '/artists'
@@ -196,6 +229,13 @@ declare module '@tanstack/react-router' {
       path: '/playlists/$id'
       fullPath: '/playlists/$id'
       preLoaderRoute: typeof PlaylistsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/listen/$roomId': {
+      id: '/listen/$roomId'
+      path: '/listen/$roomId'
+      fullPath: '/listen/$roomId'
+      preLoaderRoute: typeof ListenRoomIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/artists/$id': {
@@ -221,9 +261,11 @@ const rootRouteChildren: RootRouteChildren = {
   LibrariesRoute: LibrariesRoute,
   AlbumsIdRoute: AlbumsIdRoute,
   ArtistsIdRoute: ArtistsIdRoute,
+  ListenRoomIdRoute: ListenRoomIdRoute,
   PlaylistsIdRoute: PlaylistsIdRoute,
   AlbumsIndexRoute: AlbumsIndexRoute,
   ArtistsIndexRoute: ArtistsIndexRoute,
+  ListenIndexRoute: ListenIndexRoute,
   PlaylistsIndexRoute: PlaylistsIndexRoute,
 }
 export const routeTree = rootRouteImport

@@ -15,6 +15,8 @@ import { createRootRoute, Link, Outlet } from "@tanstack/react-router"
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools"
 import { TextScroller } from "@/client/components/ui/TextScroller"
 import { CurrentTrackScroller } from "@/client/components/CurrentTrackScroller"
+import { ListenTogetherDialog } from "@/client/components/ListenTogetherDialog"
+import { ListenTogetherProvider } from "@/listen-together/listen-together-provider"
 
 function LibraryProgressWatcher() {
   const queryClient = useQueryClient()
@@ -90,6 +92,12 @@ const RootLayout = () => (
         >
           About
         </Link>
+        <Link
+          to="/listen"
+          className="[&.active]:bg-secondary [&.active]:font-bold"
+        >
+          Listen Together
+        </Link>
       </nav>
 
       <div className="flex items-center gap-2">
@@ -108,6 +116,7 @@ const RootLayout = () => (
     <MediaSessionSync />
     <PlaybackDetails />
     <TitleSetter />
+    <ListenTogetherProvider />
   </div>
 )
 
@@ -131,6 +140,9 @@ function Sidebar({ className }: { className?: string }) {
         <div className="bg-accent w-full flex-col items-center justify-items-center self-end rounded-2xl p-4">
           <div className="flex items-center justify-items-center">
             <Controls />
+          </div>
+          <div className="mt-4 flex justify-center">
+            <ListenTogetherDialog />
           </div>
         </div>
       </section>

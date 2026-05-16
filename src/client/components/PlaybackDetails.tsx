@@ -8,7 +8,7 @@ import {
   ShuffleIcon,
 } from "lucide-react"
 import { useAudioPlayer, useCurrentTrack, useIsPlaying } from "@/Player"
-import { formatTime } from "@/lib/utils"
+import { cn, formatTime } from "@/lib/utils"
 import {
   Drawer,
   DrawerContent,
@@ -21,14 +21,19 @@ import SeekBar from "@/client/components/SeekBar"
 import { usePlaybackDrawer } from "@/contexts/PlaybackDrawerContext"
 import VolumeSlider from "@/VolumeControl"
 import { Cassette } from "@/client/components/Cassette"
+import { useListenTogetherStore } from "@/listen-together/store"
 
-function ShuffleButton({ onClick }: { onClick: () => void }) {
+function ShuffleButton({ onClick, disabled }: { onClick: () => void; disabled?: boolean }) {
   const isShuffled = useAudioPlayer.use.isShuffled()
   return (
     <button
       onClick={onClick}
+      disabled={disabled}
       aria-label="Shuffle"
-      className="text-primary/60 rounded-full p-2"
+      className={cn(
+        "rounded-full p-2",
+        disabled ? "pointer-events-none opacity-40" : "text-primary/60 hover:bg-gray-800",
+      )}
     >
       <ShuffleIcon
         size={28}
@@ -53,8 +58,17 @@ export default function PlaybackDetails() {
 
   const { open, setOpen } = usePlaybackDrawer()
 
+  const inSession = !!useListenTogetherStore((s) => s.roomId)
+  const isHost = useListenTogetherStore((s) => s.isHost)
+  const controlsDisabled = inSession && !isHost
+
+  const handlePlayPause = () => {
+    if (controlsDisabled) return
+    if (isPlaying) pause()
+    else play()
+  }
+
   useEffect(() => {
-    // close drawer if there is no track
     if (!currentTrack) setOpen(false)
   }, [currentTrack])
 
@@ -96,28 +110,40 @@ export default function PlaybackDetails() {
               </button>
               <button
                 onClick={queuePrev}
+                disabled={controlsDisabled}
                 aria-label="Previous"
-                className="rounded-full p-2 transition hover:bg-gray-800"
+                className={cn(
+                  "rounded-full p-2 transition",
+                  controlsDisabled ? "pointer-events-none opacity-40" : "hover:bg-gray-800",
+                )}
               >
                 <SkipBackIcon size={28} />
               </button>
 
               <button
-                onClick={isPlaying ? pause : play}
+                onClick={handlePlayPause}
+                disabled={controlsDisabled}
                 aria-label={isPlaying ? "Pause" : "Play"}
-                className="rounded-full bg-white/5 p-3 transition hover:bg-white/10"
+                className={cn(
+                  "rounded-full p-3 transition",
+                  controlsDisabled ? "pointer-events-none opacity-40" : "bg-white/5 hover:bg-white/10",
+                )}
               >
                 {isPlaying ? <PauseIcon size={28} /> : <PlayIcon size={28} />}
               </button>
 
               <button
                 onClick={queueSkip}
+                disabled={controlsDisabled}
                 aria-label="Next"
-                className="rounded-full p-2 transition hover:bg-gray-800"
+                className={cn(
+                  "rounded-full p-2 transition",
+                  controlsDisabled ? "pointer-events-none opacity-40" : "hover:bg-gray-800",
+                )}
               >
                 <SkipForwardIcon size={28} />
               </button>
-              <ShuffleButton onClick={shuffle} />
+              <ShuffleButton onClick={shuffle} disabled={controlsDisabled} />
             </div>
           </div>
         </DrawerContent>

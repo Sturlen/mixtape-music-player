@@ -4,6 +4,7 @@ import { useAudioPlayer, useCurrentTrack, useIsPlaying } from "@/Player"
 import { cn, formatTime } from "@/lib/utils"
 import { useSwipeable } from "react-swipeable"
 import { usePlaybackDrawer } from "@/contexts/PlaybackDrawerContext"
+import { useListenTogetherStore } from "@/listen-together/store"
 
 const MobileControls = ({ className }: { className?: string }) => {
   const { play, pause, duration, currentTime, queueSkip, queuePrev } =
@@ -12,6 +13,17 @@ const MobileControls = ({ className }: { className?: string }) => {
   const currentTrack = useCurrentTrack()
   const { openDrawer } = usePlaybackDrawer()
   const openPlaybackDetails = () => openDrawer()
+
+  const inSession = !!useListenTogetherStore((s) => s.roomId)
+  const isHost = useListenTogetherStore((s) => s.isHost)
+  const controlsDisabled = inSession && !isHost
+
+  const handlePlayPause = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (controlsDisabled) return
+    if (isPlaying) pause()
+    else play()
+  }
 
   const handlers = useSwipeable({
     onSwipedLeft: queueSkip,
@@ -22,7 +34,6 @@ const MobileControls = ({ className }: { className?: string }) => {
 
   const primaryColor = currentTrack?.primaryColor
   const textColor = currentTrack?.textColor
-  // TODO: make height a variable
   return (
     <div
       {...handlers}
@@ -36,18 +47,14 @@ const MobileControls = ({ className }: { className?: string }) => {
       <div className="flex items-center gap-2">
         <button
           className="flex items-center justify-center p-2"
-          onClick={(e) => {
-            e.stopPropagation()
-            if (isPlaying) {
-              pause()
-            } else {
-              play()
-            }
-          }}
+          onClick={handlePlayPause}
           aria-label={isPlaying ? "Pause" : "Play"}
         >
           <div
-            className="flex items-center justify-center rounded-full p-3 transition"
+            className={cn(
+              "flex items-center justify-center rounded-full p-3 transition",
+              controlsDisabled && "opacity-40",
+            )}
             style={{
               backgroundColor: primaryColor || undefined,
               color: textColor || undefined,
