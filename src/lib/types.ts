@@ -28,6 +28,7 @@ export type Album = {
   imageURL?: string
   primaryColor?: string
   textColor?: string
+  supportingColor?: string
   artistName?: string
 }
 
@@ -37,6 +38,7 @@ export type Artist = {
   imageURL?: string
   primaryColor?: string
   textColor?: string
+  supportingColor?: string
 }
 
 export type ArtAssetRole = "cover" | "portrait" | "back" | "other"
@@ -68,6 +70,7 @@ export type ArtAsset = {
   height: number
   primaryColor?: string
   textColor?: string
+  supportingColor?: string
   fileExt: string
 }
 

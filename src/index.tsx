@@ -191,6 +191,7 @@ const app = new Elysia()
             imageURL: `/api/files/artistart/${a.id}`,
             primaryColor: art?.primaryColor ?? undefined,
             textColor: art?.textColor ?? undefined,
+            supportingColor: art?.supportingColor ?? undefined,
           }
         }),
       )
@@ -218,6 +219,7 @@ const app = new Elysia()
         imageURL: `/api/files/artistart/${artistId}`,
         primaryColor: art?.primaryColor ?? null,
         textColor: art?.textColor ?? null,
+        supportingColor: art?.supportingColor ?? null,
         albums: albumsWithArt,
       },
     }
@@ -245,6 +247,7 @@ const app = new Elysia()
             artistName: artist?.name ?? null,
             primaryColor: art?.primaryColor ?? null,
             textColor: art?.textColor ?? null,
+            supportingColor: art?.supportingColor ?? null,
             imageURL: `/api/files/albumart/${album.id}`,
           }
         }),
@@ -282,6 +285,7 @@ const app = new Elysia()
         artistName: artist?.name ?? null,
         primaryColor: art?.primaryColor ?? null,
         textColor: art?.textColor ?? null,
+        supportingColor: art?.supportingColor ?? null,
         imageURL,
         tracks,
       },
@@ -441,6 +445,7 @@ const app = new Elysia()
         imageURL: `/api/files/albumart/${albumId}`,
         primaryColor: art?.primaryColor ?? undefined,
         textColor: art?.textColor ?? undefined,
+        supportingColor: art?.supportingColor ?? undefined,
       },
       tracks: sorted,
     }

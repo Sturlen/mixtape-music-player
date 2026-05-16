@@ -1,0 +1,1 @@
+ALTER TABLE "art_assets" ADD COLUMN "supporting_color" text;

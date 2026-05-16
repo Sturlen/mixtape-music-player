@@ -12,15 +12,16 @@ export function Cassette({ className }: { className?: string }) {
   const progress = useQueueProgress()
 
   const current_track = useCurrentTrack()
+  const primaryColor = current_track?.primaryColor
+  const supportingColor = current_track?.supportingColor
 
   const currentTrackName = current_track
     ? (current_track?.album?.name ?? current_track.name)
     : "MIXTAPE"
 
-  const durationTakeUp = 0.93 + (3.0 - 0.93) * progress // s/rev
-  const durationSupply = 3.0 - (3.0 - 0.93) * progress // reverse relationship
+  const durationTakeUp = 0.93 + (3.0 - 0.93) * progress
+  const durationSupply = 3.0 - (3.0 - 0.93) * progress
 
-  // these are all implicitly updated whenever current time changes
   const scaleTakeUp = lerp(spoolScaleMin, spoolScaleMax, progress)
   const scaleSupply = lerp(spoolScaleMax, spoolScaleMin, progress)
 
@@ -75,7 +76,7 @@ export function Cassette({ className }: { className?: string }) {
         style={{ animationDuration: durationTakeUp.toFixed() + "s" }}
       />
       <div className="absolute my-auto w-full">
-        <CassetteBody color={current_track?.primaryColor || undefined} />
+        <CassetteBody mainColor={primaryColor} accentColor={supportingColor} />
       </div>
       <div className="font-inter absolute top-[24%] right-[12.1%] left-[10.9%] h-[16%] overflow-hidden bg-white px-2 text-sm text-nowrap overflow-ellipsis text-black">
         <span>{currentTrackName}</span>

@@ -78,6 +78,7 @@ export const artAssets = pgTable(
     height: integer("height").notNull().default(0),
     primaryColor: text("primary_color"),
     textColor: text("text_color"),
+    supportingColor: text("supporting_color"),
     fileExt: text("file_ext"),
   },
   (t) => [

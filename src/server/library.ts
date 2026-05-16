@@ -111,10 +111,23 @@ export class Library {
       .where(and(eq(artAssets.entityId, entityId), eq(artAssets.entityType, entityType), eq(artAssets.role, role)))
       .limit(1)
       .then((r) => r[0])
-    if (existing) return
 
     const info = await artInfo(filePath)
     if (!info) return
+
+    if (existing) {
+      await this.db
+        .update(artAssets)
+        .set({
+          width: info.width,
+          height: info.height,
+          primaryColor: info.hex,
+          textColor: info.textColor,
+          supportingColor: info.supportingColor,
+        })
+        .where(eq(artAssets.id, existing.id))
+      return
+    }
 
     await this.db.insert(artAssets).values({
       id: crypto.randomUUID(),
@@ -127,6 +140,7 @@ export class Library {
       height: info.height,
       primaryColor: info.hex,
       textColor: info.textColor,
+      supportingColor: info.supportingColor,
       fileExt: path.extname(filePath).toLowerCase(),
     })
   }

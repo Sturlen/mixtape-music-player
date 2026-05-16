@@ -10,6 +10,7 @@ export type Track = {
   artURL?: string
   primaryColor?: string
   textColor?: string
+  supportingColor?: string
   album?: {
     id: string
     name: string
@@ -371,11 +372,10 @@ export const useQueueProgress = () => {
   const currentTime = useAudioPlayer.use.currentTime()
   const tracks = useAudioPlayer.use.queueTracks()
 
+  const allTracksDuration = tracks.reduce((sum, t) => sum + (t.duration || 0), 0)
   const elapsedBefore = tracks
     .slice(0, queueIndex)
     .reduce((sum, t) => sum + (t.duration || 0), 0)
-  const currentTrackDuration = tracks[queueIndex]?.duration || 0
-  const totalDuration = elapsedBefore + currentTrackDuration
 
-  return totalDuration > 0 ? (elapsedBefore + currentTime) / totalDuration : 0
+  return allTracksDuration > 0 ? (elapsedBefore + currentTime) / allTracksDuration : 0
 }

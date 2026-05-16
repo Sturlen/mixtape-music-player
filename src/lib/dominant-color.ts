@@ -1,23 +1,28 @@
 import sharp from "sharp"
-import { getColor } from "colorthief"
+import { getPalette } from "colorthief"
 
 export type ArtInfo = {
   hex: string
   textColor: string
+  supportingColor: string
   width: number
   height: number
 }
 
 export async function artInfo(filePath: string): Promise<ArtInfo | null> {
   try {
-    const [color, meta] = await Promise.all([
-      getColor(filePath, { quality: 5 }),
+    const [palette, meta] = await Promise.all([
+      getPalette(filePath, { colorCount: 4, quality: 5 }),
       sharp(filePath).metadata(),
     ])
-    if (!color) return null
+    if (!palette || palette.length === 0) return null
+    const primary = palette[0]
+    if (!primary) return null
+    const supporting = palette[1] ?? primary
     return {
-      hex: color.hex(),
-      textColor: color.textColor,
+      hex: primary.hex(),
+      textColor: primary.textColor,
+      supportingColor: supporting.hex(),
       width: meta.width ?? 0,
       height: meta.height ?? 0,
     }

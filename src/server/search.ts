@@ -21,6 +21,7 @@ type SearchResultItem = {
   year: number | null
   primaryColor: string | null
   textColor: string | null
+  supportingColor: string | null
   imageURL: string
   related: boolean
 }
@@ -153,6 +154,7 @@ export class SearchService {
         year: null,
         primaryColor: art?.primaryColor ?? null,
         textColor: art?.textColor ?? null,
+        supportingColor: art?.supportingColor ?? null,
         imageURL: `/api/files/artistart/${id}`,
       }
     }
@@ -172,6 +174,7 @@ export class SearchService {
         year: album.year ?? null,
         primaryColor: art?.primaryColor ?? null,
         textColor: art?.textColor ?? null,
+        supportingColor: art?.supportingColor ?? null,
         imageURL: `/api/files/albumart/${id}`,
       }
     }
@@ -192,6 +195,7 @@ export class SearchService {
       year: album?.year ?? null,
       primaryColor: art?.primaryColor ?? null,
       textColor: art?.textColor ?? null,
+      supportingColor: art?.supportingColor ?? null,
       imageURL: `/api/files/albumart/${track.albumId}`,
     }
   }

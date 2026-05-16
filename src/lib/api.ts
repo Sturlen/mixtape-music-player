@@ -83,6 +83,7 @@ export function usePlayAlbum() {
           artURL: album.imageURL,
           primaryColor: album.primaryColor,
           textColor: album.textColor,
+          supportingColor: album.supportingColor,
           album: {
             id: album.id,
             name: album.name,
