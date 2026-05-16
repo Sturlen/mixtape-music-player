@@ -16,7 +16,7 @@ export default function SeekBar({
 
   const inSession = !!useListenTogetherStore((s) => s.roomId)
   const isHost = useListenTogetherStore((s) => s.isHost)
-  const disabled = inSession && !isHost
+  const disabled = inSession && isHost === false
 
   const deferredSeeking = useDeferredValue(seeking)
   const seekValue: [number] = [deferredSeeking ?? currentTime ?? 0]

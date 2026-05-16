@@ -60,10 +60,9 @@ export default function PlaybackDetails() {
 
   const inSession = !!useListenTogetherStore((s) => s.roomId)
   const isHost = useListenTogetherStore((s) => s.isHost)
-  const controlsDisabled = inSession && !isHost
+  const skipPrevDisabled = inSession && isHost === false
 
   const handlePlayPause = () => {
-    if (controlsDisabled) return
     if (isPlaying) pause()
     else play()
   }
@@ -110,11 +109,11 @@ export default function PlaybackDetails() {
               </button>
               <button
                 onClick={queuePrev}
-                disabled={controlsDisabled}
+                disabled={skipPrevDisabled}
                 aria-label="Previous"
                 className={cn(
                   "rounded-full p-2 transition",
-                  controlsDisabled ? "pointer-events-none opacity-40" : "hover:bg-gray-800",
+                  skipPrevDisabled ? "pointer-events-none opacity-40" : "hover:bg-gray-800",
                 )}
               >
                 <SkipBackIcon size={28} />
@@ -122,11 +121,10 @@ export default function PlaybackDetails() {
 
               <button
                 onClick={handlePlayPause}
-                disabled={controlsDisabled}
                 aria-label={isPlaying ? "Pause" : "Play"}
                 className={cn(
                   "rounded-full p-3 transition",
-                  controlsDisabled ? "pointer-events-none opacity-40" : "bg-white/5 hover:bg-white/10",
+                  "bg-white/5 hover:bg-white/10",
                 )}
               >
                 {isPlaying ? <PauseIcon size={28} /> : <PlayIcon size={28} />}
@@ -134,16 +132,16 @@ export default function PlaybackDetails() {
 
               <button
                 onClick={queueSkip}
-                disabled={controlsDisabled}
+                disabled={skipPrevDisabled}
                 aria-label="Next"
                 className={cn(
                   "rounded-full p-2 transition",
-                  controlsDisabled ? "pointer-events-none opacity-40" : "hover:bg-gray-800",
+                  skipPrevDisabled ? "pointer-events-none opacity-40" : "hover:bg-gray-800",
                 )}
               >
                 <SkipForwardIcon size={28} />
               </button>
-              <ShuffleButton onClick={shuffle} disabled={controlsDisabled} />
+              <ShuffleButton onClick={shuffle} disabled={skipPrevDisabled} />
             </div>
           </div>
         </DrawerContent>

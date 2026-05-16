@@ -3,7 +3,7 @@ import { useListenTogetherStore } from "./store"
 
 export type UseListenTogetherReturn = {
   connected: boolean
-  isHost: boolean
+  isHost: boolean | null
   isEnded: boolean
   disconnect: () => void
 }

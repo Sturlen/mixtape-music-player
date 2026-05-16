@@ -27,7 +27,7 @@ export function Controls() {
 
   const inSession = !!useListenTogetherStore((s) => s.roomId)
   const isHost = useListenTogetherStore((s) => s.isHost)
-  const controlsDisabled = inSession && !isHost
+  const skipPrevDisabled = inSession && isHost === false
 
   return (
     <div className="flex w-full flex-col items-center">
@@ -53,7 +53,7 @@ export function Controls() {
           </div>
         </div>
         <div className="flex h-20 justify-stretch gap-2 pt-4">
-          <PlayerButton onClick={() => prev()} disabled={controlsDisabled}>
+          <PlayerButton onClick={() => prev()} disabled={skipPrevDisabled}>
             <SkipBackIcon />
           </PlayerButton>
           <PlayerButton
@@ -63,7 +63,6 @@ export function Controls() {
                 requestedPlaybackState === "playing",
             })}
             onClick={() => togglePlayback()}
-            disabled={controlsDisabled}
           >
             {requestedPlaybackState === "playing" ? (
               <PauseIcon className="fill-current" />
@@ -72,12 +71,12 @@ export function Controls() {
             )}
           </PlayerButton>
 
-          <PlayerButton onClick={() => skip()} disabled={controlsDisabled}>
+          <PlayerButton onClick={() => skip()} disabled={skipPrevDisabled}>
             <SkipForwardIcon />
           </PlayerButton>
         </div>
         <div className="flex h-10 justify-stretch gap-2 pt-2">
-          <PlayerButton onClick={() => shuffle()} disabled={controlsDisabled}>
+          <PlayerButton onClick={() => shuffle()} disabled={skipPrevDisabled}>
             <ShuffleIcon
               className={cn("transition", { "scale-y-[-1]": isShuffled })}
             />

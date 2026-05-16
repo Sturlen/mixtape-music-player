@@ -3,17 +3,9 @@ import { useListenTogetherStore } from "./store"
 import { ListenTogetherClient } from "./sync-client"
 import { createPlayerAdapter } from "./player-adapter"
 import { getOrCreateClientId } from "./room-id"
-import type { TrackRef } from "./types"
 import { useAudioPlayerBase } from "@/Player"
 
 const PARTYKIT_HOST = "localhost:1999"
-
-function getCurrentTrackRef(): TrackRef | undefined {
-  const state = useAudioPlayerBase.getState()
-  const track = state.queueTracks[state.queueIndex]
-  if (!track) return undefined
-  return { trackId: track.id, durationMs: Math.round(track.duration * 1000) }
-}
 
 export function ListenTogetherProvider() {
   const roomId = useListenTogetherStore((s) => s.roomId)
@@ -41,6 +33,7 @@ export function ListenTogetherProvider() {
       },
     })
 
+    useListenTogetherStore.getState().setConnected(true)
     client.connect()
 
     const unsub = useAudioPlayerBase.subscribe((state, prev) => {
@@ -49,18 +42,25 @@ export function ListenTogetherProvider() {
       const store = useListenTogetherStore.getState()
       if (!store.roomId || !store.isHost || store.isEnded) return
 
-      const trackChanged =
-        state.queueTracks[state.queueIndex]?.id !==
-        prev.queueTracks[prev.queueIndex]?.id
+      const trackId = state.queueTracks[state.queueIndex]?.id ?? null
+      const prevTrackId = prev.queueTracks[prev.queueIndex]?.id ?? null
+      const trackChanged = trackId !== prevTrackId
       const playbackChanged =
         state.requestedPlaybackState !== prev.requestedPlaybackState
       const seekChanged =
         state.requestedSeekPosition !== undefined &&
         state.requestedSeekPosition !== prev.requestedSeekPosition
 
-      if (trackChanged || playbackChanged) {
-        if (state.requestedPlaybackState === "playing") {
-          client.play(getCurrentTrackRef())
+      if (trackChanged && trackId) {
+        console.log(`[listen-together] trackChanged: ${prevTrackId} -> ${trackId}, calling syncState`)
+        client.syncState(trackId)
+        return
+      }
+
+      if (playbackChanged) {
+        console.log(`[listen-together] playbackChanged: ${prev.requestedPlaybackState} -> ${state.requestedPlaybackState}, trackId=${trackId}`)
+        if (state.requestedPlaybackState === "playing" && trackId) {
+          client.play(trackId)
         } else {
           client.pause()
         }
@@ -74,6 +74,9 @@ export function ListenTogetherProvider() {
 
     return () => {
       unsub()
+      if (client.isHost()) {
+        client.leave()
+      }
       client.disconnect()
     }
   }, [roomId])

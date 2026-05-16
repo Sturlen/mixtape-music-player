@@ -2,11 +2,11 @@ import { create } from "zustand"
 
 type ListenTogetherStore = {
   roomId: string | null
-  isHost: boolean
+  isHost: boolean | null
   isEnded: boolean
   connected: boolean
   setRoomId: (id: string | null) => void
-  setHost: (host: boolean) => void
+  setHost: (host: boolean | null) => void
   setEnded: (ended: boolean) => void
   setConnected: (connected: boolean) => void
   clear: () => void
@@ -14,7 +14,7 @@ type ListenTogetherStore = {
 
 export const useListenTogetherStore = create<ListenTogetherStore>((set) => ({
   roomId: null,
-  isHost: false,
+  isHost: null,
   isEnded: false,
   connected: false,
   setRoomId: (id) => set({ roomId: id }),
@@ -22,5 +22,5 @@ export const useListenTogetherStore = create<ListenTogetherStore>((set) => ({
   setEnded: (ended) => set({ isEnded: ended }),
   setConnected: (connected) => set({ connected }),
   clear: () =>
-    set({ roomId: null, isHost: false, isEnded: false, connected: false }),
+    set({ roomId: null, isHost: null, isEnded: false, connected: false }),
 }))

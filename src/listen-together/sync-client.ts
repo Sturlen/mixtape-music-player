@@ -1,6 +1,7 @@
 import PartySocket from "partysocket"
 import type { PlayerAdapter } from "./player-adapter"
-import type { RoomState, TrackRef, PlayerSnapshot } from "./types"
+import type { PlayerSnapshot } from "./types"
+import type { RoomState } from "./types"
 
 export type ListenTogetherCallbacks = {
   onState?: (state: RoomState) => void
@@ -102,50 +103,65 @@ export class ListenTogetherClient {
     return this.currentState?.ended === true
   }
 
-  play(track?: TrackRef): void {
-    if (!this.socket || !this.isHost() || this.isEnded()) return
+  syncState(trackId: string): void {
+    if (!this.socket || !this.isHost()) return
     const snapshot = this.player.getSnapshot()
-    const queue = this.buildQueue()
+    this.socket.send(
+      JSON.stringify({
+        type: "syncState",
+        clientId: this.clientId,
+        trackId,
+        queue: snapshot.queue,
+        queueIndex: snapshot.queueIndex,
+        positionMs: 0,
+        playbackState: snapshot.playbackState,
+      }),
+    )
+  }
+
+  leave(): void {
+    if (!this.socket) return
+    this.socket.send(
+      JSON.stringify({ type: "leave", clientId: this.clientId }),
+    )
+  }
+
+  play(trackId: string): void {
+    if (!this.socket || !this.isHost()) return
+    const snapshot = this.player.getSnapshot()
     this.socket.send(
       JSON.stringify({
         type: "play",
         clientId: this.clientId,
-        ...(track ? { track, queue, queueIndex: this.buildQueueIndex(), positionMs: Math.round(snapshot.positionMs) } : {}),
+        trackId,
+        queue: snapshot.queue,
+        queueIndex: snapshot.queueIndex,
+        positionMs: Math.round(snapshot.positionMs),
       }),
     )
   }
 
   pause(): void {
-    if (!this.socket || !this.isHost() || this.isEnded()) return
+    if (!this.socket || !this.isHost()) return
+    const snapshot = this.player.getSnapshot()
     this.socket.send(
-      JSON.stringify({ type: "pause", clientId: this.clientId }),
+      JSON.stringify({
+        type: "pause",
+        clientId: this.clientId,
+        positionMs: Math.round(snapshot.positionMs),
+      }),
     )
   }
 
   seek(positionMs: number): void {
-    if (!this.socket || !this.isHost() || this.isEnded()) return
+    if (!this.socket || !this.isHost()) return
     this.socket.send(
       JSON.stringify({ type: "seek", clientId: this.clientId, positionMs }),
     )
   }
 
   private buildSnapshot(): PlayerSnapshot {
-    const s = this.player.getSnapshot()
-    return {
-      track: s.track ?? undefined,
-      queue: this.buildQueue(),
-      queueIndex: this.buildQueueIndex(),
-      playbackState: s.playbackState,
-      positionMs: s.positionMs,
-    }
-  }
-
-  private buildQueue(): TrackRef[] {
-    return this.player.getSnapshot().queue
-  }
-
-  private buildQueueIndex(): number {
-    return this.player.getSnapshot().queueIndex
+    return this.player.getSnapshot()
   }
 
   private handleMessage(msg: unknown): void {
@@ -158,6 +174,9 @@ export class ListenTogetherClient {
         break
       case "state":
         this.applyState(msg)
+        break
+      case "syncState":
+        this.applySyncState(msg)
         break
       case "pong":
         this.handlePong(msg)
@@ -221,7 +240,36 @@ export class ListenTogetherClient {
     }
 
     this.syncing = true
-    this.syncToState(state, serverTimeMs, executeAtMs)
+    this.syncToState(state, serverTimeMs, executeAtMs, false)
+    this.syncing = false
+    this.callbacks.onState?.(state)
+  }
+
+  private applySyncState(msg: unknown): void {
+    const { state, serverTimeMs } = msg as {
+      state: RoomState
+      serverTimeMs: number
+    }
+
+    if (state.version < this.lastAppliedVersion) return
+    this.lastAppliedVersion = state.version
+    this.currentState = state
+
+    if (this.isHostForState(state)) {
+      this.callbacks.onState?.(state)
+      return
+    }
+
+    if (state.ended) {
+      this.syncing = true
+      this.player.pause()
+      this.syncing = false
+      this.callbacks.onState?.(state)
+      return
+    }
+
+    this.syncing = true
+    this.syncToState(state, serverTimeMs, undefined, true)
     this.syncing = false
     this.callbacks.onState?.(state)
   }
@@ -230,13 +278,13 @@ export class ListenTogetherClient {
     state: RoomState,
     serverTimeMs: number,
     executeAtMs: number | undefined,
+    preservePlayback = false,
   ): void {
-    const serverNow = this.getEstimatedServerNow()
     const localSnapshot = this.player.getSnapshot()
 
     const needsQueueLoad =
       state.queue.length > 0 &&
-      localSnapshot.track?.trackId !== state.track?.trackId
+      localSnapshot.queue[localSnapshot.queueIndex] !== state.trackId
 
     const apply = () => {
       const serverNow = this.getEstimatedServerNow()
@@ -248,21 +296,23 @@ export class ListenTogetherClient {
 
       this.player.seek(Math.round(targetPositionMs))
 
-      if (state.playbackState === "playing") {
-        this.player.play()
-      } else {
-        this.player.pause()
+      if (!preservePlayback) {
+        if (state.playbackState === "playing") {
+          this.player.play()
+        } else {
+          this.player.pause()
+        }
       }
     }
 
     if (executeAtMs !== undefined) {
       const delay = Math.max(0, executeAtMs - this.getEstimatedServerNow())
-      if (needsQueueLoad) {
+      if (needsQueueLoad && state.trackId) {
         this.player.loadQueue(state.queue, state.queueIndex)
       }
       setTimeout(apply, delay)
     } else {
-      if (needsQueueLoad) {
+      if (needsQueueLoad && state.trackId) {
         this.player.loadQueue(state.queue, state.queueIndex).then(apply)
       } else {
         apply()
@@ -302,7 +352,7 @@ export class ListenTogetherClient {
 
   private startDriftCorrection(): void {
     this.driftInterval = setInterval(() => {
-      if (!this.currentState || this.currentState.playbackState !== "playing") return
+      if (!this.currentState) return
       if (this.isHostForState(this.currentState)) return
 
       const serverNow = this.getEstimatedServerNow()

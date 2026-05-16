@@ -16,11 +16,9 @@ const MobileControls = ({ className }: { className?: string }) => {
 
   const inSession = !!useListenTogetherStore((s) => s.roomId)
   const isHost = useListenTogetherStore((s) => s.isHost)
-  const controlsDisabled = inSession && !isHost
 
   const handlePlayPause = (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (controlsDisabled) return
     if (isPlaying) pause()
     else play()
   }
@@ -53,7 +51,6 @@ const MobileControls = ({ className }: { className?: string }) => {
           <div
             className={cn(
               "flex items-center justify-center rounded-full p-3 transition",
-              controlsDisabled && "opacity-40",
             )}
             style={{
               backgroundColor: primaryColor || undefined,

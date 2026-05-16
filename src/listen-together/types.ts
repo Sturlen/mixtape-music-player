@@ -1,13 +1,8 @@
-export type TrackRef = {
-  trackId: string
-  durationMs: number
-}
-
 export type PlaybackState = "playing" | "paused"
 
 export type PlayerSnapshot = {
-  track?: TrackRef
-  queue: TrackRef[]
+  trackId: string | null
+  queue: string[]
   queueIndex: number
   playbackState: PlaybackState
   positionMs: number
@@ -16,8 +11,8 @@ export type PlayerSnapshot = {
 export type RoomState = {
   version: number
   hostClientId: string | null
-  track: TrackRef | null
-  queue: TrackRef[]
+  trackId: string | null
+  queue: string[]
   queueIndex: number
   playbackState: PlaybackState
   positionMs: number
@@ -28,8 +23,8 @@ export type RoomState = {
 
 export type ClientMessage =
   | { type: "join"; clientId: string; initialState?: PlayerSnapshot }
-  | { type: "play"; clientId: string; track?: TrackRef; queue?: TrackRef[]; queueIndex?: number; positionMs?: number }
-  | { type: "pause"; clientId: string }
+  | { type: "play"; clientId: string; trackId: string; queue: string[]; queueIndex: number; positionMs: number }
+  | { type: "pause"; clientId: string; positionMs: number }
   | { type: "seek"; clientId: string; positionMs: number }
   | { type: "ping"; clientTimeMs: number }
 

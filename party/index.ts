@@ -1,15 +1,10 @@
 import type * as Party from "partykit/server"
 
-type TrackRef = {
-  trackId: string
-  durationMs: number
-}
-
 type PlaybackState = "playing" | "paused"
 
 type PlayerSnapshot = {
-  track?: TrackRef
-  queue: TrackRef[]
+  trackId: string | null
+  queue: string[]
   queueIndex: number
   playbackState: PlaybackState
   positionMs: number
@@ -18,8 +13,8 @@ type PlayerSnapshot = {
 type RoomState = {
   version: number
   hostClientId: string | null
-  track: TrackRef | null
-  queue: TrackRef[]
+  trackId: string | null
+  queue: string[]
   queueIndex: number
   playbackState: PlaybackState
   positionMs: number
@@ -30,26 +25,24 @@ type RoomState = {
 
 type ClientMessage =
   | { type: "join"; clientId: string; initialState?: PlayerSnapshot }
-  | { type: "play"; clientId: string; track?: TrackRef; queue?: TrackRef[]; queueIndex?: number; positionMs?: number }
-  | { type: "pause"; clientId: string }
+  | { type: "syncState"; clientId: string; trackId: string; queue: string[]; queueIndex: number; positionMs: number; playbackState: PlaybackState }
+  | { type: "play"; clientId: string; trackId: string; queue: string[]; queueIndex: number; positionMs: number }
+  | { type: "pause"; clientId: string; positionMs: number }
   | { type: "seek"; clientId: string; positionMs: number }
+  | { type: "leave"; clientId: string }
   | { type: "ping"; clientTimeMs: number }
 
 type ServerMessage =
   | { type: "snapshot"; state: RoomState; serverTimeMs: number }
-  | {
-      type: "state"
-      state: RoomState
-      serverTimeMs: number
-      executeAtMs?: number
-    }
+  | { type: "state"; state: RoomState; serverTimeMs: number; executeAtMs?: number }
+  | { type: "syncState"; state: RoomState; serverTimeMs: number }
   | { type: "pong"; serverTimeMs: number }
   | { type: "error"; message: string }
 
 const defaultState = (): RoomState => ({
   version: 0,
   hostClientId: null,
-  track: null,
+  trackId: null,
   queue: [],
   queueIndex: 0,
   playbackState: "paused",
@@ -58,15 +51,6 @@ const defaultState = (): RoomState => ({
   playbackRate: 1,
   ended: false,
 })
-
-function getCurrentPositionMs(state: RoomState, now: number): number {
-  if (state.playbackState !== "playing") return state.positionMs
-  return Math.max(
-    0,
-    state.positionMs +
-      (now - state.positionCapturedAtMs) * state.playbackRate,
-  )
-}
 
 export default class RoomServer implements Party.PartyServer {
   state: RoomState
@@ -80,10 +64,14 @@ export default class RoomServer implements Party.PartyServer {
     const persisted = await this.room.storage.get<RoomState>("state")
     if (persisted) {
       this.state = persisted
+      console.log(`[${this.room.id}] onStart: restored state v${this.state.version} host=${this.state.hostClientId} track=${this.state.trackId} ended=${this.state.ended}`)
+    } else {
+      console.log(`[${this.room.id}] onStart: fresh room`)
     }
   }
 
   async onConnect(connection: Party.Connection) {
+    console.log(`[${this.room.id}] onConnect: connection=${connection.id} host=${this.state.hostClientId} track=${this.state.trackId} v${this.state.version}`)
     if (this.state.hostClientId !== null) {
       connection.send(
         JSON.stringify({
@@ -108,18 +96,26 @@ export default class RoomServer implements Party.PartyServer {
 
     switch (msg.type) {
       case "join": {
-        this.connectionToClientId.set(id, msg.clientId)
-        if (this.state.hostClientId === null || this.state.hostClientId === msg.clientId) {
-          this.state.hostClientId = msg.clientId
+        const clientId = msg.clientId
+        console.log(`[${this.room.id}] join: connection=${id} clientId=${clientId} host=${this.state.hostClientId} hasInitial=${!!msg.initialState}`)
+        this.connectionToClientId.set(id, clientId)
+        if (this.state.hostClientId === null || this.state.hostClientId === clientId) {
+          this.state.hostClientId = clientId
           if (msg.initialState) {
-            this.state.track = msg.initialState.track ?? null
+            this.state.trackId = msg.initialState.trackId
             this.state.queue = msg.initialState.queue
             this.state.queueIndex = msg.initialState.queueIndex
             this.state.playbackState = msg.initialState.playbackState
             this.state.positionMs = msg.initialState.positionMs
             this.state.positionCapturedAtMs = now
           }
-          await this.persistAndBroadcast(now)
+          this.state.ended = false
+          this.state.version++
+          console.log(`[${this.room.id}] host=${clientId} track=${this.state.trackId} queueLen=${this.state.queue.length} state=${this.state.playbackState} pos=${this.state.positionMs} v${this.state.version}`)
+          await this.persist()
+          this.broadcastState(now)
+        } else {
+          console.log(`[${this.room.id}] follower joined: clientId=${clientId}`)
         }
         sender.send(
           JSON.stringify({
@@ -128,6 +124,31 @@ export default class RoomServer implements Party.PartyServer {
             serverTimeMs: now,
           } satisfies ServerMessage),
         )
+        break
+      }
+
+      case "syncState": {
+        const clientId = this.connectionToClientId.get(id)
+        if (!clientId || clientId !== this.state.hostClientId) {
+          sender.send(
+            JSON.stringify({
+              type: "error",
+              message: "Only the host can sync state",
+            } satisfies ServerMessage),
+          )
+          return
+        }
+        console.log(`[${this.room.id}] syncState: track=${msg.trackId} queueLen=${msg.queue.length} index=${msg.queueIndex} state=${msg.playbackState} pos=${msg.positionMs}`)
+        this.state.trackId = msg.trackId
+        this.state.queue = msg.queue
+        this.state.queueIndex = msg.queueIndex
+        this.state.positionMs = msg.positionMs
+        this.state.positionCapturedAtMs = now
+        this.state.playbackState = msg.playbackState
+        this.state.ended = false
+        this.state.version++
+        await this.persist()
+        this.broadcastSyncState(now)
         break
       }
 
@@ -142,18 +163,13 @@ export default class RoomServer implements Party.PartyServer {
           )
           return
         }
-        if (msg.track) {
-          this.state.track = msg.track
-          this.state.positionMs = msg.positionMs ?? 0
-        }
-        if (msg.queue) {
-          this.state.queue = msg.queue
-        }
-        if (msg.queueIndex !== undefined) {
-          this.state.queueIndex = msg.queueIndex
-        }
-        this.state.playbackState = "playing"
+        console.log(`[${this.room.id}] play: track=${msg.trackId} queueLen=${msg.queue.length} index=${msg.queueIndex} pos=${msg.positionMs}`)
+        this.state.trackId = msg.trackId
+        this.state.queue = msg.queue
+        this.state.queueIndex = msg.queueIndex
+        this.state.positionMs = msg.positionMs
         this.state.positionCapturedAtMs = now
+        this.state.playbackState = "playing"
         this.state.ended = false
         this.state.version++
         await this.persist()
@@ -172,7 +188,8 @@ export default class RoomServer implements Party.PartyServer {
           )
           return
         }
-        this.state.positionMs = getCurrentPositionMs(this.state, now)
+        console.log(`[${this.room.id}] pause: pos=${msg.positionMs}`)
+        this.state.positionMs = msg.positionMs
         this.state.playbackState = "paused"
         this.state.positionCapturedAtMs = now
         this.state.version++
@@ -192,8 +209,28 @@ export default class RoomServer implements Party.PartyServer {
           )
           return
         }
+        console.log(`[${this.room.id}] seek: pos=${msg.positionMs}`)
         this.state.positionMs = msg.positionMs
         this.state.positionCapturedAtMs = now
+        this.state.version++
+        await this.persist()
+        this.broadcastState(now)
+        break
+      }
+
+      case "leave": {
+        const clientId = this.connectionToClientId.get(id)
+        if (!clientId || clientId !== this.state.hostClientId) {
+          sender.send(
+            JSON.stringify({
+              type: "error",
+              message: "Only the host can end the session",
+            } satisfies ServerMessage),
+          )
+          return
+        }
+        console.log(`[${this.room.id}] leave: host ${clientId} ended session`)
+        this.state.ended = true
         this.state.version++
         await this.persist()
         this.broadcastState(now)
@@ -214,12 +251,7 @@ export default class RoomServer implements Party.PartyServer {
 
   async onClose(connection: Party.Connection) {
     const clientId = this.connectionToClientId.get(connection.id)
-    if (clientId && clientId === this.state.hostClientId) {
-      this.state.ended = true
-      this.state.version++
-      await this.persist()
-      this.broadcastState(Date.now())
-    }
+    console.log(`[${this.room.id}] onClose: connection=${connection.id} clientId=${clientId ?? "unknown"}`)
     this.connectionToClientId.delete(connection.id)
   }
 
@@ -227,12 +259,8 @@ export default class RoomServer implements Party.PartyServer {
     await this.room.storage.put("state", this.state)
   }
 
-  private async persistAndBroadcast(now: number) {
-    await this.persist()
-    this.broadcastState(now)
-  }
-
   private broadcastState(executeAtMs?: number) {
+    console.log(`[${this.room.id}] broadcast: v${this.state.version} track=${this.state.trackId} state=${this.state.playbackState} pos=${this.state.positionMs} ended=${this.state.ended} executeAt=${executeAtMs ?? "none"}`)
     const msg: ServerMessage = {
       type: "state",
       state: this.state,
@@ -240,6 +268,16 @@ export default class RoomServer implements Party.PartyServer {
     }
     if (executeAtMs !== undefined) {
       msg.executeAtMs = executeAtMs
+    }
+    this.room.broadcast(JSON.stringify(msg))
+  }
+
+  private broadcastSyncState(executeAtMs?: number) {
+    console.log(`[${this.room.id}] broadcastSyncState: v${this.state.version} track=${this.state.trackId} state=${this.state.playbackState} pos=${this.state.positionMs} ended=${this.state.ended} executeAt=${executeAtMs ?? "none"}`)
+    const msg: ServerMessage = {
+      type: "syncState",
+      state: this.state,
+      serverTimeMs: Date.now(),
     }
     this.room.broadcast(JSON.stringify(msg))
   }

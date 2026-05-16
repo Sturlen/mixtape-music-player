@@ -14,7 +14,7 @@ function RouteComponent() {
   const currentTrack = useCurrentTrack()
   const isPlaying = useIsPlaying()
 
-  const status = isEnded ? "Session ended" : isHost ? "You are the host" : "Joined as listener"
+  const status = isEnded ? "Session ended" : isHost === null ? "Connecting to session..." : isHost ? "You are the host" : "Joined as listener"
 
   const handleLeave = () => {
     useListenTogetherStore.getState().clear()
