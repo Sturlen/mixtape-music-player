@@ -5,7 +5,7 @@ import { createPlayerAdapter } from "./player-adapter"
 import { getOrCreateClientId } from "./room-id"
 import { useAudioPlayerBase } from "@/Player"
 
-const PARTYKIT_HOST = "localhost:1999"
+const PARTYKIT_HOST = "https://mixtape-listen-together.sturlen.partykit.dev"
 
 function getRoomParam(): string | null {
   return new URLSearchParams(window.location.search).get("room_id")
@@ -70,13 +70,17 @@ export function ListenTogetherProvider() {
         state.requestedSeekPosition !== prev.requestedSeekPosition
 
       if (trackChanged && trackId) {
-        console.log(`[listen-together] trackChanged: ${prevTrackId} -> ${trackId}, calling syncState`)
+        console.log(
+          `[listen-together] trackChanged: ${prevTrackId} -> ${trackId}, calling syncState`,
+        )
         client.syncState(trackId)
         return
       }
 
       if (playbackChanged) {
-        console.log(`[listen-together] playbackChanged: ${prev.requestedPlaybackState} -> ${state.requestedPlaybackState}, trackId=${trackId}`)
+        console.log(
+          `[listen-together] playbackChanged: ${prev.requestedPlaybackState} -> ${state.requestedPlaybackState}, trackId=${trackId}`,
+        )
         if (state.requestedPlaybackState === "playing" && trackId) {
           client.play(trackId)
         } else {

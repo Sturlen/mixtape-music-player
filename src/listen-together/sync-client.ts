@@ -9,6 +9,13 @@ export type ListenTogetherCallbacks = {
   onError?: (message: string) => void
 }
 
+const IGNORE_DRIFT_MS = 150
+const HARD_SEEK_DRIFT_MS = 500
+const SEEK_COOLDOWN_MS = 2000
+const DRIFT_INTERVAL_MS = 2000
+const PING_INTERVAL_MS = 5000
+const MAX_RTT_MS = 1000
+
 export class ListenTogetherClient {
   syncing = false
 
@@ -20,6 +27,8 @@ export class ListenTogetherClient {
 
   private socket: PartySocket | null = null
   private serverOffsetMs = 0
+  private bestRttMs = Number.POSITIVE_INFINITY
+  private lastHardSeekAtMs = 0
   private lastAppliedVersion = -1
   private currentState: RoomState | null = null
   private connected = false
@@ -160,9 +169,50 @@ export class ListenTogetherClient {
     )
   }
 
+  // ── Server clock helpers ──────────────────────────────────────────
+
+  private getEstimatedServerNowMs(): number {
+    return Date.now() + this.serverOffsetMs
+  }
+
+  private getExpectedPositionMs(): number {
+    const s = this.currentState
+    if (!s) return 0
+    if (s.playbackState === "paused") return s.positionMs
+    const elapsedMs = this.getEstimatedServerNowMs() - s.positionCapturedAtMs
+    return s.positionMs + elapsedMs * s.playbackRate
+  }
+
+  // ── Smooth ping/pong clock offset ─────────────────────────────────
+
+  private updateServerOffsetFromPong(args: {
+    sentAtMs: number
+    receivedAtMs: number
+    serverTimeMs: number
+  }) {
+    const rttMs = args.receivedAtMs - args.sentAtMs
+    if (rttMs > MAX_RTT_MS) return
+
+    const candidateOffsetMs =
+      args.serverTimeMs + rttMs / 2 - args.receivedAtMs
+
+    if (rttMs < this.bestRttMs) {
+      this.bestRttMs = rttMs
+      this.serverOffsetMs = candidateOffsetMs
+      return
+    }
+
+    this.serverOffsetMs =
+      this.serverOffsetMs * 0.9 + candidateOffsetMs * 0.1
+  }
+
+  // ── Outgoing host messages ────────────────────────────────────────
+
   private buildSnapshot(): PlayerSnapshot {
     return this.player.getSnapshot()
   }
+
+  // ── Incoming message handling ─────────────────────────────────────
 
   private handleMessage(msg: unknown): void {
     if (typeof msg !== "object" || !msg || !("type" in msg)) return
@@ -190,10 +240,7 @@ export class ListenTogetherClient {
   }
 
   private applySnapshot(msg: unknown): void {
-    const { state, serverTimeMs } = msg as {
-      state: RoomState
-      serverTimeMs: number
-    }
+    const { state } = msg as { state: RoomState }
     this.currentState = state
     this.lastAppliedVersion = state.version
 
@@ -210,15 +257,14 @@ export class ListenTogetherClient {
     }
 
     this.syncing = true
-    this.syncToState(state, serverTimeMs, undefined)
+    this.syncTo(state)
     this.syncing = false
     this.callbacks.onState?.(state)
   }
 
   private applyState(msg: unknown): void {
-    const { state, serverTimeMs, executeAtMs } = msg as {
+    const { state, executeAtMs } = msg as {
       state: RoomState
-      serverTimeMs: number
       executeAtMs?: number
     }
 
@@ -240,16 +286,13 @@ export class ListenTogetherClient {
     }
 
     this.syncing = true
-    this.syncToState(state, serverTimeMs, executeAtMs, false)
+    this.syncTo(state, executeAtMs, false)
     this.syncing = false
     this.callbacks.onState?.(state)
   }
 
   private applySyncState(msg: unknown): void {
-    const { state, serverTimeMs } = msg as {
-      state: RoomState
-      serverTimeMs: number
-    }
+    const { state } = msg as { state: RoomState }
 
     if (state.version < this.lastAppliedVersion) return
     this.lastAppliedVersion = state.version
@@ -269,32 +312,30 @@ export class ListenTogetherClient {
     }
 
     this.syncing = true
-    this.syncToState(state, serverTimeMs, undefined, true)
+    this.syncTo(state, undefined, true)
     this.syncing = false
     this.callbacks.onState?.(state)
   }
 
-  private syncToState(
+  /**
+   * Apply server state to the local player.
+   *
+   * When executeAtMs is provided, delay execution until estimated server
+   * time reaches that value so all clients act at the same server timestamp.
+   */
+  private syncTo(
     state: RoomState,
-    serverTimeMs: number,
-    executeAtMs: number | undefined,
+    executeAtMs?: number,
     preservePlayback = false,
   ): void {
     const localSnapshot = this.player.getSnapshot()
-
     const needsQueueLoad =
       state.queue.length > 0 &&
       localSnapshot.queue[localSnapshot.queueIndex] !== state.trackId
 
     const apply = () => {
-      const serverNow = this.getEstimatedServerNow()
-      const targetPositionMs =
-        state.playbackState === "playing"
-          ? state.positionMs +
-            (serverNow - state.positionCapturedAtMs) * state.playbackRate
-          : state.positionMs
-
-      this.player.seek(Math.round(targetPositionMs))
+      const targetMs = Math.round(this.getExpectedPositionMs())
+      this.player.seek(targetMs)
 
       if (!preservePlayback) {
         if (state.playbackState === "playing") {
@@ -306,7 +347,7 @@ export class ListenTogetherClient {
     }
 
     if (executeAtMs !== undefined) {
-      const delay = Math.max(0, executeAtMs - this.getEstimatedServerNow())
+      const delay = Math.max(0, executeAtMs - this.getEstimatedServerNowMs())
       if (needsQueueLoad && state.trackId) {
         this.player.loadQueue(state.queue, state.queueIndex)
       }
@@ -320,21 +361,14 @@ export class ListenTogetherClient {
     }
   }
 
-  private isHostForState(state: RoomState): boolean {
-    return state.hostClientId === this.clientId
-  }
+  // ── Clock sync via ping/pong ──────────────────────────────────────
 
   private handlePong(msg: unknown): void {
     const { serverTimeMs } = msg as { serverTimeMs: number }
-    const receivedAt = Date.now()
-    const sentAt = (msg as { clientTimeMs?: number }).clientTimeMs ?? receivedAt
-    const rtt = receivedAt - sentAt
-    const estimatedServerNow = serverTimeMs + rtt / 2
-    this.serverOffsetMs = estimatedServerNow - receivedAt
-  }
-
-  private getEstimatedServerNow(): number {
-    return Date.now() + this.serverOffsetMs
+    const receivedAtMs = Date.now()
+    const sentAtMs =
+      (msg as { clientTimeMs?: number }).clientTimeMs ?? receivedAtMs
+    this.updateServerOffsetFromPong({ sentAtMs, receivedAtMs, serverTimeMs })
   }
 
   private startPingInterval(): void {
@@ -347,29 +381,48 @@ export class ListenTogetherClient {
           }),
         )
       }
-    }, 10000)
+    }, PING_INTERVAL_MS)
   }
+
+  // ── Drift correction ──────────────────────────────────────────────
 
   private startDriftCorrection(): void {
     this.driftInterval = setInterval(() => {
       if (!this.currentState) return
       if (this.isHostForState(this.currentState)) return
+      if (this.isInSeekCooldown()) return
 
-      const serverNow = this.getEstimatedServerNow()
-      const expectedMs =
-        this.currentState.positionMs +
-        (serverNow - this.currentState.positionCapturedAtMs) *
-          this.currentState.playbackRate
-
+      const expectedMs = this.getExpectedPositionMs()
       const actualMs = this.player.getSnapshot().positionMs
-      const drift = Math.abs(expectedMs - actualMs)
+      const driftMs = expectedMs - actualMs
+      const absDrift = Math.abs(driftMs)
 
-      if (drift >= 250) {
+      if (absDrift >= HARD_SEEK_DRIFT_MS) {
+        console.log(
+          `[drift] hard seek: drift=${Math.round(driftMs)}ms ` +
+            `expected=${Math.round(expectedMs)}ms actual=${Math.round(actualMs)}ms`,
+        )
         this.syncing = true
+        this.lastHardSeekAtMs = Date.now()
         this.player.seek(Math.round(expectedMs))
         this.syncing = false
+      } else if (absDrift >= IGNORE_DRIFT_MS) {
+        console.log(
+          `[drift] ignoring: drift=${Math.round(driftMs)}ms ` +
+            `expected=${Math.round(expectedMs)}ms actual=${Math.round(actualMs)}ms`,
+        )
       }
-    }, 5000)
+    }, DRIFT_INTERVAL_MS)
+  }
+
+  private isInSeekCooldown(): boolean {
+    return Date.now() - this.lastHardSeekAtMs < SEEK_COOLDOWN_MS
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────
+
+  private isHostForState(state: RoomState): boolean {
+    return state.hostClientId === this.clientId
   }
 
   private stopIntervals(): void {

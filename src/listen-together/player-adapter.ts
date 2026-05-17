@@ -8,6 +8,7 @@ export interface PlayerAdapter {
   play(): Promise<void>
   pause(): Promise<void>
   seek(positionMs: number): Promise<void>
+  setPlaybackRate(rate: number): void
   getSnapshot(): PlayerSnapshot
 }
 
@@ -35,6 +36,10 @@ export function createPlayerAdapter(): PlayerAdapter {
 
     async seek(positionMs: number) {
       useAudioPlayer.getState().seek(positionMs / 1000)
+    },
+
+    setPlaybackRate(rate: number) {
+      useAudioPlayer.getState().setPlaybackRate(rate)
     },
 
     getSnapshot(): PlayerSnapshot {

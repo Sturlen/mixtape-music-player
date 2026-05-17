@@ -3,6 +3,24 @@
 Notable changes. Expect proper version numbers when it's actually close to a release version.
 
 
+## v0.4.0 [16-05-2026]
+
+### Added
+
+- **Listen Together**: PartyKit-based real-time session sync with host/follower model. Sessions persist across host reconnects. URL-based room management via `?room_id=` query param.
+- **Server-time clock sync**: Smoothed ping/pong clock offset estimation. Conservative drift correction with seek cooldown to prevent oscillation.
+- **Track resolution for followers**: Fetches track and album data from local API. Album art and colors sync correctly.
+
+### Changed
+
+- **Listen Together button moved to top bar** left of search. Dedicated `/listen` pages removed.
+- **Listener controls**: Play/pause always allowed (local mute). Queue, prev/skip/shuffle disabled. Track changes don't force playback.
+
+### Fixed
+
+- **Position on track switch**: Always 0, not stale from previous track.
+- **Album art data shape**: Unwraps `{ albums: [...] }` response correctly.
+
 ## v0.3.0 [14-05-2026]
 
 ### Added

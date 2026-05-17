@@ -93,6 +93,7 @@ type PublicAPI = {
   queueJump: (trackIndex: number) => Track | undefined
   setVolume: (newVolumeFraction: number) => void
   seek: (time: number) => void
+  setPlaybackRate: (rate: number) => void
 }
 
 type PlayerState = {
@@ -101,6 +102,7 @@ type PlayerState = {
   isError: boolean
   _playbackState: "playing" | "paused"
   requestedPlaybackState: "playing" | "paused"
+  requestedPlaybackRate: number
   requestedSeekPosition: number | undefined
   src: string | undefined
   currentTime: number
@@ -208,6 +210,7 @@ export const useAudioPlayerBase = create<PlayerState>()(
         },
         _playbackState: "paused",
         requestedPlaybackState: "paused",
+        requestedPlaybackRate: 1,
         src: undefined,
         requestedSeekPosition: undefined,
         isLoading: false,
@@ -219,6 +222,9 @@ export const useAudioPlayerBase = create<PlayerState>()(
         queueIndex: 0,
         setVolume: (newVolumeFraction) => {
           set({ volume: clamp(newVolumeFraction) })
+        },
+        setPlaybackRate: (rate) => {
+          set({ requestedPlaybackRate: rate })
         },
         queuePush: (tr: Track) => {
           const queueTracks = [...get().queueTracks]

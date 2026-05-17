@@ -71,13 +71,14 @@ export default class RoomServer implements Party.PartyServer {
   }
 
   async onConnect(connection: Party.Connection) {
+    const now = Date.now()
     console.log(`[${this.room.id}] onConnect: connection=${connection.id} host=${this.state.hostClientId} track=${this.state.trackId} v${this.state.version}`)
     if (this.state.hostClientId !== null) {
       connection.send(
         JSON.stringify({
           type: "snapshot",
           state: this.state,
-          serverTimeMs: Date.now(),
+          serverTimeMs: now,
         } satisfies ServerMessage),
       )
     }
@@ -173,7 +174,7 @@ export default class RoomServer implements Party.PartyServer {
         this.state.ended = false
         this.state.version++
         await this.persist()
-        this.broadcastState(now + 800)
+        this.broadcastState(now, now + 800)
         break
       }
 
@@ -259,12 +260,12 @@ export default class RoomServer implements Party.PartyServer {
     await this.room.storage.put("state", this.state)
   }
 
-  private broadcastState(executeAtMs?: number) {
+  private broadcastState(now: number, executeAtMs?: number) {
     console.log(`[${this.room.id}] broadcast: v${this.state.version} track=${this.state.trackId} state=${this.state.playbackState} pos=${this.state.positionMs} ended=${this.state.ended} executeAt=${executeAtMs ?? "none"}`)
     const msg: ServerMessage = {
       type: "state",
       state: this.state,
-      serverTimeMs: Date.now(),
+      serverTimeMs: now,
     }
     if (executeAtMs !== undefined) {
       msg.executeAtMs = executeAtMs
@@ -272,12 +273,12 @@ export default class RoomServer implements Party.PartyServer {
     this.room.broadcast(JSON.stringify(msg))
   }
 
-  private broadcastSyncState(executeAtMs?: number) {
-    console.log(`[${this.room.id}] broadcastSyncState: v${this.state.version} track=${this.state.trackId} state=${this.state.playbackState} pos=${this.state.positionMs} ended=${this.state.ended} executeAt=${executeAtMs ?? "none"}`)
+  private broadcastSyncState(now: number) {
+    console.log(`[${this.room.id}] broadcastSyncState: v${this.state.version} track=${this.state.trackId} state=${this.state.playbackState} pos=${this.state.positionMs} ended=${this.state.ended}`)
     const msg: ServerMessage = {
       type: "syncState",
       state: this.state,
-      serverTimeMs: Date.now(),
+      serverTimeMs: now,
     }
     this.room.broadcast(JSON.stringify(msg))
   }
