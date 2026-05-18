@@ -3,6 +3,14 @@
 Notable changes. Expect proper version numbers when it's actually close to a release version.
 
 
+## [18-05-2026]
+
+
+### Changed
+
+- **Vite Bundler**: Replaces Bun html imports. local dev port is now 5173. API port remains the same, but is proxied during development.
+
+
 ## v0.4.0 [16-05-2026]
 
 ### Added
