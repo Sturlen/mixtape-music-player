@@ -20,4 +20,5 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bunx partykit deploy
         env:
+          PARTYKIT_LOGIN: ${{ secrets.PARTYKIT_LOGIN }}
           PARTYKIT_TOKEN: ${{ secrets.PARTYKIT_TOKEN }}
