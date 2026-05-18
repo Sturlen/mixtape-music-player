@@ -2,6 +2,7 @@ import { XIcon } from "lucide-react"
 import { useAudioPlayer } from "@/Player"
 import { cn } from "@/lib/utils"
 import { useEffect, useRef } from "react"
+import { useListenTogetherStore } from "@/listen-together/store"
 
 function scrollIntoViewIfNeeded(
   container: HTMLElement,
@@ -19,6 +20,10 @@ export function PlaybackQueue({ className }: { className?: string }) {
   const queueJump = useAudioPlayer.use.queueJump()
   const active_el_ref = useRef<HTMLDivElement | null>(null)
   const container_ref = useRef<HTMLOListElement | null>(null)
+
+  const inSession = !!useListenTogetherStore((s) => s.roomId)
+  const isHost = useListenTogetherStore((s) => s.isHost)
+  const disabled = inSession && isHost === false
 
   useEffect(() => {
     if (!active_el_ref.current || !container_ref.current) {
@@ -46,19 +51,26 @@ export function PlaybackQueue({ className }: { className?: string }) {
             <div
               ref={i === queueIndex ? active_el_ref : undefined}
               data-active={i === queueIndex}
-              className="data-[active=true]:bg-accent hover:bg-muted flex cursor-pointer items-stretch gap-2"
-              onClick={() => queueJump(i)}
+              className={cn(
+                "flex items-stretch gap-2",
+                disabled
+                  ? "cursor-default"
+                  : "data-[active=true]:bg-accent hover:bg-muted cursor-pointer",
+              )}
+              onClick={() => !disabled && queueJump(i)}
             >
               <div className="h-10 grow truncate p-2 px-4">{tr.name}</div>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  queueRemove(i)
-                }}
-                className="hover:bg-foreground text-foreground hover:text-background justify-self-end p-2"
-              >
-                <XIcon />
-              </button>
+              {!disabled && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    queueRemove(i)
+                  }}
+                  className="hover:bg-foreground text-foreground hover:text-background justify-self-end p-2"
+                >
+                  <XIcon />
+                </button>
+              )}
             </div>
           </li>
         ))

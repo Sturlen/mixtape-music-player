@@ -1,0 +1,8 @@
+{
+  "name": "mixtape-listen-together",
+  "main": "party/index.ts",
+  "parties": {
+    "room": "party/index.ts"
+  },
+  "compatibilityDate": "2026-05-16"
+}

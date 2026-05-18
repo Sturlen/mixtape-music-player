@@ -28,6 +28,7 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
 
   const volume = useAudioPlayer.use.volume()
   const requested_playback_state = useAudioPlayer.use.requestedPlaybackState()
+  const requested_playback_rate = useAudioPlayer.use.requestedPlaybackRate()
   const is_loading = useAudioPlayer.use.isLoading()
   const endSeek = useAudioPlayer.use.endSeek()
   const requestedSeekPosition = useAudioPlayer.use.requestedSeekPosition()
@@ -138,6 +139,13 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
       audio_ref.current.pause()
     }
   }, [requested_playback_state])
+
+  // Playback rate
+  useEffect(() => {
+    if (audio_ref.current) {
+      audio_ref.current.playbackRate = requested_playback_rate
+    }
+  }, [requested_playback_rate])
 
   // Auto-play after loading completes
   useEffect(() => {

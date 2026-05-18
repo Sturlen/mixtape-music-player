@@ -56,6 +56,14 @@ bun install
 
 Mixtape is currently configured through environment variables. Available options are listed in [/src/shared/env.ts](/src/shared/env.ts)
 
+Key variables:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MUSIC_PATH` | `./demo-music/` | Path to your music library |
+| `PORT` | `3000` | Server port |
+| `BUN_PUBLIC_PARTYKIT_HOST` | `localhost:1999` | PartyKit host for Listen Together |
+
 To begin using it with your music, set `MUSIC_PATH` to point towards your music library. Here's how mixtape expects it to be structured:
 
 ```
@@ -84,6 +92,24 @@ To run for production:
 ```bash
 bun run start
 ```
+
+### 6. Listen Together (experimental)
+
+Mixtape includes an experimental "Listen Together" feature that lets you synchronize playback with friends using PartyKit.
+
+To use it, you need to run the PartyKit room server in parallel:
+
+```bash
+# Terminal 1 — PartyKit room server
+bunx partykit dev
+
+# Terminal 2 — Mixtape app
+bun dev
+```
+
+Then navigate to `/listen` to create or join a session. The first person in a room becomes the host and controls playback. Followers sync automatically within ~1 second.
+
+For deployment, see `listen-together.md`.
 
 ## Current Limitations
 

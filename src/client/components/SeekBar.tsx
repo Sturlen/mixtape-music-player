@@ -2,6 +2,7 @@ import { useState, useDeferredValue } from "react"
 import { useAudioPlayer } from "@/Player"
 import { formatTime } from "@/lib/utils"
 import { Slider } from "./ui/slider"
+import { useListenTogetherStore } from "@/listen-together/store"
 
 export default function SeekBar({
   classNameTrack,
@@ -13,12 +14,20 @@ export default function SeekBar({
   const seek = useAudioPlayer.use.seek()
   const [seeking, setSeeking] = useState<number | null>(null)
 
+  const inSession = !!useListenTogetherStore((s) => s.roomId)
+  const isHost = useListenTogetherStore((s) => s.isHost)
+  const disabled = inSession && isHost === false
+
   const deferredSeeking = useDeferredValue(seeking)
   const seekValue: [number] = [deferredSeeking ?? currentTime ?? 0]
 
-  const onSeekStart = () => setSeeking(currentTime ?? 0)
+  const onSeekStart = () => {
+    if (disabled) return
+    setSeeking(currentTime ?? 0)
+  }
   const onSeekChange = (val: [number]) => setSeeking(val[0])
   const onSeekEnd = () => {
+    if (disabled) return
     if (seeking != null) seek(seeking)
     setSeeking(null)
   }
@@ -40,6 +49,7 @@ export default function SeekBar({
           onTouchEnd={onSeekEnd}
           className="flex-1"
           classNameTrack={classNameTrack}
+          disabled={disabled}
         />
         <span className="w-10">{formatTime(duration)}</span>
       </div>

@@ -7,6 +7,7 @@ RUN bun install --frozen-lockfile
 # copy source and build
 COPY . /app
 # run tests and build in this stage (CI should run tests before building image)
+RUN bun run generate-routes
 RUN bun test || true
 RUN bun run build
 

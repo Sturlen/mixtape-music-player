@@ -5,13 +5,13 @@ import {
   SkipBackIcon,
   SkipForwardIcon,
 } from "lucide-react"
-import { useAudioPlayer, useCurrentTrack } from "@/Player"
+import { useAudioPlayer } from "@/Player"
 import { cn, formatTime } from "@/lib/utils"
 import VolumeSlider from "@/VolumeControl"
 import { Cassette } from "@/client/components/Cassette"
 import { CurrentTrackScroller } from "@/client/components/CurrentTrackScroller"
 import SeekBar from "@/client/components/SeekBar"
-import { Button } from "@/client/components/ui/button"
+import { useListenTogetherStore } from "@/listen-together/store"
 import type { ReactNode } from "react"
 
 export function Controls() {
@@ -23,9 +23,11 @@ export function Controls() {
   const prev = useAudioPlayer.use.queuePrev()
   const shuffle = useAudioPlayer.use.queueShuffle()
 
-  const is_play_button_down = requestedPlaybackState === "playing"
-
   const isShuffled = useAudioPlayer.use.isShuffled()
+
+  const inSession = !!useListenTogetherStore((s) => s.roomId)
+  const isHost = useListenTogetherStore((s) => s.isHost)
+  const skipPrevDisabled = inSession && isHost === false
 
   return (
     <div className="flex w-full flex-col items-center">
@@ -51,14 +53,14 @@ export function Controls() {
           </div>
         </div>
         <div className="flex h-20 justify-stretch gap-2 pt-4">
-          <PlayerButton onClick={() => prev()}>
+          <PlayerButton onClick={() => prev()} disabled={skipPrevDisabled}>
             <SkipBackIcon />
           </PlayerButton>
           <PlayerButton
-            data-active={is_play_button_down}
+            data-active={requestedPlaybackState === "playing"}
             className={cn({
               "bg-amber-400 text-foreground hover:bg-amber-400/90":
-                is_play_button_down,
+                requestedPlaybackState === "playing",
             })}
             onClick={() => togglePlayback()}
           >
@@ -69,12 +71,12 @@ export function Controls() {
             )}
           </PlayerButton>
 
-          <PlayerButton onClick={() => skip()}>
+          <PlayerButton onClick={() => skip()} disabled={skipPrevDisabled}>
             <SkipForwardIcon />
           </PlayerButton>
         </div>
         <div className="flex h-10 justify-stretch gap-2 pt-2">
-          <PlayerButton onClick={() => shuffle()}>
+          <PlayerButton onClick={() => shuffle()} disabled={skipPrevDisabled}>
             <ShuffleIcon
               className={cn("transition", { "scale-y-[-1]": isShuffled })}
             />
@@ -111,18 +113,23 @@ function PlayerButton({
   children,
   className,
   onClick,
+  disabled,
 }: {
   children: ReactNode
   className?: string
   onClick?: () => void
+  disabled?: boolean
 }) {
   return (
     <button
       className={cn(
-        "bg-primary text-primary-foreground hover:bg-primary/90 flex grow items-center justify-center transition active:scale-95",
+        "bg-primary text-primary-foreground flex grow items-center justify-center transition active:scale-95",
+        disabled && "pointer-events-none opacity-40",
+        !disabled && "hover:bg-primary/90",
         className,
       )}
       onClick={onClick}
+      disabled={disabled}
     >
       {children}
     </button>
