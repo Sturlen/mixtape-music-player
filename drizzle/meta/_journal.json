@@ -29,6 +29,13 @@
       "when": 1778914621977,
       "tag": "0003_reflective_kitty_pryde",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1779138237848,
+      "tag": "0004_tranquil_ghost_rider",
+      "breakpoints": true
     }
   ]
 }

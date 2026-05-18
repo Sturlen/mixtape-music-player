@@ -107,3 +107,39 @@ export const playlistTracks = pgTable(
   },
   (t) => [index("idx_playlist_tracks_playlist").on(t.playlistId)],
 )
+
+export const users = pgTable(
+  "users",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    username: text("username").notNull().unique(),
+    passwordHash: text("password_hash").notNull(),
+    role: text("role").notNull().default("user"),
+    isActive: boolean("is_active").notNull().default(true),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (t) => [index("idx_users_username").on(t.username)],
+)
+
+export const invitations = pgTable(
+  "invitations",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    code: text("code").notNull().unique(),
+    username: text("username").notNull(),
+    createdBy: uuid("created_by").notNull().references(() => users.id, { onDelete: "cascade" }),
+    isUsed: boolean("is_used").notNull().default(false),
+    usedBy: uuid("used_by").references(() => users.id),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => [index("idx_invitations_code").on(t.code)],
+)
+
+export const settings = pgTable(
+  "settings",
+  {
+    key: text("key").primaryKey(),
+    value: text("value").notNull(),
+  },
+)

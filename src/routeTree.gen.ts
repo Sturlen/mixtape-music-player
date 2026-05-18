@@ -9,16 +9,29 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as LibrariesRouteImport } from './routes/libraries'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PlaylistsIndexRouteImport } from './routes/playlists/index'
 import { Route as ArtistsIndexRouteImport } from './routes/artists/index'
 import { Route as AlbumsIndexRouteImport } from './routes/albums/index'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as PlaylistsIdRouteImport } from './routes/playlists/$id'
 import { Route as ArtistsIdRouteImport } from './routes/artists/$id'
 import { Route as AlbumsIdRouteImport } from './routes/albums/$id'
 
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LibrariesRoute = LibrariesRouteImport.update({
   id: '/libraries',
   path: '/libraries',
@@ -49,6 +62,11 @@ const AlbumsIndexRoute = AlbumsIndexRouteImport.update({
   path: '/albums/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlaylistsIdRoute = PlaylistsIdRouteImport.update({
   id: '/playlists/$id',
   path: '/playlists/$id',
@@ -69,9 +87,12 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/libraries': typeof LibrariesRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
   '/albums/$id': typeof AlbumsIdRoute
   '/artists/$id': typeof ArtistsIdRoute
   '/playlists/$id': typeof PlaylistsIdRoute
+  '/admin/': typeof AdminIndexRoute
   '/albums/': typeof AlbumsIndexRoute
   '/artists/': typeof ArtistsIndexRoute
   '/playlists/': typeof PlaylistsIndexRoute
@@ -80,9 +101,12 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/libraries': typeof LibrariesRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
   '/albums/$id': typeof AlbumsIdRoute
   '/artists/$id': typeof ArtistsIdRoute
   '/playlists/$id': typeof PlaylistsIdRoute
+  '/admin': typeof AdminIndexRoute
   '/albums': typeof AlbumsIndexRoute
   '/artists': typeof ArtistsIndexRoute
   '/playlists': typeof PlaylistsIndexRoute
@@ -92,9 +116,12 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/libraries': typeof LibrariesRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
   '/albums/$id': typeof AlbumsIdRoute
   '/artists/$id': typeof ArtistsIdRoute
   '/playlists/$id': typeof PlaylistsIdRoute
+  '/admin/': typeof AdminIndexRoute
   '/albums/': typeof AlbumsIndexRoute
   '/artists/': typeof ArtistsIndexRoute
   '/playlists/': typeof PlaylistsIndexRoute
@@ -105,9 +132,12 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/libraries'
+    | '/login'
+    | '/register'
     | '/albums/$id'
     | '/artists/$id'
     | '/playlists/$id'
+    | '/admin/'
     | '/albums/'
     | '/artists/'
     | '/playlists/'
@@ -116,9 +146,12 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/libraries'
+    | '/login'
+    | '/register'
     | '/albums/$id'
     | '/artists/$id'
     | '/playlists/$id'
+    | '/admin'
     | '/albums'
     | '/artists'
     | '/playlists'
@@ -127,9 +160,12 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/libraries'
+    | '/login'
+    | '/register'
     | '/albums/$id'
     | '/artists/$id'
     | '/playlists/$id'
+    | '/admin/'
     | '/albums/'
     | '/artists/'
     | '/playlists/'
@@ -139,9 +175,12 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   LibrariesRoute: typeof LibrariesRoute
+  LoginRoute: typeof LoginRoute
+  RegisterRoute: typeof RegisterRoute
   AlbumsIdRoute: typeof AlbumsIdRoute
   ArtistsIdRoute: typeof ArtistsIdRoute
   PlaylistsIdRoute: typeof PlaylistsIdRoute
+  AdminIndexRoute: typeof AdminIndexRoute
   AlbumsIndexRoute: typeof AlbumsIndexRoute
   ArtistsIndexRoute: typeof ArtistsIndexRoute
   PlaylistsIndexRoute: typeof PlaylistsIndexRoute
@@ -149,6 +188,20 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/libraries': {
       id: '/libraries'
       path: '/libraries'
@@ -191,6 +244,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AlbumsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/': {
+      id: '/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/playlists/$id': {
       id: '/playlists/$id'
       path: '/playlists/$id'
@@ -219,9 +279,12 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   LibrariesRoute: LibrariesRoute,
+  LoginRoute: LoginRoute,
+  RegisterRoute: RegisterRoute,
   AlbumsIdRoute: AlbumsIdRoute,
   ArtistsIdRoute: ArtistsIdRoute,
   PlaylistsIdRoute: PlaylistsIdRoute,
+  AdminIndexRoute: AdminIndexRoute,
   AlbumsIndexRoute: AlbumsIndexRoute,
   ArtistsIndexRoute: ArtistsIndexRoute,
   PlaylistsIndexRoute: PlaylistsIndexRoute,

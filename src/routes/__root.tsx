@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import MobileControls from "@/client/components/mobile-controls"
 import PlaybackDetails from "@/client/components/PlaybackDetails"
-import ReloadButton from "@/client/components/ReloadButton"
 import { SearchButton } from "@/client/components/SearchButton"
 import { TitleSetter } from "@/client/components/TitleSetter"
 import SeekBar from "@/client/components/SeekBar"
@@ -17,6 +16,8 @@ import { TextScroller } from "@/client/components/ui/TextScroller"
 import { CurrentTrackScroller } from "@/client/components/CurrentTrackScroller"
 import { ListenTogetherDialog } from "@/client/components/ListenTogetherDialog"
 import { ListenTogetherProvider } from "@/listen-together/listen-together-provider"
+import { AuthProvider } from "@/client/components/AuthProvider"
+import UserCapsule from "@/client/components/UserCapsule"
 
 function LibraryProgressWatcher() {
   const queryClient = useQueryClient()
@@ -52,67 +53,68 @@ function LibraryProgressWatcher() {
 }
 
 const RootLayout = () => (
-  <div className="min-h-full bg-background">
-    <LibraryProgressWatcher />
-    <header className="fixed top-0 right-0 left-0 z-10 flex h-30 items-center justify-between bg-black p-2 md:p-10 xl:left-[25rem]">
-      <Link to="/">
-        <h1 className="font-battle font-serif text-2xl whitespace-nowrap italic md:text-3xl">
-          MIXTAPE
-        </h1>
-      </Link>
-      {/* <div className="grow"></div> */}
-      <nav className="hidden w-full items-center justify-around md:flex [&>*]:p-4">
-        <Link
-          to="/albums"
-          className="[&.active]:bg-secondary [&.active]:font-bold"
-        >
-          Albums
+  <AuthProvider>
+    <div className="min-h-full bg-background">
+      <LibraryProgressWatcher />
+      <header className="fixed top-0 right-0 left-0 z-10 flex h-30 items-center justify-between bg-black p-2 md:p-10 xl:left-[25rem]">
+        <Link to="/">
+          <h1 className="font-battle font-serif text-2xl whitespace-nowrap italic md:text-3xl">
+            MIXTAPE
+          </h1>
         </Link>
-        <Link
-          to="/artists"
-          className="[&.active]:bg-secondary [&.active]:font-bold"
-        >
-          Artists
-        </Link>
-        <Link
-          to="/playlists"
-          className="[&.active]:bg-secondary [&.active]:font-bold"
-        >
-          Mixtapes
-        </Link>
-        <Link
-          to="/libraries"
-          className="[&.active]:bg-secondary [&.active]:font-bold"
-        >
-          Libraries
-        </Link>
-        <Link
-          to="/about"
-          className="[&.active]:bg-secondary [&.active]:font-bold"
-        >
-          About
-        </Link>
-      </nav>
+        <nav className="hidden w-full items-center justify-around md:flex [&>*]:p-4">
+          <Link
+            to="/albums"
+            className="[&.active]:bg-secondary [&.active]:font-bold"
+          >
+            Albums
+          </Link>
+          <Link
+            to="/artists"
+            className="[&.active]:bg-secondary [&.active]:font-bold"
+          >
+            Artists
+          </Link>
+          <Link
+            to="/playlists"
+            className="[&.active]:bg-secondary [&.active]:font-bold"
+          >
+            Mixtapes
+          </Link>
+          <Link
+            to="/libraries"
+            className="[&.active]:bg-secondary [&.active]:font-bold"
+          >
+            Libraries
+          </Link>
+          <Link
+            to="/about"
+            className="[&.active]:bg-secondary [&.active]:font-bold"
+          >
+            About
+          </Link>
+        </nav>
 
-      <div className="flex items-center gap-2">
-        <ListenTogetherDialog />
-        <SearchButton />
-        <ReloadButton />
+        <div className="flex items-center gap-2">
+          <ListenTogetherDialog />
+          <SearchButton />
+          <UserCapsule />
+        </div>
+      </header>
+      <Sidebar className="hidden w-[25rem] xl:grid" />
+      <div className="pt-30 pb-40 xl:pl-[25rem]">
+        <Outlet />
       </div>
-    </header>
-    <Sidebar className="hidden w-[25rem] xl:grid" />
-    <div className="pt-30 pb-40 xl:pl-[25rem]">
-      <Outlet />
+
+      <MobileControls className="xl:hidden" />
+
+      <TanStackRouterDevtools position="top-right" />
+      <MediaSessionSync />
+      <PlaybackDetails />
+      <TitleSetter />
+      <ListenTogetherProvider />
     </div>
-
-    <MobileControls className="xl:hidden" />
-
-    <TanStackRouterDevtools position="top-right" />
-    <MediaSessionSync />
-    <PlaybackDetails />
-    <TitleSetter />
-    <ListenTogetherProvider />
-  </div>
+  </AuthProvider>
 )
 
 function Sidebar({ className }: { className?: string }) {

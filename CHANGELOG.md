@@ -6,9 +6,22 @@ Notable changes. Expect proper version numbers when it's actually close to a rel
 ## [18-05-2026]
 
 
+### Added
+
+- **User system**: JWT-based authentication with admin setup on first login. Users created via invitation links (admin picks username, invitee sets password). Admin panel at `/admin` for user and invitation management.
+- **Auth routes**: `POST /api/auth/login` (auto-creates admin on first run), `GET /api/auth/status` (check if users exist), `GET/POST /api/auth/register/:code` (validate & activate invite), `GET /api/auth/me` (current user).
+- **Admin routes**: `GET/DELETE /api/admin/users`, `GET/POST /api/admin/invitations`.
+- **UserCapsule**: Header component showing "Wanderer" when logged out, username when logged in, with admin shield and logout.
+
 ### Changed
 
 - **Vite Bundler**: Replaces Bun html imports. local dev port is now 5173. API port remains the same, but is proxied during development.
+- **Playback & editing routes now require auth**: Browsing (GET routes) remains public.
+- **JWT secret**: Auto-generated and stored in the `settings` database table on first run. Overridable via `JWT_SECRET` env var.
+
+### Removed
+
+- **Library rescan button**: Removed from the header.
 
 
 ## v0.4.0 [16-05-2026]

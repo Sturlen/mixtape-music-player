@@ -12,14 +12,19 @@ import { parse } from "@/parse"
 import type { Album, Artist, Playlist, Track } from "@/lib/types"
 import { raise } from "@/lib/utils"
 import { $ } from "bun"
+import { eq } from "drizzle-orm"
+import { jwt } from "@elysiajs/jwt"
 import { parsePlaylists } from "./server/new_playlist_parser"
 import { createPlaylistRoutes } from "./playlist"
+import { createAuthRoutes } from "./server/auth"
+import { createAdminRoutes } from "./server/admin"
+import { verifyAuth } from "./server/guard"
 import { mkdirSync, existsSync } from "fs"
 import { fuse_artists, fuse_albums, fuse_playlists, fuse_tracks } from "./lib/fuse"
 import { Library, enrichmentProgress } from "./server/library"
 import { SearchService } from "./server/search"
 import { initDB } from "@/db"
-import { sources } from "@/db/schema"
+import { sources, users, settings } from "@/db/schema"
 import { createLibraryRoutes } from "./server/libraries"
 import { createServer, LogLevel } from "pglite-server"
 
@@ -140,6 +145,36 @@ async function reloadLibrary() {
 await seedLibraries()
 await reloadLibrary()
 
+let jwtSecret: string
+if (env.JWT_SECRET) {
+  jwtSecret = env.JWT_SECRET
+  console.log("Using JWT_SECRET from environment variable")
+} else {
+  const [stored] = await db
+    .select()
+    .from(settings)
+    .where(eq(settings.key, "jwt_secret"))
+    .limit(1)
+  if (stored) {
+    jwtSecret = stored.value
+  } else {
+    jwtSecret = crypto.randomUUID() + crypto.randomUUID()
+    await db.insert(settings).values({ key: "jwt_secret", value: jwtSecret })
+    console.log("Generated and stored JWT secret in database")
+  }
+}
+
+const existingUsers = await db.select().from(users).limit(1)
+if (existingUsers.length === 0 && env.ADMIN_USERNAME && env.ADMIN_PASSWORD) {
+  const passwordHash = await Bun.password.hash(env.ADMIN_PASSWORD)
+  await db.insert(users).values({
+    username: env.ADMIN_USERNAME,
+    passwordHash,
+    role: "admin",
+  }).onConflictDoNothing()
+  console.log(`Admin user "${env.ADMIN_USERNAME}" created from environment variables`)
+}
+
 const isProduction = process.env.NODE_ENV === "production"
 
 const app = new Elysia()
@@ -161,6 +196,7 @@ const app = new Elysia()
       references: fromTypes(),
     }),
   )
+  .use(jwt({ secret: jwtSecret }))
   .get("/api/*", "418")
   .get("/api", () => redirect("/openapi"))
   .get("/api/stats", async () => await library.getStats())
@@ -413,12 +449,22 @@ const app = new Elysia()
       },
     })
   })
-  .post("/api/libary/reload", async () => await reloadLibrary(), {
+  .use(createAuthRoutes({ db, jwtSecret }))
+  .use(createAdminRoutes({ db, jwtSecret }))
+  .use(createPlaylistRoutes({ db: playlistStore, fuse_playlists }))
+  .use(createLibraryRoutes({ library, db }))
+  .post("/api/libary/reload", async ({ jwt, headers, status }) => {
+    const user = await verifyAuth(jwt, headers)
+    if (!user) throw status(401, "Authentication required")
+    return await reloadLibrary()
+  }, {
     detail: { description: "Reloads the internal db and parses all sources again" },
   })
   .post(
     "/api/player",
-    async ({ body: { trackId }, status }) => {
+    async ({ body: { trackId }, jwt, headers, status }) => {
+      const user = await verifyAuth(jwt, headers)
+      if (!user) throw status(401, "Authentication required")
       if (!trackId) return status("Bad Request")
       const track = await library.getTrack(trackId)
       if (!track) return status("Not Found")
@@ -431,7 +477,9 @@ const app = new Elysia()
     },
     { body: t.Object({ trackId: t.String() }) },
   )
-  .post("/api/playAlbum/:albumId", async ({ params: { albumId }, status }) => {
+  .post("/api/playAlbum/:albumId", async ({ params: { albumId }, jwt, headers, status }) => {
+    const user = await verifyAuth(jwt, headers)
+    if (!user) throw status(401, "Authentication required")
     const [album, art] = await Promise.all([
       library.getAlbum(albumId),
       library.getArt(albumId, "album", "cover"),
@@ -453,15 +501,15 @@ const app = new Elysia()
   })
   .post(
     "/api/playPlaylist/:playlistId",
-    async ({ params: { playlistId }, status }) => {
+    async ({ params: { playlistId }, jwt, headers, status }) => {
+      const user = await verifyAuth(jwt, headers)
+      if (!user) throw status(401, "Authentication required")
       const playlist = await library.getPlaylist(playlistId)
       if (!playlist) return status(404)
       const playlistTracks = [] as Track[]
       return { playlist, tracks: playlistTracks }
     },
   )
-  .use(createPlaylistRoutes({ db: playlistStore, fuse_playlists }))
-  .use(createLibraryRoutes({ library, db }))
 
 if (isProduction) {
   const distIndexHtml = readFileSync("./dist/index.html", "utf-8")
