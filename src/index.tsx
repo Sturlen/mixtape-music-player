@@ -3,9 +3,10 @@ import { openapi, fromTypes } from "@elysiajs/openapi"
 import { opentelemetry } from "@elysiajs/opentelemetry"
 import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-node"
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-proto"
+import { staticPlugin } from "@elysiajs/static"
 import Fuse from "fuse.js"
 import pLimit from "p-limit"
-import index from "@/index.html"
+import { readFileSync } from "fs"
 import { env } from "@/shared/env"
 import { parse } from "@/parse"
 import type { Album, Artist, Playlist, Track } from "@/lib/types"
@@ -56,7 +57,6 @@ const playlistStore = {
 async function loadPlaylists(): Promise<Playlist[]> {
   const playlistsPath = `${env.DATA_PATH}/playlists`
 
-  // Ensure the playlists folder exists
   if (!existsSync(playlistsPath)) {
     console.warn(`Playlists folder not found. Creating: ${playlistsPath}`)
     mkdirSync(playlistsPath, { recursive: true })
@@ -140,6 +140,8 @@ async function reloadLibrary() {
 await seedLibraries()
 await reloadLibrary()
 
+const isProduction = process.env.NODE_ENV === "production"
+
 const app = new Elysia()
   .onError(({ error, set, status }) => {
     console.error("An error occurred:", error)
@@ -159,7 +161,6 @@ const app = new Elysia()
       references: fromTypes(),
     }),
   )
-  .get("/*", index, { detail: "hide" })
   .get("/api/*", "418")
   .get("/api", () => redirect("/openapi"))
   .get("/api/stats", async () => await library.getStats())
@@ -461,7 +462,16 @@ const app = new Elysia()
   )
   .use(createPlaylistRoutes({ db: playlistStore, fuse_playlists }))
   .use(createLibraryRoutes({ library, db }))
-  .listen(env.PORT, () => {
+
+if (isProduction) {
+  const distIndexHtml = readFileSync("./dist/index.html", "utf-8")
+  app.use(staticPlugin({ assets: "./dist", prefix: "/" }))
+  app.get("/*", distIndexHtml, { detail: "hide" })
+} else {
+  app.get("/*", "Vite dev server running on http://localhost:5173", { detail: "hide" })
+}
+
+app.listen(env.PORT, () => {
     console.log(`started in ${(performance.now() - started_at).toFixed(2)} ms`)
 
     if (env.PG_PORT) {

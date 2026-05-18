@@ -1,10 +1,8 @@
-// src/env.mjs
-import { createEnv } from "@t3-oss/env-core" // or core package
+import { createEnv } from "@t3-oss/env-core"
 import * as z from "zod"
 
 export const env = createEnv({
   server: {
-    // DATABASE_URL: z.string().url(),
     MUSIC_PATH: z.string().min(1).default("./demo-music/"),
     MUSIC2_PATH: z.string().optional(),
     PORT: z.coerce.number().int().default(3000),
@@ -18,4 +16,13 @@ export const env = createEnv({
   },
   emptyStringAsUndefined: true,
   runtimeEnv: process.env,
+})
+
+export const clientEnv = createEnv({
+  clientPrefix: "VITE_",
+  client: {
+    VITE_PARTYKIT_HOST: z.string().url().default("https://mixtape-listen-together.sturlen.partykit.dev"),
+  },
+  runtimeEnv: (import.meta as { env?: Record<string, string | undefined> }).env ?? {},
+  emptyStringAsUndefined: true,
 })

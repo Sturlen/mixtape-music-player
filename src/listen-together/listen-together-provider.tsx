@@ -4,8 +4,7 @@ import { ListenTogetherClient } from "./sync-client"
 import { createPlayerAdapter } from "./player-adapter"
 import { getOrCreateClientId } from "./room-id"
 import { useAudioPlayerBase } from "@/Player"
-
-const PARTYKIT_HOST = "https://mixtape-listen-together.sturlen.partykit.dev"
+import { clientEnv } from "@/shared/env"
 
 function getRoomParam(): string | null {
   return new URLSearchParams(window.location.search).get("room_id")
@@ -35,7 +34,7 @@ export function ListenTogetherProvider() {
     const player = createPlayerAdapter()
 
     const client = new ListenTogetherClient({
-      partyHost: PARTYKIT_HOST,
+      partyHost: clientEnv.VITE_PARTYKIT_HOST,
       roomId,
       clientId,
       player,
