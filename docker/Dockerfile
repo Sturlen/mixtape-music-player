@@ -15,7 +15,6 @@ RUN bun run build
 ENV NODE_ENV=production
 EXPOSE 3000
 
-RUN apt-get update -qq && apt-get install -y -qq su-exec > /dev/null 2>&1 && rm -rf /var/lib/apt/lists/*
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
