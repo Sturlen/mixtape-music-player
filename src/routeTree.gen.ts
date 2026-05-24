@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LibrariesRouteImport } from './routes/libraries'
@@ -22,6 +23,11 @@ import { Route as PlaylistsIdRouteImport } from './routes/playlists/$id'
 import { Route as ArtistsIdRouteImport } from './routes/artists/$id'
 import { Route as AlbumsIdRouteImport } from './routes/albums/$id'
 
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
@@ -89,6 +95,7 @@ export interface FileRoutesByFullPath {
   '/libraries': typeof LibrariesRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/settings': typeof SettingsRoute
   '/albums/$id': typeof AlbumsIdRoute
   '/artists/$id': typeof ArtistsIdRoute
   '/playlists/$id': typeof PlaylistsIdRoute
@@ -103,6 +110,7 @@ export interface FileRoutesByTo {
   '/libraries': typeof LibrariesRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/settings': typeof SettingsRoute
   '/albums/$id': typeof AlbumsIdRoute
   '/artists/$id': typeof ArtistsIdRoute
   '/playlists/$id': typeof PlaylistsIdRoute
@@ -118,6 +126,7 @@ export interface FileRoutesById {
   '/libraries': typeof LibrariesRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/settings': typeof SettingsRoute
   '/albums/$id': typeof AlbumsIdRoute
   '/artists/$id': typeof ArtistsIdRoute
   '/playlists/$id': typeof PlaylistsIdRoute
@@ -134,6 +143,7 @@ export interface FileRouteTypes {
     | '/libraries'
     | '/login'
     | '/register'
+    | '/settings'
     | '/albums/$id'
     | '/artists/$id'
     | '/playlists/$id'
@@ -148,6 +158,7 @@ export interface FileRouteTypes {
     | '/libraries'
     | '/login'
     | '/register'
+    | '/settings'
     | '/albums/$id'
     | '/artists/$id'
     | '/playlists/$id'
@@ -162,6 +173,7 @@ export interface FileRouteTypes {
     | '/libraries'
     | '/login'
     | '/register'
+    | '/settings'
     | '/albums/$id'
     | '/artists/$id'
     | '/playlists/$id'
@@ -177,6 +189,7 @@ export interface RootRouteChildren {
   LibrariesRoute: typeof LibrariesRoute
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
+  SettingsRoute: typeof SettingsRoute
   AlbumsIdRoute: typeof AlbumsIdRoute
   ArtistsIdRoute: typeof ArtistsIdRoute
   PlaylistsIdRoute: typeof PlaylistsIdRoute
@@ -188,6 +201,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/register': {
       id: '/register'
       path: '/register'
@@ -281,6 +301,7 @@ const rootRouteChildren: RootRouteChildren = {
   LibrariesRoute: LibrariesRoute,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
+  SettingsRoute: SettingsRoute,
   AlbumsIdRoute: AlbumsIdRoute,
   ArtistsIdRoute: ArtistsIdRoute,
   PlaylistsIdRoute: PlaylistsIdRoute,

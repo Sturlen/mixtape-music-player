@@ -51,6 +51,15 @@ const started_at = performance.now()
 
 const pgliteDir = env.DATA_PATH + "/pglite"
 const { db, pg } = await initDB(pgliteDir)
+
+async function isFfmpegEnabled(): Promise<boolean> {
+  const [row] = await db
+    .select()
+    .from(settings)
+    .where(eq(settings.key, "ffmpeg_enabled"))
+    .limit(1)
+  return row ? row.value === "true" : env.USE_FFMPEG
+}
 const library = new Library(db)
 const searchService = new SearchService(library)
 library.onIndexRebuilt = () => searchService.buildIndex()
@@ -372,7 +381,7 @@ const app = new Elysia()
   .get("/api/assets/:assetId", async ({ params: { assetId }, set, status }) => {
     const asset = await library.getAudioAsset(assetId)
     if (!asset) return status(404, "Asset not found")
-    if (env.USE_FFMPEG) {
+    if (await isFfmpegEnabled()) {
       let ffmpeg_stderr = ""
       try {
         const start = performance.now()

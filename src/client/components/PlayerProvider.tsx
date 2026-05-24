@@ -3,6 +3,7 @@ import { type PropsWithChildren, useEffect } from "react"
 import { useAudioPlayer, useCurrentTrack, useEvents } from "@/Player"
 import { EdenClient } from "@/lib/eden"
 import { useQuery } from "@tanstack/react-query"
+import { useSettings } from "@/client/stores/settings"
 
 async function fetchPlaybackData(trackId: string) {
   const { data, error } = await EdenClient.api.player.post({ trackId })
@@ -146,6 +147,12 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
       audio_ref.current.playbackRate = requested_playback_rate
     }
   }, [requested_playback_rate])
+
+  // Sync playback speed from settings store to player store
+  const settingsSpeed = useSettings(s => s.values.playback_speed) as number
+  useEffect(() => {
+    useAudioPlayer.getState().setPlaybackRate(settingsSpeed)
+  }, [settingsSpeed])
 
   // Auto-play after loading completes
   useEffect(() => {

@@ -1,9 +1,12 @@
 import { Elysia, t } from "elysia"
 import { jwt } from "@elysiajs/jwt"
-import { eq, desc } from "drizzle-orm"
-import { users, invitations } from "@/db/schema"
+import { eq, desc, inArray } from "drizzle-orm"
+import { users, invitations, settings } from "@/db/schema"
 import type { DB } from "@/db"
 import { verifyAuth } from "./guard"
+import { SERVER_SETTING_KEYS } from "@/lib/settings"
+
+export let ffmpegEnabled: boolean | null = null
 
 interface AdminContext {
   db: DB
@@ -120,4 +123,41 @@ export function createAdminRoutes(context: AdminContext) {
 
       return { invitations: rows }
     })
+    .get("/settings", async ({ jwt, headers, status }) => {
+      const user = await verifyAuth(jwt, headers)
+      if (!user) throw status(401, "Authentication required")
+      if (user.role !== "admin") throw status(403, "Admin access required")
+
+      const rows = await db
+        .select()
+        .from(settings)
+        .where(inArray(settings.key, SERVER_SETTING_KEYS))
+
+      return { settings: Object.fromEntries(rows.map(r => [r.key, r.value])) }
+    })
+    .put(
+      "/settings",
+      async ({ body, jwt, headers, status }) => {
+        const user = await verifyAuth(jwt, headers)
+        if (!user) throw status(401, "Authentication required")
+        if (user.role !== "admin") throw status(403, "Admin access required")
+
+        for (const [key, value] of Object.entries(body)) {
+          if (!SERVER_SETTING_KEYS.includes(key)) continue
+          await db
+            .insert(settings)
+            .values({ key, value: String(value) })
+            .onConflictDoUpdate({ target: settings.key, set: { value: String(value) } })
+        }
+
+        ffmpegEnabled = null
+
+        return { success: true }
+      },
+      {
+        body: t.Object({
+          ffmpeg_enabled: t.Optional(t.Boolean()),
+        }),
+      },
+    )
 }

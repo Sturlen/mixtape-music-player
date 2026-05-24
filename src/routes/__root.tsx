@@ -18,6 +18,7 @@ import { ListenTogetherDialog } from "@/client/components/ListenTogetherDialog"
 import { ListenTogetherProvider } from "@/listen-together/listen-together-provider"
 import { AuthProvider } from "@/client/components/AuthProvider"
 import UserCapsule from "@/client/components/UserCapsule"
+import { useSettings } from "@/client/stores/settings"
 
 function LibraryProgressWatcher() {
   const queryClient = useQueryClient()
@@ -52,9 +53,32 @@ function LibraryProgressWatcher() {
   return null
 }
 
+function ThemeWatcher() {
+  const theme = useSettings(s => s.values.theme) as string
+
+  useEffect(() => {
+    const root = document.documentElement
+    if (theme === "dark") {
+      root.classList.add("dark")
+    } else if (theme === "light") {
+      root.classList.remove("dark")
+    } else {
+      const mq = window.matchMedia("(prefers-color-scheme: dark)")
+      root.classList.toggle("dark", mq.matches)
+      const handler = (e: MediaQueryListEvent) =>
+        root.classList.toggle("dark", e.matches)
+      mq.addEventListener("change", handler)
+      return () => mq.removeEventListener("change", handler)
+    }
+  }, [theme])
+
+  return null
+}
+
 const RootLayout = () => (
   <AuthProvider>
     <div className="min-h-full bg-background">
+      <ThemeWatcher />
       <LibraryProgressWatcher />
       <header className="fixed top-0 right-0 left-0 z-10 flex h-30 items-center justify-between bg-black p-2 md:p-10 xl:left-[25rem]">
         <Link to="/">
@@ -86,6 +110,12 @@ const RootLayout = () => (
             className="[&.active]:bg-secondary [&.active]:font-bold"
           >
             Libraries
+          </Link>
+          <Link
+            to="/settings"
+            className="[&.active]:bg-secondary [&.active]:font-bold"
+          >
+            Settings
           </Link>
           <Link
             to="/about"
