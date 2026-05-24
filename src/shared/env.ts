@@ -24,8 +24,11 @@ export const env = createEnv({
 export const clientEnv = createEnv({
   clientPrefix: "VITE_",
   client: {
-    VITE_PARTYKIT_HOST: z.string().url().default("https://mixtape-listen-together.sturlen.partykit.dev"),
+    VITE_PARTYKIT_HOST: z
+      .url()
+      .default("https://mixtape-listen-together.sturlen.partykit.dev"),
   },
-  runtimeEnv: (import.meta as { env?: Record<string, string | undefined> }).env ?? {},
+  runtimeEnv:
+    (import.meta as { env?: Record<string, string | undefined> }).env ?? {},
   emptyStringAsUndefined: true,
 })
