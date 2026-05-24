@@ -1,0 +1,19 @@
+services:
+  web:
+    image: spetling/mixtape:latest
+    volumes:
+      - data:/data
+      - /mnt/Plex/Library/demo:/data/demo
+      - /mnt/Plex/Library/mp3:/data/mp3
+    ports:
+      - "3001:3000"
+    restart: unless-stopped
+    environment:
+      - MUSIC_PATH=/data/demo
+      - MUSIC2_PATH=/data/mp3
+      - GRAFANA_TOKEN
+      - OTEL_EXPORTER_OTLP_ENDPOINT
+      - DATA_PATH=/data
+
+volumes:
+  data: {}
