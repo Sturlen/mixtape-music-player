@@ -34,11 +34,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     EdenClient.api.auth.me
       .get()
       .then(({ data, error }) => {
-        if (error || !data?.user) {
-          localStorage.removeItem("token")
-          setToken(null)
-          setUser(null)
-        } else {
+        if (error) {
+          if (error.status === 401) {
+            localStorage.removeItem("token")
+            setToken(null)
+            setUser(null)
+          }
+        } else if (data?.user) {
           setUser(data.user as User)
         }
       })
