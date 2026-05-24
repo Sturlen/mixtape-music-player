@@ -228,19 +228,18 @@ const app = new Elysia()
       } else {
         artists = await library.getArtists()
       }
-      const enriched = await Promise.all(
-        artists.map(async (a) => {
-          const art = await library.getArt(a.id, "artist", "portrait")
-          return {
-            id: a.id,
-            name: a.name,
-            imageURL: `/api/files/artistart/${a.id}`,
-            primaryColor: art?.primaryColor ?? undefined,
-            textColor: art?.textColor ?? undefined,
-            supportingColor: art?.supportingColor ?? undefined,
-          }
-        }),
-      )
+      const artMap = await library.getArtBatch(artists.map(a => a.id), "artist", "portrait")
+      const enriched = artists.map((a) => {
+        const art = artMap.get(a.id)
+        return {
+          id: a.id,
+          name: a.name,
+          ...(art ? { imageURL: `/api/files/artistart/${a.id}` } : {}),
+          primaryColor: art?.primaryColor ?? undefined,
+          textColor: art?.textColor ?? undefined,
+          supportingColor: art?.supportingColor ?? undefined,
+        }
+      })
       return enriched.sort((a, b) => a.name.localeCompare(b.name))
     },
     {
@@ -255,14 +254,21 @@ const app = new Elysia()
     ])
     if (!artist) return { artist: null }
     const artistAlbums = await library.getArtistAlbums(artistId)
-    const albumsWithArt = artistAlbums.map((album) => ({
-      ...album,
-      imageURL: `/api/files/albumart/${album.id}`,
-    }))
+    const albumArtMap = await library.getArtBatch(artistAlbums.map(a => a.id), "album", "cover")
+    const albumsWithArt = artistAlbums.map((album) => {
+      const albumArt = albumArtMap.get(album.id)
+      return {
+        ...album,
+        ...(albumArt ? { imageURL: `/api/files/albumart/${album.id}` } : {}),
+        primaryColor: albumArt?.primaryColor ?? null,
+        textColor: albumArt?.textColor ?? null,
+        supportingColor: albumArt?.supportingColor ?? null,
+      }
+    })
     return {
       artist: {
         ...artist,
-        imageURL: `/api/files/artistart/${artistId}`,
+        ...(art ? { imageURL: `/api/files/artistart/${artistId}` } : {}),
         primaryColor: art?.primaryColor ?? null,
         textColor: art?.textColor ?? null,
         supportingColor: art?.supportingColor ?? null,
@@ -280,24 +286,22 @@ const app = new Elysia()
       } else {
         albums = await library.getAlbums()
       }
-      const enriched = await Promise.all(
-        albums.map(async (album) => {
-          const [artist, art] = await Promise.all([
-            library.getArtist(album.artistId),
-            library.getArt(album.id, "album", "cover"),
-          ])
-          return {
-            id: album.id,
-            name: album.name,
-            artistId: album.artistId,
-            artistName: artist?.name ?? null,
-            primaryColor: art?.primaryColor ?? null,
-            textColor: art?.textColor ?? null,
-            supportingColor: art?.supportingColor ?? null,
-            imageURL: `/api/files/albumart/${album.id}`,
-          }
-        }),
-      )
+      const artistsForAlbums = await library.getArtists()
+      const artistNameMap = new Map(artistsForAlbums.map(a => [a.id, a.name]))
+      const artMap = await library.getArtBatch(albums.map(a => a.id), "album", "cover")
+      const enriched = albums.map((album) => {
+        const art = artMap.get(album.id)
+        return {
+          id: album.id,
+          name: album.name,
+          artistId: album.artistId,
+          artistName: artistNameMap.get(album.artistId) ?? null,
+          ...(art ? { imageURL: `/api/files/albumart/${album.id}` } : {}),
+          primaryColor: art?.primaryColor ?? null,
+          textColor: art?.textColor ?? null,
+          supportingColor: art?.supportingColor ?? null,
+        }
+      })
       return { albums: enriched.sort((a, b) => a.name.localeCompare(b.name)) }
     },
     { detail: "Get albums", query: t.Object({ q: t.Optional(t.String()) }) },
@@ -310,7 +314,6 @@ const app = new Elysia()
     if (!album) return { album: null }
     const artist = await library.getArtist(album.artistId)
     const albumTracks = await library.getAlbumTracks(albumId)
-    const imageURL = `/api/files/albumart/${album.id}`
     const tracks = albumTracks
       .map((tr) => ({
         id: tr.id,
@@ -319,7 +322,7 @@ const app = new Elysia()
         trackNumber: tr.trackNumber,
         playtimeSeconds: tr.playtimeSeconds ?? 0,
         path: tr.path,
-        artURL: imageURL,
+        ...(art ? { artURL: `/api/files/albumart/${album.id}` } : {}),
       }))
       .sort(compareTracksByNumberName)
 
@@ -329,10 +332,10 @@ const app = new Elysia()
         name: album.name,
         artistId: album.artistId,
         artistName: artist?.name ?? null,
+        ...(art ? { imageURL: `/api/files/albumart/${album.id}` } : {}),
         primaryColor: art?.primaryColor ?? null,
         textColor: art?.textColor ?? null,
         supportingColor: art?.supportingColor ?? null,
-        imageURL,
         tracks,
       },
     }
@@ -500,7 +503,7 @@ const app = new Elysia()
     return {
       album: {
         ...album,
-        imageURL: `/api/files/albumart/${albumId}`,
+        ...(art ? { imageURL: `/api/files/albumart/${albumId}` } : {}),
         primaryColor: art?.primaryColor ?? undefined,
         textColor: art?.textColor ?? undefined,
         supportingColor: art?.supportingColor ?? undefined,

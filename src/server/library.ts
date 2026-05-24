@@ -1,6 +1,6 @@
 import type { LimitFunction } from "p-limit"
 import path from "path"
-import { eq, and, sql } from "drizzle-orm"
+import { eq, and, sql, inArray } from "drizzle-orm"
 import type { DB } from "@/db"
 import { artists, albums, tracks, audioAssets, artAssets, playlists, playlistTracks, sources } from "@/db/schema"
 import type { AudioMetadata } from "@/server/audio"
@@ -374,6 +374,19 @@ export class Library {
   async getArtById(id: string) {
     const [row] = await this.db.select().from(artAssets).where(eq(artAssets.id, id)).limit(1)
     return row ? this.fix(row) as any as ArtAsset : null
+  }
+
+  async getArtBatch(entityIds: string[], entityType: "album" | "artist", role: "cover" | "portrait" = "cover") {
+    if (entityIds.length === 0) return new Map()
+    const rows = await this.db
+      .select()
+      .from(artAssets)
+      .where(and(eq(artAssets.entityType, entityType), eq(artAssets.role, role), inArray(artAssets.entityId, entityIds)))
+    const map = new Map<string, ArtAsset>()
+    for (const row of rows) {
+      map.set(row.entityId, this.fix(row) as any as ArtAsset)
+    }
+    return map
   }
 
   async getAllArt(entityId: string, entityType: "album" | "artist") {

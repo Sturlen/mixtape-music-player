@@ -22,7 +22,7 @@ type SearchResultItem = {
   primaryColor: string | null
   textColor: string | null
   supportingColor: string | null
-  imageURL: string
+  imageURL?: string
   related: boolean
 }
 
@@ -155,7 +155,7 @@ export class SearchService {
         primaryColor: art?.primaryColor ?? null,
         textColor: art?.textColor ?? null,
         supportingColor: art?.supportingColor ?? null,
-        imageURL: `/api/files/artistart/${id}`,
+        ...(art ? { imageURL: `/api/files/artistart/${id}` } : {}),
       }
     }
 
@@ -175,7 +175,7 @@ export class SearchService {
         primaryColor: art?.primaryColor ?? null,
         textColor: art?.textColor ?? null,
         supportingColor: art?.supportingColor ?? null,
-        imageURL: `/api/files/albumart/${id}`,
+        ...(art ? { imageURL: `/api/files/albumart/${id}` } : {}),
       }
     }
 
@@ -196,7 +196,7 @@ export class SearchService {
       primaryColor: art?.primaryColor ?? null,
       textColor: art?.textColor ?? null,
       supportingColor: art?.supportingColor ?? null,
-      imageURL: `/api/files/albumart/${track.albumId}`,
+      ...(art ? { imageURL: `/api/files/albumart/${track.albumId}` } : {}),
     }
   }
 }
