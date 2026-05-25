@@ -15,12 +15,5 @@ RUN bun run build
 ENV NODE_ENV=production
 EXPOSE 3000
 
-COPY docker/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-
-USER bun
-
-ENTRYPOINT ["/entrypoint.sh"]
 # using start script can lead to illegal instruction execptions.
 CMD ["bun", "run", "src/index.tsx"]
-
