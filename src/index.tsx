@@ -20,7 +20,12 @@ import { createAuthRoutes } from "./server/auth"
 import { createAdminRoutes } from "./server/admin"
 import { verifyAuth } from "./server/guard"
 import { mkdirSync, existsSync } from "fs"
-import { fuse_artists, fuse_albums, fuse_playlists, fuse_tracks } from "./lib/fuse"
+import {
+  fuse_artists,
+  fuse_albums,
+  fuse_playlists,
+  fuse_tracks,
+} from "./lib/fuse"
 import { Library, enrichmentProgress } from "./server/library"
 import { SearchService } from "./server/search"
 import { initDB } from "@/db"
@@ -94,7 +99,11 @@ async function seedLibraries() {
   const rows = []
   const row1 = await db
     .insert(sources)
-    .values({ name: "Default Library", rootPath: env.MUSIC_PATH, enabled: true })
+    .values({
+      name: "Default Library",
+      rootPath: env.MUSIC_PATH,
+      enabled: true,
+    })
     .returning()
     .then((r) => r[0])
   if (row1) {
@@ -105,7 +114,11 @@ async function seedLibraries() {
   if (env.MUSIC2_PATH) {
     const row = await db
       .insert(sources)
-      .values({ name: "Secondary Library", rootPath: env.MUSIC2_PATH, enabled: true })
+      .values({
+        name: "Secondary Library",
+        rootPath: env.MUSIC2_PATH,
+        enabled: true,
+      })
       .returning()
       .then((r) => r[0])
     if (row) {
@@ -122,11 +135,20 @@ async function reloadLibrary() {
   const enabledLibraries = libRows.filter((r) => r.enabled)
 
   const playlistsArr = await loadPlaylists()
-  await library.setPlaylists(playlistsArr.map(p => ({ id: p.id, name: p.name, imageUrl: p.imageUrl })))
+  await library.setPlaylists(
+    playlistsArr.map((p) => ({ id: p.id, name: p.name, imageUrl: p.imageUrl })),
+  )
   await library.rebuildIndex()
 
-  playlistStore.tracks = new Map((await library.getAllTracks()).map(t => [t.id, t]))
-  playlistStore.playlists = new Map(playlistsArr.map(p => [p.id, { ...p, imageUrl: p.imageUrl ?? undefined }]))
+  playlistStore.tracks = new Map(
+    (await library.getAllTracks()).map((t) => [t.id, t]),
+  )
+  playlistStore.playlists = new Map(
+    playlistsArr.map((p) => [
+      p.id,
+      { ...p, imageUrl: p.imageUrl ?? undefined },
+    ]),
+  )
 
   const limit = pLimit(8)
   const sourceScans = await Promise.all(
@@ -176,12 +198,17 @@ if (env.JWT_SECRET) {
 const existingUsers = await db.select().from(users).limit(1)
 if (existingUsers.length === 0 && env.ADMIN_USERNAME && env.ADMIN_PASSWORD) {
   const passwordHash = await Bun.password.hash(env.ADMIN_PASSWORD)
-  await db.insert(users).values({
-    username: env.ADMIN_USERNAME,
-    passwordHash,
-    role: "admin",
-  }).onConflictDoNothing()
-  console.log(`Admin user "${env.ADMIN_USERNAME}" created from environment variables`)
+  await db
+    .insert(users)
+    .values({
+      username: env.ADMIN_USERNAME,
+      passwordHash,
+      role: "admin",
+    })
+    .onConflictDoNothing()
+  console.log(
+    `Admin user "${env.ADMIN_USERNAME}" created from environment variables`,
+  )
 }
 
 const isProduction = process.env.NODE_ENV === "production"
@@ -214,7 +241,10 @@ const app = new Elysia()
     async ({ query: { q } }) => {
       return searchService.search(q ?? "")
     },
-    { detail: "Search artists, albums, tracks", query: t.Object({ q: t.String() }) },
+    {
+      detail: "Search artists, albums, tracks",
+      query: t.Object({ q: t.String() }),
+    },
   )
   .get(
     "/api/artists",
@@ -228,7 +258,11 @@ const app = new Elysia()
       } else {
         artists = await library.getArtists()
       }
-      const artMap = await library.getArtBatch(artists.map(a => a.id), "artist", "portrait")
+      const artMap = await library.getArtBatch(
+        artists.map((a) => a.id),
+        "artist",
+        "portrait",
+      )
       const enriched = artists.map((a) => {
         const art = artMap.get(a.id)
         return {
@@ -254,7 +288,11 @@ const app = new Elysia()
     ])
     if (!artist) return { artist: null }
     const artistAlbums = await library.getArtistAlbums(artistId)
-    const albumArtMap = await library.getArtBatch(artistAlbums.map(a => a.id), "album", "cover")
+    const albumArtMap = await library.getArtBatch(
+      artistAlbums.map((a) => a.id),
+      "album",
+      "cover",
+    )
     const albumsWithArt = artistAlbums.map((album) => {
       const albumArt = albumArtMap.get(album.id)
       return {
@@ -282,13 +320,19 @@ const app = new Elysia()
       let albums: Album[] = []
       if (q) {
         console.log("q", q)
-        albums = fuse_albums.search(q).map((res: { item: Album }) => res.item) as unknown as Album[]
+        albums = fuse_albums
+          .search(q)
+          .map((res: { item: Album }) => res.item) as unknown as Album[]
       } else {
         albums = await library.getAlbums()
       }
       const artistsForAlbums = await library.getArtists()
-      const artistNameMap = new Map(artistsForAlbums.map(a => [a.id, a.name]))
-      const artMap = await library.getArtBatch(albums.map(a => a.id), "album", "cover")
+      const artistNameMap = new Map(artistsForAlbums.map((a) => [a.id, a.name]))
+      const artMap = await library.getArtBatch(
+        albums.map((a) => a.id),
+        "album",
+        "cover",
+      )
       const enriched = albums.map((album) => {
         const art = artMap.get(album.id)
         return {
@@ -341,12 +385,18 @@ const app = new Elysia()
     }
   })
   .get("/api/tracks", async () => await library.getAllTracks())
-  .get("/api/tracks/:trackId", async ({ params: { trackId } }) => await library.getTrack(trackId))
+  .get(
+    "/api/tracks/:trackId",
+    async ({ params: { trackId } }) => await library.getTrack(trackId),
+  )
   .get(
     "/api/files/artistart/:artistId",
     async ({ params: { artistId }, query, set, status }) => {
       const art = await library.getArt(artistId, "artist", "portrait")
-      if (!art) { console.error("artist art not found for", artistId); return status(404) }
+      if (!art) {
+        console.error("artist art not found for", artistId)
+        return status(404)
+      }
       const file = Bun.file(art.path)
       set.headers["Content-Type"] = file.type
       set.headers["Cache-Control"] = "public, max-age=86400"
@@ -388,11 +438,16 @@ const app = new Elysia()
       let ffmpeg_stderr = ""
       try {
         const start = performance.now()
-        const proc = await $`ffmpeg -i ${asset?.path ?? ""} -f mp3 -vn -q:a 1 pipe:1`.quiet()
+        const proc =
+          await $`ffmpeg -i ${asset?.path ?? ""} -f mp3 -vn -q:a 1 pipe:1`.quiet()
         ffmpeg_stderr = proc.stderr.toString()
         set.headers["content-type"] = "audio/mpeg"
         const end = performance.now()
-        console.log("ffmpeg took %ds for file '%s'", (end - start) / 1000, asset.name)
+        console.log(
+          "ffmpeg took %ds for file '%s'",
+          (end - start) / 1000,
+          asset.name,
+        )
         return proc.stdout
       } catch (error) {
         console.error(ffmpeg_stderr)
@@ -424,11 +479,15 @@ const app = new Elysia()
           try {
             const { completed, total } = enrichmentProgress
             controller.enqueue(
-              new TextEncoder().encode(`event: progress\ndata: ${JSON.stringify({ completed, total })}\n\n`),
+              new TextEncoder().encode(
+                `event: progress\ndata: ${JSON.stringify({ completed, total })}\n\n`,
+              ),
             )
 
             if (completed === total) {
-              controller.enqueue(new TextEncoder().encode(`event: done\ndata: {}\n\n`))
+              controller.enqueue(
+                new TextEncoder().encode(`event: done\ndata: {}\n\n`),
+              )
               cleanup()
               controller.close()
             }
@@ -465,13 +524,19 @@ const app = new Elysia()
   .use(createAdminRoutes({ db, jwtSecret }))
   .use(createPlaylistRoutes({ db: playlistStore, fuse_playlists }))
   .use(createLibraryRoutes({ library, db }))
-  .post("/api/libary/reload", async ({ jwt, headers, status }) => {
-    const user = await verifyAuth(jwt, headers)
-    if (!user) throw status(401, "Authentication required")
-    return await reloadLibrary()
-  }, {
-    detail: { description: "Reloads the internal db and parses all sources again" },
-  })
+  .post(
+    "/api/libary/reload",
+    async ({ jwt, headers, status }) => {
+      const user = await verifyAuth(jwt, headers)
+      if (!user) throw status(401, "Authentication required")
+      return await reloadLibrary()
+    },
+    {
+      detail: {
+        description: "Reloads the internal db and parses all sources again",
+      },
+    },
+  )
   .post(
     "/api/player",
     async ({ body: { trackId }, jwt, headers, status }) => {
@@ -483,34 +548,45 @@ const app = new Elysia()
       const audio_assets = await library.getAudioAssetsByParent(trackId)
       console.log("audio assets found: ", audio_assets)
       const main_asset = audio_assets[0]
-      if (!main_asset) { console.log("No audio asset found"); return status(404) }
+      if (!main_asset) {
+        console.log("No audio asset found")
+        return status(404)
+      }
       console.log("playback started ", track.id)
       return { url: `/api/assets/${main_asset.id}` }
     },
     { body: t.Object({ trackId: t.String() }) },
   )
-  .post("/api/playAlbum/:albumId", async ({ params: { albumId }, jwt, headers, status }) => {
-    const user = await verifyAuth(jwt, headers)
-    if (!user) throw status(401, "Authentication required")
-    const [album, art] = await Promise.all([
-      library.getAlbum(albumId),
-      library.getArt(albumId, "album", "cover"),
-    ])
-    if (!album) return status(404)
-    const albumTracks = await library.getAlbumTracks(albumId)
-    const sorted = albumTracks.sort(compareTracksByNumberName)
-    console.log("playAlbum requested for album", albumId, "tracks:", sorted.length)
-    return {
-      album: {
-        ...album,
-        ...(art ? { imageURL: `/api/files/albumart/${albumId}` } : {}),
-        primaryColor: art?.primaryColor ?? undefined,
-        textColor: art?.textColor ?? undefined,
-        supportingColor: art?.supportingColor ?? undefined,
-      },
-      tracks: sorted,
-    }
-  })
+  .post(
+    "/api/playAlbum/:albumId",
+    async ({ params: { albumId }, jwt, headers, status }) => {
+      const user = await verifyAuth(jwt, headers)
+      if (!user) throw status(401, "Authentication required")
+      const [album, art] = await Promise.all([
+        library.getAlbum(albumId),
+        library.getArt(albumId, "album", "cover"),
+      ])
+      if (!album) return status(404)
+      const albumTracks = await library.getAlbumTracks(albumId)
+      const sorted = albumTracks.sort(compareTracksByNumberName)
+      console.log(
+        "playAlbum requested for album",
+        albumId,
+        "tracks:",
+        sorted.length,
+      )
+      return {
+        album: {
+          ...album,
+          ...(art ? { imageURL: `/api/files/albumart/${albumId}` } : {}),
+          primaryColor: art?.primaryColor ?? undefined,
+          textColor: art?.textColor ?? undefined,
+          supportingColor: art?.supportingColor ?? undefined,
+        },
+        tracks: sorted,
+      }
+    },
+  )
   .post(
     "/api/playPlaylist/:playlistId",
     async ({ params: { playlistId }, jwt, headers, status }) => {
@@ -525,22 +601,28 @@ const app = new Elysia()
 
 if (isProduction) {
   const distIndexHtml = readFileSync("./dist/index.html", "utf-8")
-  app.use(staticPlugin({ assets: "./dist", prefix: "/" }))
-  app.get("/*", distIndexHtml, { detail: "hide" })
+  app.use(
+    staticPlugin({
+      assets: "./dist/assets",
+      prefix: "/assets",
+      indexHTML: false,
+    }),
+  )
+  app.get("/*", distIndexHtml)
 } else {
-  app.get("/*", "Vite dev server running on http://localhost:5173", { detail: "hide" })
+  app.get("/*", "Vite dev server running on http://localhost:5173", {})
 }
 
 app.listen(env.PORT, () => {
-    console.log(`started in ${(performance.now() - started_at).toFixed(2)} ms`)
+  console.log(`started in ${(performance.now() - started_at).toFixed(2)} ms`)
 
-    if (env.PG_PORT) {
-      const pgServer = createServer(pg, { logLevel: LogLevel.Info })
-      pgServer.listen(env.PG_PORT, () => {
-        console.log("PGlite exposed on port", env.PG_PORT)
-      })
-    }
-  })
+  if (env.PG_PORT) {
+    const pgServer = createServer(pg, { logLevel: LogLevel.Info })
+    pgServer.listen(env.PG_PORT, () => {
+      console.log("PGlite exposed on port", env.PG_PORT)
+    })
+  }
+})
 
 export type App = typeof app
 
