@@ -1,10 +1,12 @@
 services:
   web:
-    image: spetling/mixtape:latest
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
     volumes:
       - data:/data
-      - /mnt/Plex/Library/demo:/data/demo
-      - /mnt/Plex/Library/mp3:/data/mp3
+      - /mnt/plex/Library/demo:/data/demo
+      - /mnt/plex/Library/mp3:/data/mp3
     ports:
       - "3001:3000"
     restart: unless-stopped
