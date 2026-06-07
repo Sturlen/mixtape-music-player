@@ -11,7 +11,15 @@ type Props = {
   noFallback?: boolean
 }
 
-export function ArtImage({ src, name, primaryColor, textColor, className, imgClassName, noFallback }: Props) {
+export function ArtImage({
+  src,
+  name,
+  primaryColor,
+  textColor,
+  className,
+  imgClassName,
+  noFallback,
+}: Props) {
   const [loaded, setLoaded] = useState(false)
   const [errored, setErrored] = useState(false)
   const showImage = !errored && src
@@ -19,7 +27,11 @@ export function ArtImage({ src, name, primaryColor, textColor, className, imgCla
 
   return (
     <div
-      className={cn("relative overflow-hidden", !primaryColor && "bg-muted", className)}
+      className={cn(
+        "relative overflow-hidden",
+        !primaryColor && "bg-muted",
+        className,
+      )}
       style={primaryColor ? { backgroundColor: primaryColor } : undefined}
     >
       {showFallback && !noFallback && (
@@ -27,7 +39,12 @@ export function ArtImage({ src, name, primaryColor, textColor, className, imgCla
           className="absolute inset-0 flex items-center justify-center p-2 text-center text-xs font-semibold"
           style={textColor ? { color: textColor } : undefined}
         >
-          <span className={cn("line-clamp-3 break-words", !textColor && "text-muted-foreground")}>
+          <span
+            className={cn(
+              "line-clamp-3 break-words",
+              !textColor && "text-muted-foreground",
+            )}
+          >
             {name}
           </span>
         </div>

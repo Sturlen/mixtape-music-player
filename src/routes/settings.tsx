@@ -23,7 +23,7 @@ function RouteComponent() {
   const [category, setCategory] = useState<SettingCategory>("appearance")
 
   const visibleCategories = CATEGORIES.filter(
-    c => c.id !== "server" || isAdmin,
+    (c) => c.id !== "server" || isAdmin,
   )
 
   return (
@@ -32,7 +32,7 @@ function RouteComponent() {
         <h1 className="text-3xl font-bold">Settings</h1>
 
         <div className="flex gap-2 border-b pb-2">
-          {visibleCategories.map(c => (
+          {visibleCategories.map((c) => (
             <button
               key={c.id}
               onClick={() => setCategory(c.id)}
@@ -58,20 +58,17 @@ function RouteComponent() {
 function AppearanceSettings() {
   const { values, setSetting } = useSettings()
 
-  const def = SETTINGS.find(s => s.key === "theme")!
+  const def = SETTINGS.find((s) => s.key === "theme")!
   const value = (values.theme ?? def.defaultValue) as string
 
   return (
-    <SettingCard
-      label={def.label}
-      description={def.description}
-    >
+    <SettingCard label={def.label} description={def.description}>
       <select
         value={value}
-        onChange={e => setSetting(def.key, e.target.value)}
+        onChange={(e) => setSetting(def.key, e.target.value)}
         className="bg-background border-input rounded-md border px-3 py-1.5 text-sm"
       >
-        {def.options?.map(o => (
+        {def.options?.map((o) => (
           <option key={String(o.value)} value={String(o.value)}>
             {o.label}
           </option>
@@ -84,14 +81,11 @@ function AppearanceSettings() {
 function PlaybackSettings() {
   const { values, setSetting } = useSettings()
 
-  const def = SETTINGS.find(s => s.key === "playback_speed")!
+  const def = SETTINGS.find((s) => s.key === "playback_speed")!
   const value = (values.playback_speed ?? def.defaultValue) as number
 
   return (
-    <SettingCard
-      label={def.label}
-      description={def.description}
-    >
+    <SettingCard label={def.label} description={def.description}>
       <div className="flex items-center gap-3">
         <Slider
           value={[value]}
@@ -155,7 +149,7 @@ function ServerSettings() {
     },
   })
 
-  const ffmpegDef = SETTINGS.find(s => s.key === "ffmpeg_enabled")!
+  const ffmpegDef = SETTINGS.find((s) => s.key === "ffmpeg_enabled")!
   const ffmpegOn = data?.ffmpeg_enabled === "true"
 
   return (
@@ -166,7 +160,9 @@ function ServerSettings() {
       <div className="bg-card flex items-center justify-between rounded-lg border p-4">
         <div className="space-y-0.5">
           <Label className="text-base">{ffmpegDef.label}</Label>
-          <p className="text-muted-foreground text-sm">{ffmpegDef.description}</p>
+          <p className="text-muted-foreground text-sm">
+            {ffmpegDef.description}
+          </p>
         </div>
         <button
           onClick={() => {
@@ -231,7 +227,7 @@ function UserList() {
 
   return (
     <div className="space-y-2">
-      {data.map(user => (
+      {data.map((user) => (
         <div
           key={user.id}
           className="bg-card flex items-center justify-between rounded-lg border p-4"
@@ -316,7 +312,7 @@ function InvitationsSection() {
               id="invite-username"
               placeholder="Choose a username"
               value={username}
-              onChange={e => setUsername(e.target.value)}
+              onChange={(e) => setUsername(e.target.value)}
               minLength={2}
               maxLength={32}
               pattern="[a-z]([a-z0-9_]*[a-z0-9])?"
@@ -341,7 +337,7 @@ function InvitationsSection() {
 
       {data && data.length > 0 && (
         <div className="space-y-2">
-          {data.map(inv => (
+          {data.map((inv) => (
             <div
               key={inv.id}
               className="bg-card flex items-center justify-between rounded-lg border p-3 text-sm"

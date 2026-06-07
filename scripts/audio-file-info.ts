@@ -14,9 +14,7 @@ export async function main(args: string[]): Promise<void> {
   const filePath = args[0]
 
   if (!filePath) {
-    console.error(
-      "Usage: bun run scripts/audio-file-info.ts <audio-file-path>",
-    )
+    console.error("Usage: bun run scripts/audio-file-info.ts <audio-file-path>")
     process.exitCode = 1
     return
   }

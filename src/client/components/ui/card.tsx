@@ -28,13 +28,16 @@ function CardTitle({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       data-slot="card-title"
-      className={cn("font-semibold leading-none tracking-tight", className)}
+      className={cn("leading-none font-semibold tracking-tight", className)}
       {...props}
     />
   )
 }
 
-function CardDescription({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
+function CardDescription({
+  className,
+  ...props
+}: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       data-slot="card-description"

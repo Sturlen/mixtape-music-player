@@ -23,7 +23,14 @@ export type RoomState = {
 
 export type ClientMessage =
   | { type: "join"; clientId: string; initialState?: PlayerSnapshot }
-  | { type: "play"; clientId: string; trackId: string; queue: string[]; queueIndex: number; positionMs: number }
+  | {
+      type: "play"
+      clientId: string
+      trackId: string
+      queue: string[]
+      queueIndex: number
+      positionMs: number
+    }
   | { type: "pause"; clientId: string; positionMs: number }
   | { type: "seek"; clientId: string; positionMs: number }
   | { type: "ping"; clientTimeMs: number }

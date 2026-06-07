@@ -130,9 +130,7 @@ export class ListenTogetherClient {
 
   leave(): void {
     if (!this.socket) return
-    this.socket.send(
-      JSON.stringify({ type: "leave", clientId: this.clientId }),
-    )
+    this.socket.send(JSON.stringify({ type: "leave", clientId: this.clientId }))
   }
 
   play(trackId: string): void {
@@ -193,8 +191,7 @@ export class ListenTogetherClient {
     const rttMs = args.receivedAtMs - args.sentAtMs
     if (rttMs > MAX_RTT_MS) return
 
-    const candidateOffsetMs =
-      args.serverTimeMs + rttMs / 2 - args.receivedAtMs
+    const candidateOffsetMs = args.serverTimeMs + rttMs / 2 - args.receivedAtMs
 
     if (rttMs < this.bestRttMs) {
       this.bestRttMs = rttMs
@@ -202,8 +199,7 @@ export class ListenTogetherClient {
       return
     }
 
-    this.serverOffsetMs =
-      this.serverOffsetMs * 0.9 + candidateOffsetMs * 0.1
+    this.serverOffsetMs = this.serverOffsetMs * 0.9 + candidateOffsetMs * 0.1
   }
 
   // ── Outgoing host messages ────────────────────────────────────────
@@ -233,7 +229,8 @@ export class ListenTogetherClient {
         break
       case "error":
         this.callbacks.onError?.(
-          ((msg as Record<string, unknown>).message as string) ?? "Unknown error",
+          ((msg as Record<string, unknown>).message as string) ??
+            "Unknown error",
         )
         break
     }

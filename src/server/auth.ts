@@ -90,7 +90,10 @@ export function createAuthRoutes(context: AuthContext) {
         return { valid: true, username: invite.username }
       },
       {
-        detail: { description: "Validate an invite code and return the assigned username" },
+        detail: {
+          description:
+            "Validate an invite code and return the assigned username",
+        },
       },
     )
     .post(
@@ -133,7 +136,10 @@ export function createAuthRoutes(context: AuthContext) {
         body: t.Object({
           password: t.String({ minLength: 6 }),
         }),
-        detail: { description: "Register with an invite code (username is pre-assigned)" },
+        detail: {
+          description:
+            "Register with an invite code (username is pre-assigned)",
+        },
       },
     )
     .get("/me", async ({ jwt, headers, status }) => {

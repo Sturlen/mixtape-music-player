@@ -10,7 +10,11 @@ export type ScanResult = {
   artByDir: Map<string, string>
 }
 
-async function walk(dir: string, files: FileInfo[], artByDir: Map<string, string>) {
+async function walk(
+  dir: string,
+  files: FileInfo[],
+  artByDir: Map<string, string>,
+) {
   const entries = await readdir(dir, { withFileTypes: true })
 
   for (const entry of entries) {
@@ -25,9 +29,14 @@ async function walk(dir: string, files: FileInfo[], artByDir: Map<string, string
       }
     } else if (entry.isFile()) {
       const ext = path.extname(entry.name).toLowerCase()
-      if ([".mp3", ".flac", ".ogg", ".wav", ".m4a", ".aac", ".wma"].includes(ext)) {
+      if (
+        [".mp3", ".flac", ".ogg", ".wav", ".m4a", ".aac", ".wma"].includes(ext)
+      ) {
         files.push({ path: fullPath })
-      } else if ([".jpg", ".jpeg", ".png", ".webp", ".avif", ".bmp"].includes(ext) && !entry.name.startsWith(".")) {
+      } else if (
+        [".jpg", ".jpeg", ".png", ".webp", ".avif", ".bmp"].includes(ext) &&
+        !entry.name.startsWith(".")
+      ) {
         const dirPath = path.dirname(fullPath)
         if (!artByDir.has(dirPath)) {
           artByDir.set(dirPath, fullPath)

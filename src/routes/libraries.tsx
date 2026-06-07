@@ -86,8 +86,7 @@ function AddLibraryForm({ onDone }: { onDone: () => void }) {
   const [rootPath, setRootPath] = useState("")
 
   const createMutation = useMutation({
-    mutationFn: () =>
-      EdenClient.api.libraries.post({ name, rootPath }),
+    mutationFn: () => EdenClient.api.libraries.post({ name, rootPath }),
     onSuccess: () => onDone(),
   })
 

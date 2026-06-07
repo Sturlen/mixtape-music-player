@@ -75,8 +75,12 @@ export function createLibraryRoutes(context: LibraryContext) {
 
       await library.deleteTracksBySource(id)
       await db.delete(sources).where(eq(sources.id, id))
-      await db.execute(sql`DELETE FROM albums WHERE id NOT IN (SELECT DISTINCT album_id FROM tracks)`)
-      await db.execute(sql`DELETE FROM artists WHERE id NOT IN (SELECT DISTINCT artist_id FROM albums)`)
+      await db.execute(
+        sql`DELETE FROM albums WHERE id NOT IN (SELECT DISTINCT album_id FROM tracks)`,
+      )
+      await db.execute(
+        sql`DELETE FROM artists WHERE id NOT IN (SELECT DISTINCT artist_id FROM albums)`,
+      )
       await library.rebuildIndex()
       return { success: true }
     })

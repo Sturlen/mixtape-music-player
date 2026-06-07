@@ -90,7 +90,11 @@ function Content({ searchTerm }: { searchTerm: string }) {
               >
                 <div className="relative aspect-square w-full origin-center transform-gpu border border-[rgba(0,0,0,0.06)] shadow-[0_8px_20px_rgba(2,6,23,0.12)] transition-transform duration-200 will-change-transform group-hover:[transform:scale(1.03)]">
                   <ArtImage
-                    src={album.imageURL ? album.imageURL + "?w=200&h=200&q=85&f=jpeg" : undefined}
+                    src={
+                      album.imageURL
+                        ? album.imageURL + "?w=200&h=200&q=85&f=jpeg"
+                        : undefined
+                    }
                     name={album.name}
                     primaryColor={album.primaryColor}
                     textColor={album.textColor}

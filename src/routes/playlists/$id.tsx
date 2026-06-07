@@ -136,12 +136,16 @@ function RouteComponent() {
               key={track.id}
               track={track}
               index={i}
-              onPlay={() => playPlaylist({ playlistId: playlist.id, trackIndex: i })}
+              onPlay={() =>
+                playPlaylist({ playlistId: playlist.id, trackIndex: i })
+              }
               actions={
                 <button
-                  className="font-mono text-sm font-medium uppercase tracking-wider text-destructive opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 hover:underline"
+                  className="text-destructive font-mono text-sm font-medium tracking-wider uppercase opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 hover:underline"
                   onClick={() => {
-                    if (confirm(`Remove "${track.name}" from "${playlist.name}"?`))
+                    if (
+                      confirm(`Remove "${track.name}" from "${playlist.name}"?`)
+                    )
                       removeTrackMutation.mutate({ trackId: track.id })
                   }}
                   disabled={removeTrackMutation.isPending}

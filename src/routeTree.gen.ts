@@ -8,179 +8,179 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root'
-import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as RegisterRouteImport } from './routes/register'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as LibrariesRouteImport } from './routes/libraries'
-import { Route as AboutRouteImport } from './routes/about'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as PlaylistsIndexRouteImport } from './routes/playlists/index'
-import { Route as ArtistsIndexRouteImport } from './routes/artists/index'
-import { Route as AlbumsIndexRouteImport } from './routes/albums/index'
-import { Route as AdminIndexRouteImport } from './routes/admin/index'
-import { Route as PlaylistsIdRouteImport } from './routes/playlists/$id'
-import { Route as ArtistsIdRouteImport } from './routes/artists/$id'
-import { Route as AlbumsIdRouteImport } from './routes/albums/$id'
+import { Route as rootRouteImport } from "./routes/__root"
+import { Route as SettingsRouteImport } from "./routes/settings"
+import { Route as RegisterRouteImport } from "./routes/register"
+import { Route as LoginRouteImport } from "./routes/login"
+import { Route as LibrariesRouteImport } from "./routes/libraries"
+import { Route as AboutRouteImport } from "./routes/about"
+import { Route as IndexRouteImport } from "./routes/index"
+import { Route as PlaylistsIndexRouteImport } from "./routes/playlists/index"
+import { Route as ArtistsIndexRouteImport } from "./routes/artists/index"
+import { Route as AlbumsIndexRouteImport } from "./routes/albums/index"
+import { Route as AdminIndexRouteImport } from "./routes/admin/index"
+import { Route as PlaylistsIdRouteImport } from "./routes/playlists/$id"
+import { Route as ArtistsIdRouteImport } from "./routes/artists/$id"
+import { Route as AlbumsIdRouteImport } from "./routes/albums/$id"
 
 const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
+  id: "/settings",
+  path: "/settings",
   getParentRoute: () => rootRouteImport,
 } as any)
 const RegisterRoute = RegisterRouteImport.update({
-  id: '/register',
-  path: '/register',
+  id: "/register",
+  path: "/register",
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
+  id: "/login",
+  path: "/login",
   getParentRoute: () => rootRouteImport,
 } as any)
 const LibrariesRoute = LibrariesRouteImport.update({
-  id: '/libraries',
-  path: '/libraries',
+  id: "/libraries",
+  path: "/libraries",
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
-  id: '/about',
-  path: '/about',
+  id: "/about",
+  path: "/about",
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+  id: "/",
+  path: "/",
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlaylistsIndexRoute = PlaylistsIndexRouteImport.update({
-  id: '/playlists/',
-  path: '/playlists/',
+  id: "/playlists/",
+  path: "/playlists/",
   getParentRoute: () => rootRouteImport,
 } as any)
 const ArtistsIndexRoute = ArtistsIndexRouteImport.update({
-  id: '/artists/',
-  path: '/artists/',
+  id: "/artists/",
+  path: "/artists/",
   getParentRoute: () => rootRouteImport,
 } as any)
 const AlbumsIndexRoute = AlbumsIndexRouteImport.update({
-  id: '/albums/',
-  path: '/albums/',
+  id: "/albums/",
+  path: "/albums/",
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
-  id: '/admin/',
-  path: '/admin/',
+  id: "/admin/",
+  path: "/admin/",
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlaylistsIdRoute = PlaylistsIdRouteImport.update({
-  id: '/playlists/$id',
-  path: '/playlists/$id',
+  id: "/playlists/$id",
+  path: "/playlists/$id",
   getParentRoute: () => rootRouteImport,
 } as any)
 const ArtistsIdRoute = ArtistsIdRouteImport.update({
-  id: '/artists/$id',
-  path: '/artists/$id',
+  id: "/artists/$id",
+  path: "/artists/$id",
   getParentRoute: () => rootRouteImport,
 } as any)
 const AlbumsIdRoute = AlbumsIdRouteImport.update({
-  id: '/albums/$id',
-  path: '/albums/$id',
+  id: "/albums/$id",
+  path: "/albums/$id",
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/about': typeof AboutRoute
-  '/libraries': typeof LibrariesRoute
-  '/login': typeof LoginRoute
-  '/register': typeof RegisterRoute
-  '/settings': typeof SettingsRoute
-  '/albums/$id': typeof AlbumsIdRoute
-  '/artists/$id': typeof ArtistsIdRoute
-  '/playlists/$id': typeof PlaylistsIdRoute
-  '/admin/': typeof AdminIndexRoute
-  '/albums/': typeof AlbumsIndexRoute
-  '/artists/': typeof ArtistsIndexRoute
-  '/playlists/': typeof PlaylistsIndexRoute
+  "/": typeof IndexRoute
+  "/about": typeof AboutRoute
+  "/libraries": typeof LibrariesRoute
+  "/login": typeof LoginRoute
+  "/register": typeof RegisterRoute
+  "/settings": typeof SettingsRoute
+  "/albums/$id": typeof AlbumsIdRoute
+  "/artists/$id": typeof ArtistsIdRoute
+  "/playlists/$id": typeof PlaylistsIdRoute
+  "/admin/": typeof AdminIndexRoute
+  "/albums/": typeof AlbumsIndexRoute
+  "/artists/": typeof ArtistsIndexRoute
+  "/playlists/": typeof PlaylistsIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/about': typeof AboutRoute
-  '/libraries': typeof LibrariesRoute
-  '/login': typeof LoginRoute
-  '/register': typeof RegisterRoute
-  '/settings': typeof SettingsRoute
-  '/albums/$id': typeof AlbumsIdRoute
-  '/artists/$id': typeof ArtistsIdRoute
-  '/playlists/$id': typeof PlaylistsIdRoute
-  '/admin': typeof AdminIndexRoute
-  '/albums': typeof AlbumsIndexRoute
-  '/artists': typeof ArtistsIndexRoute
-  '/playlists': typeof PlaylistsIndexRoute
+  "/": typeof IndexRoute
+  "/about": typeof AboutRoute
+  "/libraries": typeof LibrariesRoute
+  "/login": typeof LoginRoute
+  "/register": typeof RegisterRoute
+  "/settings": typeof SettingsRoute
+  "/albums/$id": typeof AlbumsIdRoute
+  "/artists/$id": typeof ArtistsIdRoute
+  "/playlists/$id": typeof PlaylistsIdRoute
+  "/admin": typeof AdminIndexRoute
+  "/albums": typeof AlbumsIndexRoute
+  "/artists": typeof ArtistsIndexRoute
+  "/playlists": typeof PlaylistsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/about': typeof AboutRoute
-  '/libraries': typeof LibrariesRoute
-  '/login': typeof LoginRoute
-  '/register': typeof RegisterRoute
-  '/settings': typeof SettingsRoute
-  '/albums/$id': typeof AlbumsIdRoute
-  '/artists/$id': typeof ArtistsIdRoute
-  '/playlists/$id': typeof PlaylistsIdRoute
-  '/admin/': typeof AdminIndexRoute
-  '/albums/': typeof AlbumsIndexRoute
-  '/artists/': typeof ArtistsIndexRoute
-  '/playlists/': typeof PlaylistsIndexRoute
+  "/": typeof IndexRoute
+  "/about": typeof AboutRoute
+  "/libraries": typeof LibrariesRoute
+  "/login": typeof LoginRoute
+  "/register": typeof RegisterRoute
+  "/settings": typeof SettingsRoute
+  "/albums/$id": typeof AlbumsIdRoute
+  "/artists/$id": typeof ArtistsIdRoute
+  "/playlists/$id": typeof PlaylistsIdRoute
+  "/admin/": typeof AdminIndexRoute
+  "/albums/": typeof AlbumsIndexRoute
+  "/artists/": typeof ArtistsIndexRoute
+  "/playlists/": typeof PlaylistsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
-    | '/about'
-    | '/libraries'
-    | '/login'
-    | '/register'
-    | '/settings'
-    | '/albums/$id'
-    | '/artists/$id'
-    | '/playlists/$id'
-    | '/admin/'
-    | '/albums/'
-    | '/artists/'
-    | '/playlists/'
+    | "/"
+    | "/about"
+    | "/libraries"
+    | "/login"
+    | "/register"
+    | "/settings"
+    | "/albums/$id"
+    | "/artists/$id"
+    | "/playlists/$id"
+    | "/admin/"
+    | "/albums/"
+    | "/artists/"
+    | "/playlists/"
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
-    | '/about'
-    | '/libraries'
-    | '/login'
-    | '/register'
-    | '/settings'
-    | '/albums/$id'
-    | '/artists/$id'
-    | '/playlists/$id'
-    | '/admin'
-    | '/albums'
-    | '/artists'
-    | '/playlists'
+    | "/"
+    | "/about"
+    | "/libraries"
+    | "/login"
+    | "/register"
+    | "/settings"
+    | "/albums/$id"
+    | "/artists/$id"
+    | "/playlists/$id"
+    | "/admin"
+    | "/albums"
+    | "/artists"
+    | "/playlists"
   id:
-    | '__root__'
-    | '/'
-    | '/about'
-    | '/libraries'
-    | '/login'
-    | '/register'
-    | '/settings'
-    | '/albums/$id'
-    | '/artists/$id'
-    | '/playlists/$id'
-    | '/admin/'
-    | '/albums/'
-    | '/artists/'
-    | '/playlists/'
+    | "__root__"
+    | "/"
+    | "/about"
+    | "/libraries"
+    | "/login"
+    | "/register"
+    | "/settings"
+    | "/albums/$id"
+    | "/artists/$id"
+    | "/playlists/$id"
+    | "/admin/"
+    | "/albums/"
+    | "/artists/"
+    | "/playlists/"
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -199,96 +199,96 @@ export interface RootRouteChildren {
   PlaylistsIndexRoute: typeof PlaylistsIndexRoute
 }
 
-declare module '@tanstack/react-router' {
+declare module "@tanstack/react-router" {
   interface FileRoutesByPath {
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
+    "/settings": {
+      id: "/settings"
+      path: "/settings"
+      fullPath: "/settings"
       preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/register': {
-      id: '/register'
-      path: '/register'
-      fullPath: '/register'
+    "/register": {
+      id: "/register"
+      path: "/register"
+      fullPath: "/register"
       preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
+    "/login": {
+      id: "/login"
+      path: "/login"
+      fullPath: "/login"
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/libraries': {
-      id: '/libraries'
-      path: '/libraries'
-      fullPath: '/libraries'
+    "/libraries": {
+      id: "/libraries"
+      path: "/libraries"
+      fullPath: "/libraries"
       preLoaderRoute: typeof LibrariesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
+    "/about": {
+      id: "/about"
+      path: "/about"
+      fullPath: "/about"
       preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
+    "/": {
+      id: "/"
+      path: "/"
+      fullPath: "/"
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/playlists/': {
-      id: '/playlists/'
-      path: '/playlists'
-      fullPath: '/playlists/'
+    "/playlists/": {
+      id: "/playlists/"
+      path: "/playlists"
+      fullPath: "/playlists/"
       preLoaderRoute: typeof PlaylistsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/artists/': {
-      id: '/artists/'
-      path: '/artists'
-      fullPath: '/artists/'
+    "/artists/": {
+      id: "/artists/"
+      path: "/artists"
+      fullPath: "/artists/"
       preLoaderRoute: typeof ArtistsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/albums/': {
-      id: '/albums/'
-      path: '/albums'
-      fullPath: '/albums/'
+    "/albums/": {
+      id: "/albums/"
+      path: "/albums"
+      fullPath: "/albums/"
       preLoaderRoute: typeof AlbumsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/': {
-      id: '/admin/'
-      path: '/admin'
-      fullPath: '/admin/'
+    "/admin/": {
+      id: "/admin/"
+      path: "/admin"
+      fullPath: "/admin/"
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/playlists/$id': {
-      id: '/playlists/$id'
-      path: '/playlists/$id'
-      fullPath: '/playlists/$id'
+    "/playlists/$id": {
+      id: "/playlists/$id"
+      path: "/playlists/$id"
+      fullPath: "/playlists/$id"
       preLoaderRoute: typeof PlaylistsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/artists/$id': {
-      id: '/artists/$id'
-      path: '/artists/$id'
-      fullPath: '/artists/$id'
+    "/artists/$id": {
+      id: "/artists/$id"
+      path: "/artists/$id"
+      fullPath: "/artists/$id"
       preLoaderRoute: typeof ArtistsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/albums/$id': {
-      id: '/albums/$id'
-      path: '/albums/$id'
-      fullPath: '/albums/$id'
+    "/albums/$id": {
+      id: "/albums/$id"
+      path: "/albums/$id"
+      fullPath: "/albums/$id"
       preLoaderRoute: typeof AlbumsIdRouteImport
       parentRoute: typeof rootRouteImport
     }

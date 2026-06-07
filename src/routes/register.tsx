@@ -41,7 +41,10 @@ function RouteComponent() {
     }
     fetch(`/api/auth/register/${code}`)
       .then((r) => {
-        if (!r.ok) { setValid(false); return null }
+        if (!r.ok) {
+          setValid(false)
+          return null
+        }
         return r.json()
       })
       .then((data) => {
@@ -90,7 +93,8 @@ function RouteComponent() {
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Create Account</CardTitle>
           <CardDescription>
-            You've been invited as <strong>{username}</strong>. Set your password to activate the account.
+            You've been invited as <strong>{username}</strong>. Set your
+            password to activate the account.
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>

@@ -141,12 +141,12 @@ function log(message?: string, ...optionalParams: unknown[]) {
 function shuffle<T>(array: T[]) {
   for (let i = array.length - 1; i > 0; i--) {
     // Generate a random index from 0 to i
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(Math.random() * (i + 1))
     // Swap elements array[i] and array[j]
     // @ts-expect-error - this is valid syntax for swapping elements in an array
-    [array[i], array[j]] = [array[j], array[i]];
+    ;[array[i], array[j]] = [array[j], array[i]]
   }
-  return array;
+  return array
 }
 
 export const useAudioPlayerBase = create<PlayerState>()(
@@ -272,7 +272,10 @@ export const useAudioPlayerBase = create<PlayerState>()(
             if (queueTracks.length === 0) {
               get().stop()
             } else {
-              const newIndex = Math.min(get().queueIndex, queueTracks.length - 1)
+              const newIndex = Math.min(
+                get().queueIndex,
+                queueTracks.length - 1,
+              )
               set({ queueIndex: newIndex, queueTracks })
             }
           } else {
@@ -378,10 +381,15 @@ export const useQueueProgress = () => {
   const currentTime = useAudioPlayer.use.currentTime()
   const tracks = useAudioPlayer.use.queueTracks()
 
-  const allTracksDuration = tracks.reduce((sum, t) => sum + (t.duration || 0), 0)
+  const allTracksDuration = tracks.reduce(
+    (sum, t) => sum + (t.duration || 0),
+    0,
+  )
   const elapsedBefore = tracks
     .slice(0, queueIndex)
     .reduce((sum, t) => sum + (t.duration || 0), 0)
 
-  return allTracksDuration > 0 ? (elapsedBefore + currentTime) / allTracksDuration : 0
+  return allTracksDuration > 0
+    ? (elapsedBefore + currentTime) / allTracksDuration
+    : 0
 }

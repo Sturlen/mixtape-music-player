@@ -29,7 +29,12 @@ function testCase(provider: AudioMetadataProvider, c: Case) {
 
     expect(info.provider).toBe(provider.name)
 
-    for (const field of ["trackName", "artistName", "albumArtistName", "albumName"] as FieldName[]) {
+    for (const field of [
+      "trackName",
+      "artistName",
+      "albumArtistName",
+      "albumName",
+    ] as FieldName[]) {
       const val = c.expected[field]
       if (val === null) {
         expect(info[field]).toBeUndefined()
@@ -57,18 +62,34 @@ function testError(provider: AudioMetadataProvider) {
 const mp3Cases: Case[] = [
   {
     filename: "Cool Rock.mp3",
-    expected: { trackName: "Cool Rock", artistName: "Kevin MacLeod", albumArtistName: null, albumName: "Royalty Free", duration: 209.38 },
+    expected: {
+      trackName: "Cool Rock",
+      artistName: "Kevin MacLeod",
+      albumArtistName: null,
+      albumName: "Royalty Free",
+      duration: 209.38,
+    },
   },
   {
     filename: "Metalmania.mp3",
-    expected: { trackName: "Metalmania", artistName: "Kevin MacLeod", albumArtistName: null, duration: 190.46 },
+    expected: {
+      trackName: "Metalmania",
+      artistName: "Kevin MacLeod",
+      albumArtistName: null,
+      duration: 190.46,
+    },
   },
 ]
 
 const flacCases: Case[] = [
   {
     filename: "Metalmania.flac",
-    expected: { trackName: "Metalmania", artistName: "Kevin MacLeod", albumArtistName: null, duration: 190.46 },
+    expected: {
+      trackName: "Metalmania",
+      artistName: "Kevin MacLeod",
+      albumArtistName: null,
+      duration: 190.46,
+    },
   },
 ]
 

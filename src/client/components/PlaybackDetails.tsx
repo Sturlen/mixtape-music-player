@@ -23,7 +23,13 @@ import VolumeSlider from "@/VolumeControl"
 import { Cassette } from "@/client/components/Cassette"
 import { useListenTogetherStore } from "@/listen-together/store"
 
-function ShuffleButton({ onClick, disabled }: { onClick: () => void; disabled?: boolean }) {
+function ShuffleButton({
+  onClick,
+  disabled,
+}: {
+  onClick: () => void
+  disabled?: boolean
+}) {
   const isShuffled = useAudioPlayer.use.isShuffled()
   return (
     <button
@@ -32,13 +38,17 @@ function ShuffleButton({ onClick, disabled }: { onClick: () => void; disabled?: 
       aria-label="Shuffle"
       className={cn(
         "rounded-full p-2",
-        disabled ? "pointer-events-none opacity-40" : "text-primary/60 hover:bg-gray-800",
+        disabled
+          ? "pointer-events-none opacity-40"
+          : "text-primary/60 hover:bg-gray-800",
       )}
     >
       <ShuffleIcon
         size={28}
         className={
-          isShuffled ? "-scale-y-100 transition-transform" : "transition-transform"
+          isShuffled
+            ? "-scale-y-100 transition-transform"
+            : "transition-transform"
         }
       />
     </button>
@@ -113,7 +123,9 @@ export default function PlaybackDetails() {
                 aria-label="Previous"
                 className={cn(
                   "rounded-full p-2 transition",
-                  skipPrevDisabled ? "pointer-events-none opacity-40" : "hover:bg-gray-800",
+                  skipPrevDisabled
+                    ? "pointer-events-none opacity-40"
+                    : "hover:bg-gray-800",
                 )}
               >
                 <SkipBackIcon size={28} />
@@ -136,7 +148,9 @@ export default function PlaybackDetails() {
                 aria-label="Next"
                 className={cn(
                   "rounded-full p-2 transition",
-                  skipPrevDisabled ? "pointer-events-none opacity-40" : "hover:bg-gray-800",
+                  skipPrevDisabled
+                    ? "pointer-events-none opacity-40"
+                    : "hover:bg-gray-800",
                 )}
               >
                 <SkipForwardIcon size={28} />

@@ -134,7 +134,9 @@ export class SearchService {
     return { results, related }
   }
 
-  private async enrich(item: SearchDocument): Promise<Omit<SearchResultItem, "related">> {
+  private async enrich(
+    item: SearchDocument,
+  ): Promise<Omit<SearchResultItem, "related">> {
     return (await this.enrichItem(item._type, item.id, item.name))!
   }
 
@@ -162,7 +164,9 @@ export class SearchService {
     if (type === "album") {
       const album = await this.library.getAlbum(id)
       if (!album) return null
-      const artist = album.artistId ? await this.library.getArtist(album.artistId) : null
+      const artist = album.artistId
+        ? await this.library.getArtist(album.artistId)
+        : null
       const art = await this.library.getArt(id, "album", "cover")
       return {
         type,
@@ -183,8 +187,12 @@ export class SearchService {
     const track = await this.library.getTrack(id)
     if (!track) return null
     const album = await this.library.getAlbum(track.albumId)
-    const artist = album?.artistId ? await this.library.getArtist(album.artistId) : null
-    const art = album ? await this.library.getArt(album.id, "album", "cover") : null
+    const artist = album?.artistId
+      ? await this.library.getArtist(album.artistId)
+      : null
+    const art = album
+      ? await this.library.getArt(album.id, "album", "cover")
+      : null
     return {
       type,
       id,

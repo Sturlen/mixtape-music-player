@@ -10,7 +10,10 @@ interface SettingsState {
 
 function getDefaults() {
   return Object.fromEntries(
-    SETTINGS.filter(s => s.scope === "client").map(s => [s.key, s.defaultValue]),
+    SETTINGS.filter((s) => s.scope === "client").map((s) => [
+      s.key,
+      s.defaultValue,
+    ]),
   )
 }
 
@@ -19,7 +22,7 @@ export const useSettings = create<SettingsState>()(
     (set) => ({
       values: getDefaults(),
       setSetting: (key, value) =>
-        set(state => ({ values: { ...state.values, [key]: value } })),
+        set((state) => ({ values: { ...state.values, [key]: value } })),
       resetAll: () => set({ values: getDefaults() }),
     }),
     { name: "mixtape-client-settings" },

@@ -29,7 +29,10 @@ async function fetchData(): Promise<[ApiTrack[], Album[]]> {
   return [apiTracks, albums]
 }
 
-function buildCache(apiTracks: ApiTrack[], albums: Album[]): Map<string, Track> {
+function buildCache(
+  apiTracks: ApiTrack[],
+  albums: Album[],
+): Map<string, Track> {
   const albumMap = new Map(albums.map((a) => [a.id, a]))
   return new Map(
     apiTracks.map((t) => [t.id, toPlayerTrack(t, albumMap.get(t.albumId))]),

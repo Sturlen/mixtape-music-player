@@ -1,4 +1,11 @@
-import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react"
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+  type ReactNode,
+} from "react"
 import { EdenClient } from "@/lib/eden"
 
 interface User {
@@ -22,7 +29,9 @@ const AuthContext = createContext<AuthContextType | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem("token"))
+  const [token, setToken] = useState<string | null>(() =>
+    localStorage.getItem("token"),
+  )
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -61,9 +70,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = useCallback(
     async (code: string, _username: string, password: string) => {
-      const { data, error } = await EdenClient.api.auth.register({ code }).post({
-        password,
-      })
+      const { data, error } = await EdenClient.api.auth
+        .register({ code })
+        .post({
+          password,
+        })
       if (error || !data) throw new Error("Registration failed")
       const { token: newToken, user: userData } = data
       localStorage.setItem("token", newToken)

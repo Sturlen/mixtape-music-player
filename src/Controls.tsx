@@ -59,7 +59,7 @@ export function Controls() {
           <PlayerButton
             data-active={requestedPlaybackState === "playing"}
             className={cn({
-              "bg-amber-400 text-foreground hover:bg-amber-400/90":
+              "text-foreground bg-amber-400 hover:bg-amber-400/90":
                 requestedPlaybackState === "playing",
             })}
             onClick={() => togglePlayback()}

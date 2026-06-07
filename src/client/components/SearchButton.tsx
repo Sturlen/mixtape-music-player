@@ -39,7 +39,12 @@ function SearchItem({
   onSelect,
 }: {
   item: SearchResultItem
-  onSelect: (type: string, id: string, albumId?: string, trackId?: string) => void
+  onSelect: (
+    type: string,
+    id: string,
+    albumId?: string,
+    trackId?: string,
+  ) => void
 }) {
   const subtitle = () => {
     if (item.type === "artist") return "ARTIST"
@@ -55,7 +60,8 @@ function SearchItem({
     <CommandItem
       value={`${item.type}:${item.id}:${item.name}`}
       onSelect={() => {
-        if (item.type === "track") onSelect("track", item.id, item.albumId, item.id)
+        if (item.type === "track")
+          onSelect("track", item.id, item.albumId, item.id)
         else onSelect(item.type, item.id)
       }}
       className={item.related ? "opacity-60" : undefined}
@@ -121,7 +127,12 @@ export function SearchButton() {
     searchDebouncer.maybeExecute(q)
   }
 
-  const handleSelect = (type: string, id: string, albumId?: string, trackId?: string) => {
+  const handleSelect = (
+    type: string,
+    id: string,
+    albumId?: string,
+    trackId?: string,
+  ) => {
     setOpen(false)
     if (type === "artist") navigate({ to: "/artists/$id", params: { id } })
     else if (type === "album") navigate({ to: "/albums/$id", params: { id } })
@@ -156,14 +167,19 @@ export function SearchButton() {
           onValueChange={handleSearch}
         />
         <CommandList>
-          {!results || (results.results.length === 0 && results.related.length === 0) ? (
+          {!results ||
+          (results.results.length === 0 && results.related.length === 0) ? (
             <CommandEmpty>No results found.</CommandEmpty>
           ) : (
             [
               ...results.results.map((item) => (
-                <SearchItem key={`${item.type}:${item.id}`} item={item} onSelect={handleSelect} />
+                <SearchItem
+                  key={`${item.type}:${item.id}`}
+                  item={item}
+                  onSelect={handleSelect}
+                />
               )),
-              ...results.related.length > 0
+              ...(results.related.length > 0
                 ? [
                     <div
                       key="related-divider"
@@ -179,7 +195,7 @@ export function SearchButton() {
                       />
                     )),
                   ]
-                : [],
+                : []),
             ]
           )}
         </CommandList>

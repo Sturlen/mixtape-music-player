@@ -175,17 +175,38 @@ html {
 }
 
 @keyframes track-arrow {
-  0%, 33% { opacity: 1; }
-  34%, 100% { opacity: 0.15; }
+  0%,
+  33% {
+    opacity: 1;
+  }
+  34%,
+  100% {
+    opacity: 0.15;
+  }
 }
 
 @keyframes track-arrow-2 {
-  0%, 33% { opacity: 0.15; }
-  34%, 66% { opacity: 1; }
-  67%, 100% { opacity: 0.15; }
+  0%,
+  33% {
+    opacity: 0.15;
+  }
+  34%,
+  66% {
+    opacity: 1;
+  }
+  67%,
+  100% {
+    opacity: 0.15;
+  }
 }
 
 @keyframes track-arrow-3 {
-  0%, 66% { opacity: 0.15; }
-  67%, 100% { opacity: 1; }
+  0%,
+  66% {
+    opacity: 0.15;
+  }
+  67%,
+  100% {
+    opacity: 1;
+  }
 }

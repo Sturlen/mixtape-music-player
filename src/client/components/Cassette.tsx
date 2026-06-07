@@ -46,7 +46,10 @@ export function Cassette({ className }: { className?: string }) {
         <Circle />
       </div>
       <img
-        className={cn({ reel: isPlaying }, "absolute top-[44.5%] left-[23.3%] w-[16%]")}
+        className={cn(
+          { reel: isPlaying },
+          "absolute top-[44.5%] left-[23.3%] w-[16%]",
+        )}
         style={{ animationDuration: durationSupply.toFixed() + "s" }}
         src={CasseteSpool}
       />

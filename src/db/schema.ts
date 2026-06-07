@@ -1,4 +1,14 @@
-import { pgTable, text, uuid, real, integer, boolean, timestamp, index, uniqueIndex } from "drizzle-orm/pg-core"
+import {
+  pgTable,
+  text,
+  uuid,
+  real,
+  integer,
+  boolean,
+  timestamp,
+  index,
+  uniqueIndex,
+} from "drizzle-orm/pg-core"
 
 export const artists = pgTable(
   "artists",
@@ -16,23 +26,22 @@ export const albums = pgTable(
     id: uuid("id").defaultRandom().primaryKey(),
     stableId: text("stable_id").notNull().unique(),
     name: text("name").notNull(),
-    artistId: uuid("artist_id").notNull().references(() => artists.id, { onDelete: "cascade" }),
+    artistId: uuid("artist_id")
+      .notNull()
+      .references(() => artists.id, { onDelete: "cascade" }),
     year: integer("year"),
   },
   (t) => [uniqueIndex("idx_albums_name_artist").on(t.name, t.artistId)],
 )
 
-export const sources = pgTable(
-  "sources",
-  {
-    id: uuid("id").defaultRandom().primaryKey(),
-    name: text("name").notNull(),
-    rootPath: text("root_path").notNull().unique(),
-    enabled: boolean("enabled").notNull().default(true),
-    createdAt: timestamp("created_at").defaultNow(),
-    updatedAt: timestamp("updated_at").defaultNow(),
-  },
-)
+export const sources = pgTable("sources", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  rootPath: text("root_path").notNull().unique(),
+  enabled: boolean("enabled").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+})
 
 export const tracks = pgTable(
   "tracks",
@@ -40,8 +49,12 @@ export const tracks = pgTable(
     id: uuid("id").defaultRandom().primaryKey(),
     stableId: text("stable_id").notNull().unique(),
     name: text("name").notNull(),
-    albumId: uuid("album_id").notNull().references(() => albums.id, { onDelete: "cascade" }),
-    sourceId: uuid("source_id").references(() => sources.id, { onDelete: "cascade" }),
+    albumId: uuid("album_id")
+      .notNull()
+      .references(() => albums.id, { onDelete: "cascade" }),
+    sourceId: uuid("source_id").references(() => sources.id, {
+      onDelete: "cascade",
+    }),
     trackNumber: integer("track_number"),
     playtimeSeconds: real("playtime_seconds").default(0),
     path: text("path").notNull().unique(),
@@ -55,7 +68,9 @@ export const audioAssets = pgTable(
   {
     id: uuid("id").defaultRandom().primaryKey(),
     stableId: text("stable_id").notNull().unique(),
-    parentId: uuid("parent_id").notNull().references(() => tracks.id, { onDelete: "cascade" }),
+    parentId: uuid("parent_id")
+      .notNull()
+      .references(() => tracks.id, { onDelete: "cascade" }),
     path: text("path").notNull(),
     name: text("name").notNull(),
     filetype: text("filetype").default("audio"),
@@ -87,21 +102,20 @@ export const artAssets = pgTable(
   ],
 )
 
-export const playlists = pgTable(
-  "playlists",
-  {
-    id: uuid("id").defaultRandom().primaryKey(),
-    stableId: text("stable_id").notNull().unique(),
-    name: text("name").notNull(),
-    imageUrl: text("image_url"),
-  },
-)
+export const playlists = pgTable("playlists", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  stableId: text("stable_id").notNull().unique(),
+  name: text("name").notNull(),
+  imageUrl: text("image_url"),
+})
 
 export const playlistTracks = pgTable(
   "playlist_tracks",
   {
     id: uuid("id").defaultRandom().primaryKey(),
-    playlistId: uuid("playlist_id").notNull().references(() => playlists.id, { onDelete: "cascade" }),
+    playlistId: uuid("playlist_id")
+      .notNull()
+      .references(() => playlists.id, { onDelete: "cascade" }),
     trackStableId: text("track_stable_id").notNull(),
     position: integer("position").notNull(),
   },
@@ -128,7 +142,9 @@ export const invitations = pgTable(
     id: uuid("id").defaultRandom().primaryKey(),
     code: text("code").notNull().unique(),
     username: text("username").notNull(),
-    createdBy: uuid("created_by").notNull().references(() => users.id, { onDelete: "cascade" }),
+    createdBy: uuid("created_by")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
     isUsed: boolean("is_used").notNull().default(false),
     usedBy: uuid("used_by").references(() => users.id),
     createdAt: timestamp("created_at").defaultNow(),
@@ -136,10 +152,7 @@ export const invitations = pgTable(
   (t) => [index("idx_invitations_code").on(t.code)],
 )
 
-export const settings = pgTable(
-  "settings",
-  {
-    key: text("key").primaryKey(),
-    value: text("value").notNull(),
-  },
-)
+export const settings = pgTable("settings", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+})

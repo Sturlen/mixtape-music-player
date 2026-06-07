@@ -2,9 +2,25 @@ import type { LimitFunction } from "p-limit"
 import path from "path"
 import { eq, and, sql, inArray } from "drizzle-orm"
 import type { DB } from "@/db"
-import { artists, albums, tracks, audioAssets, artAssets, playlists, playlistTracks, sources } from "@/db/schema"
+import {
+  artists,
+  albums,
+  tracks,
+  audioAssets,
+  artAssets,
+  playlists,
+  playlistTracks,
+  sources,
+} from "@/db/schema"
 import type { AudioMetadata } from "@/server/audio"
-import type { Artist, Album, Track, AudioAsset, ArtAsset, Playlist } from "@/lib/types"
+import type {
+  Artist,
+  Album,
+  Track,
+  AudioAsset,
+  ArtAsset,
+  Playlist,
+} from "@/lib/types"
 import { createMetadataProvider } from "@/server/audio"
 import { artInfo } from "@/lib/dominant-color"
 import { fuse_artists, fuse_albums, fuse_playlists } from "@/lib/fuse"
@@ -80,13 +96,23 @@ export class Library {
     return existing!.id
   }
 
-  private async upsertAlbum(name: string, artistId: string, year?: number): Promise<{ id: string }> {
+  private async upsertAlbum(
+    name: string,
+    artistId: string,
+    year?: number,
+  ): Promise<{ id: string }> {
     const sid = stableId("album", `${name}_${artistId}`)
     const albumId = crypto.randomUUID()
 
     const [row] = await this.db
       .insert(albums)
-      .values({ id: albumId, stableId: sid, name, artistId, year: year ?? null })
+      .values({
+        id: albumId,
+        stableId: sid,
+        name,
+        artistId,
+        year: year ?? null,
+      })
       .onConflictDoNothing({ target: albums.stableId })
       .returning({ id: albums.id, year: albums.year })
     if (row) return { id: row.id }
@@ -108,7 +134,13 @@ export class Library {
     const existing = await this.db
       .select({ id: artAssets.id })
       .from(artAssets)
-      .where(and(eq(artAssets.entityId, entityId), eq(artAssets.entityType, entityType), eq(artAssets.role, role)))
+      .where(
+        and(
+          eq(artAssets.entityId, entityId),
+          eq(artAssets.entityType, entityType),
+          eq(artAssets.role, role),
+        ),
+      )
       .limit(1)
       .then((r) => r[0])
 
@@ -161,7 +193,9 @@ export class Library {
     const artistName =
       dirArtist || info.albumArtistName || artistFromList || "Unknown Artist"
     const rawAlbum =
-      info.albumName || (parts.length > 1 ? parts[1] : undefined) || "Unknown Album"
+      info.albumName ||
+      (parts.length > 1 ? parts[1] : undefined) ||
+      "Unknown Album"
     const albumName = rawAlbum.split(" - ").at(-1)?.trim() ?? rawAlbum
     const title = info.trackName || trackNameFromFile(filePath)
     const duration = info.durationSeconds.toJSON()
@@ -218,14 +252,18 @@ export class Library {
     }
   }
 
-  enrich(limit: LimitFunction, sources: { scan: ScanResult; rootPath: string; sourceId: string }[]) {
+  enrich(
+    limit: LimitFunction,
+    sources: { scan: ScanResult; rootPath: string; sourceId: string }[],
+  ) {
     const provider = createMetadataProvider()
 
     const allFiles: { path: string; rootPath: string; sourceId: string }[] = []
     const artByDir = new Map<string, string>()
 
     for (const { scan, rootPath, sourceId } of sources) {
-      for (const f of scan.audioFiles) allFiles.push({ path: f.path, rootPath, sourceId })
+      for (const f of scan.audioFiles)
+        allFiles.push({ path: f.path, rootPath, sourceId })
       for (const [dir, img] of scan.artByDir) {
         if (!artByDir.has(dir)) artByDir.set(dir, img)
       }
@@ -247,16 +285,13 @@ export class Library {
 
     Promise.allSettled(jobs).then(() => {
       this.rebuildIndex()
-      console.log(
-        "Metadata complete: from %d files",
-        allFiles.length,
-      )
+      console.log("Metadata complete: from %d files", allFiles.length)
     })
   }
 
   // Convert DB rows (with null) to domain types (with undefined)
   private fix<T>(row: T): T {
-    if (!row || typeof row !== 'object') return row
+    if (!row || typeof row !== "object") return row
     const out = {} as T
     for (const [k, v] of Object.entries(row)) {
       ;(out as any)[k] = v ?? undefined
@@ -265,20 +300,48 @@ export class Library {
   }
 
   private fixMany<T>(rows: T[]): T[] {
-    return rows.map(r => this.fix(r))
+    return rows.map((r) => this.fix(r))
   }
 
   async getStats() {
-    const [artistCount, albumCount, trackCount, audioCount, artCount, playlistCount, libraryCount] =
-      await Promise.all([
-        this.db.select({ count: sql<number>`count(*)::int` }).from(artists).then(r => Number(r[0]?.count ?? 0)),
-        this.db.select({ count: sql<number>`count(*)::int` }).from(albums).then(r => Number(r[0]?.count ?? 0)),
-        this.db.select({ count: sql<number>`count(*)::int` }).from(tracks).then(r => Number(r[0]?.count ?? 0)),
-        this.db.select({ count: sql<number>`count(*)::int` }).from(audioAssets).then(r => Number(r[0]?.count ?? 0)),
-        this.db.select({ count: sql<number>`count(*)::int` }).from(artAssets).then(r => Number(r[0]?.count ?? 0)),
-        this.db.select({ count: sql<number>`count(*)::int` }).from(playlists).then(r => Number(r[0]?.count ?? 0)),
-        this.db.select({ count: sql<number>`count(*)::int` }).from(sources).then(r => Number(r[0]?.count ?? 0)),
-      ])
+    const [
+      artistCount,
+      albumCount,
+      trackCount,
+      audioCount,
+      artCount,
+      playlistCount,
+      libraryCount,
+    ] = await Promise.all([
+      this.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(artists)
+        .then((r) => Number(r[0]?.count ?? 0)),
+      this.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(albums)
+        .then((r) => Number(r[0]?.count ?? 0)),
+      this.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(tracks)
+        .then((r) => Number(r[0]?.count ?? 0)),
+      this.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(audioAssets)
+        .then((r) => Number(r[0]?.count ?? 0)),
+      this.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(artAssets)
+        .then((r) => Number(r[0]?.count ?? 0)),
+      this.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(playlists)
+        .then((r) => Number(r[0]?.count ?? 0)),
+      this.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(sources)
+        .then((r) => Number(r[0]?.count ?? 0)),
+    ])
     return {
       artists: artistCount,
       albums: albumCount,
@@ -295,29 +358,45 @@ export class Library {
   }
 
   async getArtists() {
-    return this.fixMany(await this.db.select().from(artists).orderBy(artists.name)) as any as Artist[]
+    return this.fixMany(
+      await this.db.select().from(artists).orderBy(artists.name),
+    ) as any as Artist[]
   }
 
   async getArtist(id: string) {
-    const [row] = await this.db.select().from(artists).where(eq(artists.id, id)).limit(1)
+    const [row] = await this.db
+      .select()
+      .from(artists)
+      .where(eq(artists.id, id))
+      .limit(1)
     return (row ? this.fix(row) : null) as any as Artist | null
   }
 
   async getArtistAlbums(artistId: string) {
-    return this.fixMany(await this.db.select().from(albums).where(eq(albums.artistId, artistId))) as any as Album[]
+    return this.fixMany(
+      await this.db.select().from(albums).where(eq(albums.artistId, artistId)),
+    ) as any as Album[]
   }
 
   async getAlbums() {
-    return this.fixMany(await this.db.select().from(albums).orderBy(albums.name)) as any as Album[]
+    return this.fixMany(
+      await this.db.select().from(albums).orderBy(albums.name),
+    ) as any as Album[]
   }
 
   async getAlbum(id: string) {
-    const [row] = await this.db.select().from(albums).where(eq(albums.id, id)).limit(1)
+    const [row] = await this.db
+      .select()
+      .from(albums)
+      .where(eq(albums.id, id))
+      .limit(1)
     return (row ? this.fix(row) : null) as any as Album | null
   }
 
   async getAlbumTracks(albumId: string) {
-    return this.fixMany(await this.db.select().from(tracks).where(eq(tracks.albumId, albumId))) as any as Track[]
+    return this.fixMany(
+      await this.db.select().from(tracks).where(eq(tracks.albumId, albumId)),
+    ) as any as Track[]
   }
 
   async getAllTracks() {
@@ -325,33 +404,56 @@ export class Library {
   }
 
   async getTrack(id: string) {
-    const [row] = await this.db.select().from(tracks).where(eq(tracks.id, id)).limit(1)
+    const [row] = await this.db
+      .select()
+      .from(tracks)
+      .where(eq(tracks.id, id))
+      .limit(1)
     return (row ? this.fix(row) : null) as any as Track | null
   }
 
   async getAudioAssetsByParent(parentId: string) {
-    return this.fixMany(await this.db.select().from(audioAssets).where(eq(audioAssets.parentId, parentId))) as any as AudioAsset[]
+    return this.fixMany(
+      await this.db
+        .select()
+        .from(audioAssets)
+        .where(eq(audioAssets.parentId, parentId)),
+    ) as any as AudioAsset[]
   }
 
   async getAudioAssets() {
-    return this.fixMany(await this.db.select().from(audioAssets)) as any as AudioAsset[]
+    return this.fixMany(
+      await this.db.select().from(audioAssets),
+    ) as any as AudioAsset[]
   }
 
   async getAudioAsset(id: string) {
-    const [row] = await this.db.select().from(audioAssets).where(eq(audioAssets.id, id)).limit(1)
+    const [row] = await this.db
+      .select()
+      .from(audioAssets)
+      .where(eq(audioAssets.id, id))
+      .limit(1)
     return (row ? this.fix(row) : null) as any as AudioAsset | null
   }
 
   async getPlaylist(id: string) {
-    const [row] = await this.db.select().from(playlists).where(eq(playlists.id, id)).limit(1)
+    const [row] = await this.db
+      .select()
+      .from(playlists)
+      .where(eq(playlists.id, id))
+      .limit(1)
     return (row ? this.fix(row) : null) as any as Playlist | null
   }
 
   async getAllPlaylists() {
-    return this.fixMany(await this.db.select().from(playlists)) as any as Playlist[]
+    return this.fixMany(
+      await this.db.select().from(playlists),
+    ) as any as Playlist[]
   }
 
-  async setPlaylists(entries: { id: string; name: string; imageUrl?: string | null }[]) {
+  async setPlaylists(
+    entries: { id: string; name: string; imageUrl?: string | null }[],
+  ) {
     await this.db.delete(playlists)
     for (const p of entries) {
       const sid = stableId("playlist", p.name)
@@ -362,26 +464,50 @@ export class Library {
     }
   }
 
-  async getArt(entityId: string, entityType: "album" | "artist", role: "cover" | "portrait" = "cover") {
+  async getArt(
+    entityId: string,
+    entityType: "album" | "artist",
+    role: "cover" | "portrait" = "cover",
+  ) {
     const [row] = await this.db
       .select()
       .from(artAssets)
-      .where(and(eq(artAssets.entityId, entityId), eq(artAssets.entityType, entityType), eq(artAssets.role, role)))
+      .where(
+        and(
+          eq(artAssets.entityId, entityId),
+          eq(artAssets.entityType, entityType),
+          eq(artAssets.role, role),
+        ),
+      )
       .limit(1)
-    return row ? this.fix(row) as any as ArtAsset : null
+    return row ? (this.fix(row) as any as ArtAsset) : null
   }
 
   async getArtById(id: string) {
-    const [row] = await this.db.select().from(artAssets).where(eq(artAssets.id, id)).limit(1)
-    return row ? this.fix(row) as any as ArtAsset : null
+    const [row] = await this.db
+      .select()
+      .from(artAssets)
+      .where(eq(artAssets.id, id))
+      .limit(1)
+    return row ? (this.fix(row) as any as ArtAsset) : null
   }
 
-  async getArtBatch(entityIds: string[], entityType: "album" | "artist", role: "cover" | "portrait" = "cover") {
+  async getArtBatch(
+    entityIds: string[],
+    entityType: "album" | "artist",
+    role: "cover" | "portrait" = "cover",
+  ) {
     if (entityIds.length === 0) return new Map()
     const rows = await this.db
       .select()
       .from(artAssets)
-      .where(and(eq(artAssets.entityType, entityType), eq(artAssets.role, role), inArray(artAssets.entityId, entityIds)))
+      .where(
+        and(
+          eq(artAssets.entityType, entityType),
+          eq(artAssets.role, role),
+          inArray(artAssets.entityId, entityIds),
+        ),
+      )
     const map = new Map<string, ArtAsset>()
     for (const row of rows) {
       map.set(row.entityId, this.fix(row) as any as ArtAsset)
@@ -390,7 +516,15 @@ export class Library {
   }
 
   async getAllArt(entityId: string, entityType: "album" | "artist") {
-    return this.db.select().from(artAssets).where(and(eq(artAssets.entityId, entityId), eq(artAssets.entityType, entityType))) as any as ArtAsset[]
+    return this.db
+      .select()
+      .from(artAssets)
+      .where(
+        and(
+          eq(artAssets.entityId, entityId),
+          eq(artAssets.entityType, entityType),
+        ),
+      ) as any as ArtAsset[]
   }
 
   async getAllSources() {
@@ -398,7 +532,11 @@ export class Library {
   }
 
   async getSource(id: string) {
-    const [row] = await this.db.select().from(sources).where(eq(sources.id, id)).limit(1)
+    const [row] = await this.db
+      .select()
+      .from(sources)
+      .where(eq(sources.id, id))
+      .limit(1)
     return row ?? null
   }
 

@@ -50,12 +50,10 @@ export function createAdminRoutes(context: AdminContext) {
           .limit(1)
 
         if (!target) throw status(404, "User not found")
-        if (target.role === "admin") throw status(403, "Cannot deactivate admin users")
+        if (target.role === "admin")
+          throw status(403, "Cannot deactivate admin users")
 
-        await db
-          .update(users)
-          .set({ isActive: false })
-          .where(eq(users.id, id))
+        await db.update(users).set({ isActive: false }).where(eq(users.id, id))
 
         return { success: true }
       },
@@ -98,9 +96,15 @@ export function createAdminRoutes(context: AdminContext) {
       },
       {
         body: t.Object({
-          username: t.String({ minLength: 2, maxLength: 32, pattern: "^[a-z]([a-z0-9_]*[a-z0-9])?$" }),
+          username: t.String({
+            minLength: 2,
+            maxLength: 32,
+            pattern: "^[a-z]([a-z0-9_]*[a-z0-9])?$",
+          }),
         }),
-        detail: { description: "Create an invitation with a pre-selected username" },
+        detail: {
+          description: "Create an invitation with a pre-selected username",
+        },
       },
     )
     .get("/invitations", async ({ jwt, headers, status }) => {
@@ -133,7 +137,7 @@ export function createAdminRoutes(context: AdminContext) {
         .from(settings)
         .where(inArray(settings.key, SERVER_SETTING_KEYS))
 
-      return { settings: Object.fromEntries(rows.map(r => [r.key, r.value])) }
+      return { settings: Object.fromEntries(rows.map((r) => [r.key, r.value])) }
     })
     .put(
       "/settings",
@@ -147,7 +151,10 @@ export function createAdminRoutes(context: AdminContext) {
           await db
             .insert(settings)
             .values({ key, value: String(value) })
-            .onConflictDoUpdate({ target: settings.key, set: { value: String(value) } })
+            .onConflictDoUpdate({
+              target: settings.key,
+              set: { value: String(value) },
+            })
         }
 
         ffmpegEnabled = null

@@ -59,6 +59,6 @@ export const CATEGORIES: { id: SettingCategory; label: string }[] = [
   { id: "server", label: "Server" },
 ]
 
-export const SERVER_SETTING_KEYS = SETTINGS
-  .filter(s => s.scope === "server")
-  .map(s => s.key)
+export const SERVER_SETTING_KEYS = SETTINGS.filter(
+  (s) => s.scope === "server",
+).map((s) => s.key)

@@ -149,7 +149,7 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
   }, [requested_playback_rate])
 
   // Sync playback speed from settings store to player store
-  const settingsSpeed = useSettings(s => s.values.playback_speed) as number
+  const settingsSpeed = useSettings((s) => s.values.playback_speed) as number
   useEffect(() => {
     useAudioPlayer.getState().setPlaybackRate(settingsSpeed)
   }, [settingsSpeed])

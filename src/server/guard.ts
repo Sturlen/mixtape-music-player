@@ -3,7 +3,10 @@ interface Jwt {
   verify(token: string): Promise<Record<string, unknown> | false>
 }
 
-export async function verifyAuth(jwt: Jwt, headers: Record<string, string | undefined>) {
+export async function verifyAuth(
+  jwt: Jwt,
+  headers: Record<string, string | undefined>,
+) {
   const auth = headers.authorization
   if (!auth || !auth.startsWith("Bearer ")) return null
   const payload = await jwt.verify(auth.slice(7))

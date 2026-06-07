@@ -54,7 +54,7 @@ function LibraryProgressWatcher() {
 }
 
 function ThemeWatcher() {
-  const theme = useSettings(s => s.values.theme) as string
+  const theme = useSettings((s) => s.values.theme) as string
 
   useEffect(() => {
     const root = document.documentElement
@@ -77,7 +77,7 @@ function ThemeWatcher() {
 
 const RootLayout = () => (
   <AuthProvider>
-    <div className="min-h-full bg-background">
+    <div className="bg-background min-h-full">
       <ThemeWatcher />
       <LibraryProgressWatcher />
       <header className="fixed top-0 right-0 left-0 z-10 flex h-30 items-center justify-between bg-black p-2 md:p-10 xl:left-[25rem]">
@@ -156,7 +156,9 @@ function Sidebar({ className }: { className?: string }) {
       )}
     >
       <section className="flex min-h-0 flex-col overflow-hidden">
-        <h2 className="font-inter-400 shrink-0 pb-2 text-center text-2xl">QUEUE</h2>
+        <h2 className="font-inter-400 shrink-0 pb-2 text-center text-2xl">
+          QUEUE
+        </h2>
         <PlaybackQueue className="min-h-0 flex-1" />
       </section>
       <section className="">
@@ -168,7 +170,6 @@ function Sidebar({ className }: { className?: string }) {
           <div className="flex items-center justify-items-center">
             <Controls />
           </div>
-
         </div>
       </section>
     </div>
