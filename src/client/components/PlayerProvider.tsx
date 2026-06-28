@@ -4,6 +4,7 @@ import { useAudioPlayer, useCurrentTrack, useEvents } from "@/Player"
 import { EdenClient } from "@/lib/eden"
 import { useQuery } from "@tanstack/react-query"
 import { useSettings } from "@/client/stores/settings"
+import { HlsPlayer } from "./HlsPlayer"
 
 async function fetchPlaybackData(trackId: string) {
   const { data, error } = await EdenClient.api.player.post({ trackId })
@@ -12,6 +13,10 @@ async function fetchPlaybackData(trackId: string) {
   }
 
   return data.url
+}
+
+function hlsUrl(trackId: string) {
+  return `/api/hls/${trackId}/playlist.m3u8`
 }
 
 export const PlayerProvider = ({ children }: PropsWithChildren) => {
@@ -41,12 +46,15 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
   const keepalive_ref = React.useRef<OscillatorNode | null>(null)
 
   const saved_current_time = useAudioPlayer.use.currentTime()
+  const hlsEnabled = useSettings((s) => s.values.hls_enabled) as boolean
 
   const { data: src } = useQuery({
-    queryKey: ["playback", currentTrack?.id],
+    queryKey: ["playback", currentTrack?.id, hlsEnabled] as const,
     enabled: !!currentTrack,
     queryFn: async ({ queryKey }) => {
-      return fetchPlaybackData(queryKey[1] ?? "")
+      const trackId = queryKey[1] ?? ""
+      if (hlsEnabled) return hlsUrl(trackId)
+      return fetchPlaybackData(trackId)
     },
     staleTime: Infinity,
   })
@@ -117,13 +125,12 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
     }
   }, [requestedSeekPosition])
 
-  // Load new src
+  // Load new src (only when HLS is disabled — HlsPlayer handles HLS)
   useEffect(() => {
-    if (audio_ref.current) {
-      audio_ref.current.src = src ?? ""
-      audio_ref.current.load()
-    }
-  }, [src])
+    if (!audio_ref.current || hlsEnabled) return
+    audio_ref.current.src = src ?? ""
+    audio_ref.current.load()
+  }, [src, hlsEnabled])
 
   // Play/pause
   useEffect(() => {
@@ -168,6 +175,7 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
   return (
     <>
       {children}
+      <HlsPlayer src={src} audioRef={audio_ref} enabled={hlsEnabled} />
       <audio
         ref={audio_ref}
         onTimeUpdate={(e) => onTimeUpdate(e.currentTarget.currentTime)}
@@ -179,7 +187,6 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
         onCanPlay={onCanPlay}
         onEmptied={onEmptied}
         onLoadStart={onLoadStart}
-        src={src}
       />
     </>
   )

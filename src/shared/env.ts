@@ -16,6 +16,8 @@ export const env = createEnv({
     OTEL_EXPORTER_OTLP_HEADERS: z.string().optional(),
     OTEL_SERVICE_NAME: z.string().optional(),
     PG_PORT: z.coerce.number().int().default(0),
+    HLS_ENABLED: z.stringbool().default(false),
+    HLS_CACHE_DIR: z.string().optional(),
   },
   emptyStringAsUndefined: true,
   runtimeEnv: process.env,

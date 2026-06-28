@@ -8,6 +8,11 @@ import Fuse from "fuse.js"
 import pLimit from "p-limit"
 import { readFileSync } from "fs"
 import { env } from "@/shared/env"
+import {
+  getOrCreatePlaylist,
+  getSegmentPath,
+  startHlsCleanup,
+} from "@/server/hls"
 import { parse } from "@/parse"
 import type { Album, Artist, Playlist, Track } from "@/lib/types"
 import { raise } from "@/lib/utils"
@@ -37,6 +42,13 @@ if (env.USE_FFMPEG) {
   console.warn(
     Bun.color("yellow", "ansi") +
       "FFMPEG audio file conversion is enabled. if you are experiencing issues, try setting USE_FFMPEG=0 disable it.",
+  )
+}
+
+if (env.HLS_ENABLED) {
+  console.warn(
+    Bun.color("yellow", "ansi") +
+      "HLS streaming is enabled. Audio files will be transcoded via FFmpeg on first play.",
   )
 }
 
@@ -458,6 +470,41 @@ const app = new Elysia()
     set.headers["content-type"] = file.type
     return file
   })
+  .get(
+    "/api/hls/:trackId/playlist.m3u8",
+    async ({ params: { trackId }, set, status }) => {
+      if (!env.HLS_ENABLED) return status(404, "HLS disabled")
+      console.log("[HLS] Playlist requested for track", trackId)
+      const track = await library.getTrack(trackId)
+      if (!track) return status(404, "Track not found")
+      try {
+        const playlist = await getOrCreatePlaylist(track.path, trackId)
+        set.headers["Content-Type"] = "application/vnd.apple.mpegurl"
+        set.headers["Cache-Control"] = "no-cache"
+        return playlist
+      } catch (err) {
+        console.error("[HLS] Playlist generation failed:", err)
+        return status(500, "Failed to generate HLS playlist")
+      }
+    },
+  )
+  .get(
+    "/api/hls/:trackId/:filename",
+    async ({ params: { trackId, filename }, set, status }) => {
+      if (!env.HLS_ENABLED) return status(404, "HLS disabled")
+      console.log("[HLS] Segment requested:", trackId, "/", filename)
+      if (filename === "playlist.m3u8") return status(404, "Use playlist endpoint")
+      const segmentPath = getSegmentPath(trackId, filename)
+      if (!segmentPath) {
+        console.warn("[HLS] Segment not found for", trackId, filename)
+        return status(404, "Segment not found")
+      }
+      const file = Bun.file(segmentPath)
+      set.headers["Content-Type"] = "video/MP2T"
+      set.headers["Cache-Control"] = "public, max-age=86400"
+      return file
+    },
+  )
   .get("/api/library/progress", () => {
     let unsub: (() => void) | null = null
     let heartbeat: ReturnType<typeof setInterval> | null = null
@@ -621,6 +668,10 @@ app.listen(env.PORT, () => {
     pgServer.listen(env.PG_PORT, () => {
       console.log("PGlite exposed on port", env.PG_PORT)
     })
+  }
+
+  if (env.HLS_ENABLED) {
+    startHlsCleanup()
   }
 })
 

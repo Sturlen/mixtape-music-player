@@ -43,6 +43,16 @@ export const SETTINGS: SettingDef[] = [
     step: 0.05,
   },
   {
+    key: "hls_enabled",
+    label: "HLS Streaming",
+    description:
+      "Stream audio via HLS segments. Requires server-side FFmpeg and HLS_ENABLED env var.",
+    type: "toggle",
+    category: "playback",
+    scope: "client",
+    defaultValue: false,
+  },
+  {
     key: "ffmpeg_enabled",
     label: "FFmpeg Audio Conversion",
     description: "Enable on-the-fly audio transcoding via FFmpeg.",

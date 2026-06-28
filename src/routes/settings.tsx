@@ -81,29 +81,49 @@ function AppearanceSettings() {
 function PlaybackSettings() {
   const { values, setSetting } = useSettings()
 
-  const def = SETTINGS.find((s) => s.key === "playback_speed")!
-  const value = (values.playback_speed ?? def.defaultValue) as number
+  const speedDef = SETTINGS.find((s) => s.key === "playback_speed")!
+  const speedValue = (values.playback_speed ?? speedDef.defaultValue) as number
+  const hlsDef = SETTINGS.find((s) => s.key === "hls_enabled")!
+  const hlsValue = (values.hls_enabled ?? hlsDef.defaultValue) as boolean
 
   return (
-    <SettingCard label={def.label} description={def.description}>
-      <div className="flex items-center gap-3">
-        <Slider
-          value={[value]}
-          min={def.min}
-          max={def.max}
-          step={def.step}
-          onValueChange={([v]) => {
-            if (v == null) return
-            setSetting(def.key, v)
-            useAudioPlayer.getState().setPlaybackRate(v)
+    <div className="space-y-6">
+      <SettingCard label={speedDef.label} description={speedDef.description}>
+        <div className="flex items-center gap-3">
+          <Slider
+            value={[speedValue]}
+            min={speedDef.min}
+            max={speedDef.max}
+            step={speedDef.step}
+            onValueChange={([v]) => {
+              if (v == null) return
+              setSetting(speedDef.key, v)
+              useAudioPlayer.getState().setPlaybackRate(v)
+            }}
+            className="w-40"
+          />
+          <span className="text-muted-foreground min-w-[3ch] text-sm tabular-nums">
+            {speedValue}x
+          </span>
+        </div>
+      </SettingCard>
+      <SettingCard label={hlsDef.label} description={hlsDef.description}>
+        <button
+          onClick={() => {
+            setSetting(hlsDef.key, !hlsValue)
           }}
-          className="w-40"
-        />
-        <span className="text-muted-foreground min-w-[3ch] text-sm tabular-nums">
-          {value}x
-        </span>
-      </div>
-    </SettingCard>
+          className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border-2 border-transparent transition-colors ${
+            hlsValue ? "bg-primary" : "bg-muted"
+          }`}
+        >
+          <span
+            className={`inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
+              hlsValue ? "translate-x-5" : "translate-x-0.5"
+            }`}
+          />
+        </button>
+      </SettingCard>
+    </div>
   )
 }
 

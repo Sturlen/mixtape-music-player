@@ -6,3 +6,4 @@
 !/*.ts
 !/scripts
 !/.github/worflows
+src/routeTree.gen.ts
