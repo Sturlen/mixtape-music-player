@@ -21,6 +21,9 @@
     "test:watch": "bun test --watch",
     "test:e2e": "bun test tests/e2e",
     "test:e2e:watch": "bun test --watch tests/e2e",
+    "test:e2e:ui": "bun run build && playwright test",
+    "test:e2e:ui:debug": "bun run build && playwright test --debug",
+    "test:e2e:ui:report": "playwright show-report",
     "check": "npm-run-all --parallel lint typecheck format",
     "db:generate": "drizzle-kit generate",
     "db:up": "drizzle-kit migrate"
@@ -68,6 +71,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@playwright/test": "^1.61.1",
     "@tailwindcss/vite": "^4.1.0",
     "@tanstack/router-cli": "^1.132.51",
     "@tanstack/router-plugin": "^1.168.6",
