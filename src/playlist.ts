@@ -71,7 +71,7 @@ export function createPlaylistRoutes(context: PlaylistContext) {
           tracks: [],
         }
 
-        await savePlaylist(playlist, "./data/playlists")
+        await savePlaylist(playlist, `${env.DATA_PATH}/playlists`)
         db.playlists.set(playlist.id, playlist)
         fuse_playlists.setCollection(Array.from(db.playlists.values()))
 
@@ -102,7 +102,7 @@ export function createPlaylistRoutes(context: PlaylistContext) {
           tracks: body.tracks || playlist.tracks,
         }
 
-        await savePlaylist(updatedPlaylist, "./data/playlists")
+        await savePlaylist(updatedPlaylist, `${env.DATA_PATH}/playlists`)
         db.playlists.set(playlistId, updatedPlaylist)
         fuse_playlists.setCollection(Array.from(db.playlists.values()))
 
@@ -125,7 +125,7 @@ export function createPlaylistRoutes(context: PlaylistContext) {
 
       const deletedPlaylist = await deletePlaylist(
         playlistId,
-        "./data/playlists",
+        `${env.DATA_PATH}/playlists`,
       )
       db.playlists.delete(playlistId)
       fuse_playlists.setCollection(Array.from(db.playlists.values()))
@@ -154,7 +154,7 @@ export function createPlaylistRoutes(context: PlaylistContext) {
           tracks: [...playlist.tracks, { id: track.id, name: track.name }],
         }
 
-        await savePlaylist(updatedPlaylist, "./data/playlists")
+        await savePlaylist(updatedPlaylist, `${env.DATA_PATH}/playlists`)
         db.playlists.set(playlistId, updatedPlaylist)
         fuse_playlists.setCollection(Array.from(db.playlists.values()))
 
@@ -184,7 +184,7 @@ export function createPlaylistRoutes(context: PlaylistContext) {
           tracks: playlist.tracks.filter((t) => t.id !== trackId),
         }
 
-        await savePlaylist(updatedPlaylist, "./data/playlists")
+        await savePlaylist(updatedPlaylist, `${env.DATA_PATH}/playlists`)
         db.playlists.set(playlistId, updatedPlaylist)
         fuse_playlists.setCollection(Array.from(db.playlists.values()))
 

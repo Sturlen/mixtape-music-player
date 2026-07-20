@@ -5,6 +5,7 @@ services:
       dockerfile: Dockerfile
     volumes:
       - data:/data
+      - config:/config
       - /mnt/plex/Library:/data/music
     ports:
       - "3000:3000"
@@ -17,3 +18,4 @@ services:
 
 volumes:
   data:
+  config:

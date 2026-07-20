@@ -20,7 +20,7 @@ RUN rm -f /app/.env* && bun run build
 COPY root/ /
 
 ENV NODE_ENV=production
-ENV DATA_PATH=/data
+ENV DATA_PATH=/config
 ENV MUSIC_PATH=/data/music
 ENV MUSIC2_PATH=
 ENV PORT=3000
@@ -34,4 +34,4 @@ ENV HLS_ENABLED=false
 ENV HLS_CACHE_DIR=
 
 EXPOSE 3000
-VOLUME ["/data"]
+VOLUME ["/data", "/config"]
