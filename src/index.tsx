@@ -9,8 +9,10 @@ import pLimit from "p-limit"
 import { readFileSync } from "fs"
 import { env } from "@/shared/env"
 import {
-  getOrCreatePlaylist,
-  getSegmentPath,
+  buildPlaylist,
+  initTrackCache,
+  ensureTrackEncode,
+  requestSegment,
   startHlsCleanup,
   pregenerateFirstSegments,
 } from "@/server/hls"
@@ -487,9 +489,14 @@ const app = new Elysia()
       const track = await library.getTrack(trackId)
       if (!track) return status(404, "Track not found")
       try {
-        const playlist = await getOrCreatePlaylist(track.path, trackId)
+        initTrackCache(trackId, track.playtimeSeconds)
+
+        const playlist = buildPlaylist(trackId, track.playtimeSeconds)
         set.headers["Content-Type"] = "application/vnd.apple.mpegurl"
         set.headers["Cache-Control"] = "no-cache"
+
+        ensureTrackEncode(track.path, trackId)
+
         return playlist
       } catch (err) {
         console.error("[HLS] Playlist generation failed:", err)
@@ -503,15 +510,23 @@ const app = new Elysia()
       if (!env.HLS_ENABLED) return status(404, "HLS disabled")
       console.log("[HLS] Segment requested:", trackId, "/", filename)
       if (filename === "playlist.m3u8") return status(404, "Use playlist endpoint")
-      const segmentPath = getSegmentPath(trackId, filename)
-      if (!segmentPath) {
-        console.warn("[HLS] Segment not found for", trackId, filename)
-        return status(404, "Segment not found")
+
+      const match = filename.match(/^segment_(\d+)\.ts$/)
+      if (!match) return status(404, "Invalid segment filename")
+      const segmentIndex = parseInt(match[1]!, 10)
+
+      const track = await library.getTrack(trackId)
+      if (!track) return status(404, "Track not found")
+
+      try {
+        const data = await requestSegment(track.path, trackId, segmentIndex)
+        set.headers["Content-Type"] = "video/MP2T"
+        set.headers["Cache-Control"] = "public, max-age=86400"
+        return new Response(data)
+      } catch (err) {
+        console.error("[HLS] Segment request failed:", err)
+        return status(500, "Failed to serve segment")
       }
-      const file = Bun.file(segmentPath)
-      set.headers["Content-Type"] = "video/MP2T"
-      set.headers["Cache-Control"] = "public, max-age=86400"
-      return file
     },
   )
   .get("/api/library/progress", () => {

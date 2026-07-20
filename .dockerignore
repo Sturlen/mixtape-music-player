@@ -30,3 +30,4 @@ coverage*
 .env.local
 .env.*
 .partykit/
+data

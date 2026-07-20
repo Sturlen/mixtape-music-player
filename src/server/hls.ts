@@ -5,8 +5,6 @@ import {
   readdirSync,
   rmSync,
   statSync,
-  readFileSync,
-  renameSync,
 } from "fs"
 import { join } from "path"
 import { env } from "@/shared/env"
@@ -37,133 +35,211 @@ function segmentFilename(segmentIndex: number): string {
   return `segment_${String(segmentIndex).padStart(4, "0")}.ts`
 }
 
-function buildPartialPlaylist(duration: number): string {
-  return [
+export function buildPlaylist(
+  trackId: string,
+  playtimeSeconds: number,
+): string {
+  const totalSegments = Math.ceil(playtimeSeconds / SEGMENT_DURATION)
+  const lines: string[] = [
     "#EXTM3U",
     "#EXT-X-VERSION:3",
     `#EXT-X-TARGETDURATION:${Math.ceil(SEGMENT_DURATION)}`,
     "#EXT-X-MEDIA-SEQUENCE:0",
-    `#EXTINF:${duration.toFixed(3)},`,
-    segmentFilename(0),
-  ].join("\n")
-}
+  ]
 
-export async function generateSegmentAt(
-  trackPath: string,
-  trackId: string,
-  timeOffset: number,
-  segmentIndex: number,
-): Promise<string> {
-  const dir = ensureTrackCacheDir(trackId)
-  const filename = segmentFilename(segmentIndex)
-  const outputPath = join(dir, filename)
+  for (let i = 0; i < totalSegments; i++) {
+    const isLast = i === totalSegments - 1
+    const remainder = playtimeSeconds % SEGMENT_DURATION
+    const duration = isLast && remainder !== 0 ? playtimeSeconds - i * SEGMENT_DURATION : SEGMENT_DURATION
 
-  if (existsSync(outputPath)) return outputPath
-
-  if (!Bun.which("ffmpeg")) {
-    throw new Error("ffmpeg not found in PATH")
+    lines.push(`#EXTINF:${duration.toFixed(3)},`)
+    lines.push(segmentFilename(i))
   }
 
-  const proc = await $`ffmpeg -ss ${timeOffset} -t ${SEGMENT_DURATION} -i ${trackPath} \
-    -codec:a aac \
-    -b:a ${BITRATE} \
-    -f mpegts \
-    ${outputPath}`.quiet()
-
-  if (proc.exitCode !== 0) {
-    const stderr = proc.stderr.toString()
-    console.error("[HLS] FFmpeg failed generating segment", segmentIndex, "for track", trackId, ":", stderr)
-    throw new Error(`FFmpeg exited with code ${proc.exitCode}`)
-  }
-
-  return outputPath
+  lines.push("#EXT-X-ENDLIST")
+  return lines.join("\n")
 }
 
-export async function generateSegment(
+type SegmentStatus = "pending" | "encoding" | "complete" | "failed"
+
+type TrackCache = {
+  total: number
+  segments: SegmentStatus[]
+  encodePromise: Promise<void> | null
+  seg0Promise: Promise<void> | null
+}
+
+const tracksCache = new Map<string, TrackCache>()
+
+export function initTrackCache(trackId: string, playtimeSeconds: number): void {
+  if (tracksCache.has(trackId)) return
+
+  const total = Math.ceil(playtimeSeconds / SEGMENT_DURATION)
+  const dir = trackCacheDir(trackId)
+  const segments: SegmentStatus[] = []
+  for (let i = 0; i < total; i++) {
+    const segPath = join(dir, segmentFilename(i))
+    segments.push(existsSync(segPath) ? "complete" : "pending")
+  }
+  tracksCache.set(trackId, { total, segments, encodePromise: null, seg0Promise: null })
+}
+
+export function ensureTrackEncode(trackPath: string, trackId: string): void {
+  const cache = tracksCache.get(trackId)
+  if (!cache) throw new Error("Track cache not initialized")
+  if (cache.encodePromise) return
+  if (cache.segments.every((s) => s === "complete")) return
+
+  for (let i = 1; i < cache.total; i++) {
+    if (cache.segments[i] === "pending") {
+      cache.segments[i] = "encoding"
+    }
+  }
+
+  const onDone = () => {
+    for (let i = 1; i < cache.total; i++) {
+      if (cache.segments[i] === "encoding") {
+        cache.segments[i] = "complete"
+      }
+    }
+  }
+
+  const onFail = () => {
+    for (let i = 1; i < cache.total; i++) {
+      if (cache.segments[i] === "encoding") {
+        cache.segments[i] = "failed"
+      }
+    }
+  }
+
+  cache.encodePromise = doEncodeAll(trackPath, trackId).then(onDone, onFail)
+  cache.encodePromise.finally(() => {
+    cache.encodePromise = null
+  })
+}
+
+export async function requestSegment(
   trackPath: string,
   trackId: string,
   segmentIndex: number,
-): Promise<string> {
-  return generateSegmentAt(trackPath, trackId, segmentIndex * SEGMENT_DURATION, segmentIndex)
+): Promise<ArrayBuffer> {
+  const cache = tracksCache.get(trackId)
+  if (!cache) throw new Error("Track cache not initialized")
+
+  if (segmentIndex === 0) {
+    const s0 = cache.segments[0]
+    if (s0 === "complete") return readSegment(trackId, 0)
+    if (s0 === "failed") throw new Error("Segment generation failed")
+
+    if (!cache.seg0Promise) {
+      cache.seg0Promise = (async () => {
+        cache.segments[0] = "encoding"
+        try {
+          await generateFirstSegment(trackPath, trackId)
+          cache.segments[0] = "complete"
+          if (!cache.encodePromise) ensureTrackEncode(trackPath, trackId)
+        } catch {
+          cache.segments[0] = "failed"
+        }
+      })()
+    }
+    await cache.seg0Promise
+    if (cache.segments[0] === "complete") return readSegment(trackId, 0)
+    throw new Error("Segment generation failed")
+  }
+
+  const status = cache.segments[segmentIndex]
+  if (status === "complete") return readSegment(trackId, segmentIndex)
+  if (status === "failed") throw new Error("Segment generation failed")
+
+  if (status === "pending" || status === "encoding") {
+    if (!cache.encodePromise) ensureTrackEncode(trackPath, trackId)
+    await cache.encodePromise
+    if (cache.segments[segmentIndex] === "complete") return readSegment(trackId, segmentIndex)
+    throw new Error("Segment generation failed")
+  }
+
+  throw new Error(`Unknown segment status: ${status}`)
 }
 
-export async function generateFirstSegment(
-  trackPath: string,
-  trackId: string,
-): Promise<void> {
-  await generateSegment(trackPath, trackId, 0)
+async function readSegment(trackId: string, index: number): Promise<ArrayBuffer> {
+  const dir = trackCacheDir(trackId)
+  const path = join(dir, segmentFilename(index))
+  return Bun.file(path).arrayBuffer()
 }
 
-export async function generateAllSegments(
+async function doEncodeAll(
   trackPath: string,
   trackId: string,
 ): Promise<void> {
   const dir = ensureTrackCacheDir(trackId)
   const segmentPattern = join(dir, "segment_%04d.ts")
-  const tempPlaylist = join(dir, "index.temp.m3u8")
-  const finalPlaylist = join(dir, "index.m3u8")
 
   if (!Bun.which("ffmpeg")) {
     throw new Error("ffmpeg not found in PATH")
   }
 
-  const proc = await $`ffmpeg -i ${trackPath} \
+  console.log("[HLS] Encoding all segments for track", trackId)
+  const proc = await $`ffmpeg -ss ${SEGMENT_DURATION} -i ${trackPath} \
     -codec:a aac \
     -b:a ${BITRATE} \
-    -hls_time ${SEGMENT_DURATION} \
-    -hls_list_size 0 \
-    -hls_segment_filename ${segmentPattern} \
     -vn \
-    ${tempPlaylist}`.quiet()
+    -muxdelay 0 \
+    -muxpreload 0 \
+    -f segment \
+    -segment_time ${SEGMENT_DURATION} \
+    -segment_start_number 1 \
+    -reset_timestamps 1 \
+    -loglevel warning \
+    ${segmentPattern}`.quiet()
 
   if (proc.exitCode !== 0) {
     const stderr = proc.stderr.toString()
-    console.error("[HLS] FFmpeg failed generating all segments for track", trackId, ":", stderr)
-    if (existsSync(tempPlaylist)) rmSync(tempPlaylist)
+    console.error("[HLS] FFmpeg failed for track", trackId, ":", stderr)
     throw new Error(`FFmpeg exited with code ${proc.exitCode}`)
   }
 
-  renameSync(tempPlaylist, finalPlaylist)
+  console.log("[HLS] All segments encoded for track", trackId)
 }
 
-const generationLocks = new Map<string, Promise<void>>()
-
-function spawnAllSegments(trackPath: string, trackId: string): Promise<void> {
-  const existing = generationLocks.get(trackId)
-  if (existing) return existing
-
-  const promise = generateAllSegments(trackPath, trackId).finally(() => {
-    generationLocks.delete(trackId)
-  })
-  generationLocks.set(trackId, promise)
-  return promise
-}
-
-export async function getOrCreatePlaylist(
+// Pre-generates segment 0 for a track.
+// NOTE: This independent ffmpeg invocation still causes an audible hitch at the
+// segment 0 → 1 boundary because AAC encoder state is not carried across invocations.
+// Even with identical muxer (-f segment) and -muxdelay 0, the boundary is not gapless.
+// To fully eliminate the hitch, ALL segments must be produced in a single continuous
+// ffmpeg pass (no pre-generation). See HLS-HITCH-ANALYSIS.md for details.
+export async function generateFirstSegment(
   trackPath: string,
   trackId: string,
-): Promise<string> {
-  const dir = trackCacheDir(trackId)
-  const playlistPath = join(dir, "index.m3u8")
-  const firstSegPath = join(dir, segmentFilename(0))
+): Promise<void> {
+  const dir = ensureTrackCacheDir(trackId)
 
-  if (existsSync(playlistPath)) {
-    return readFileSync(playlistPath, "utf-8")
+  if (existsSync(join(dir, segmentFilename(0)))) return
+
+  if (!Bun.which("ffmpeg")) {
+    throw new Error("ffmpeg not found in PATH")
   }
 
-  if (existsSync(firstSegPath)) {
-    console.log("[HLS] Partial cache hit, promoting track", trackId)
-    const partial = buildPartialPlaylist(SEGMENT_DURATION)
-    spawnAllSegments(trackPath, trackId)
-    return partial
+  const segmentPattern = join(dir, "segment_%04d.ts")
+
+  const proc = await $`ffmpeg -ss 0 -t ${SEGMENT_DURATION} -i ${trackPath} \
+    -codec:a aac \
+    -b:a ${BITRATE} \
+    -vn \
+    -muxdelay 0 \
+    -muxpreload 0 \
+    -f segment \
+    -segment_time 86400 \
+    -segment_start_number 0 \
+    -reset_timestamps 1 \
+    -loglevel warning \
+    ${segmentPattern}`.quiet()
+
+  if (proc.exitCode !== 0) {
+    const stderr = proc.stderr.toString()
+    console.error("[HLS] FFmpeg failed pre-generating first segment:", stderr)
+    throw new Error(`FFmpeg exited with code ${proc.exitCode}`)
   }
-
-  console.log("[HLS] Cache miss, generating segments for track", trackId, "at", trackPath)
-  const start = performance.now()
-  await generateAllSegments(trackPath, trackId)
-  console.log("[HLS] Generated segments in", (performance.now() - start).toFixed(0), "ms for track", trackId)
-
-  return readFileSync(playlistPath, "utf-8")
 }
 
 export async function pregenerateFirstSegments(
@@ -196,23 +272,6 @@ export async function pregenerateFirstSegments(
   console.log("[HLS] Pre-generated first segment for", completed, "/", tracks.length, "tracks")
 }
 
-export function getSegmentPath(
-  trackId: string,
-  filename: string,
-): string | null {
-  const dir = trackCacheDir(trackId)
-  const resolved = resolveSafe(dir, filename)
-  if (!resolved) return null
-  if (!existsSync(resolved)) return null
-  return resolved
-}
-
-function resolveSafe(base: string, target: string): string | null {
-  const normalized = join(base, target)
-  if (!normalized.startsWith(base)) return null
-  return normalized
-}
-
 export function cleanupHlsCache(): void {
   const dir = cacheDir()
   if (!existsSync(dir)) return
@@ -224,6 +283,7 @@ export function cleanupHlsCache(): void {
       const stats = statSync(entryPath)
       if (stats.isDirectory() && now - stats.mtimeMs > CACHE_TTL_MS) {
         rmSync(entryPath, { recursive: true, force: true })
+        tracksCache.delete(entry)
       }
     } catch {
       // skip entries we can't stat

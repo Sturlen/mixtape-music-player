@@ -23,7 +23,7 @@ export function HlsPlayer({ src, audioRef, enabled }: HlsPlayerProps) {
     if (audioRef.current.canPlayType("application/vnd.apple.mpegurl")) {
       audioRef.current.src = src
     } else if (Hls.isSupported()) {
-      const hls = new Hls()
+      const hls = new Hls({ initialLiveManifestSize: 1 })
       hlsRef.current = hls
       hls.attachMedia(audioRef.current)
       hls.loadSource(src)

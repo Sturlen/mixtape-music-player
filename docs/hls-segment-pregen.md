@@ -1,99 +1,117 @@
-# HLS First-Segment Pre-generation
+# HLS Segment Architecture
 
 ## Goal
 
-Reduce time-to-first-byte on music playback by pre-generating the first HLS segment
-for every track during library reload, so it's available instantly when a user hits play.
+Reduce time-to-first-byte by pre-generating `segment_0000.ts` for every track
+during library reload. All segments beyond index 0 are generated on-the-fly
+as requested by the client.
 
 ## Decisions
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| First-segment bitrate | Same as `HLS_BITRATE` (default `128k`) | Keeps quality consistent. No audible quality jump between first and subsequent segments. |
-| Bitrate config | Env var `HLS_BITRATE`, default `"128k"` | Easy to change later without code edits. |
-| Segment duration config | Env var `HLS_SEGMENT_DURATION`, default `10` | Consistent segment length across all tracks. |
-| Storage strategy | Pre-generate only segment `0` (~170 KB/track at 128k) | 1000 tracks = ~170 MB. Tolerable for modern storage. |
-| First-play promotion | Overwrite first segment at full quality | Simpler than keeping the pre-generated version. Player already has first segment buffered, so no disruption. |
-| Pre-generation trigger | Auto during library reload when `HLS_ENABLED=true` | No extra user toggle needed. |
-| Concurrency | `pLimit(4)` for pre-generation | Limits CPU-heavy ffmpeg encodes during reload. |
+| First-segment bitrate | Same as `HLS_BITRATE` (default `128k`) | Consistent quality across segments |
+| Bitrate config | Env var `HLS_BITRATE`, default `"128k"` | Easy to change without code edits |
+| Segment duration config | Env var `HLS_SEGMENT_DURATION`, default `10` | Consistent segment length |
+| Pre-generation scope | `segment_0000.ts` only (~170 KB/track at 128k) | Tolerable storage (1000 tracks = ~170 MB); client preloads further segments |
+| Segment generation | On-the-fly per index | No bulk encoding, no background promotion |
+| Playlist generation | **Pure in-memory, from `playtimeSeconds`** | Deterministic — total segments = `ceil(playtimeSeconds / SD)`. No disk state needed. |
+| ENDLIST | **Always present** | VOD track with known fixed duration. Player already knows all segment URLs from initial playlist; never needs to reload to "discover" new ones. |
+| Pre-generation trigger | Auto during library reload when `HLS_ENABLED=true` | No extra toggle |
+| Pre-generation concurrency | `pLimit(4)` | Limits CPU during reload |
 
-## Architecture
+## Core primitive
 
-### Core primitives (`src/server/hls.ts`)
-
-```
+```typescript
 generateSegment(trackPath, trackId, segmentIndex)
-  └─ generateSegmentAt(trackPath, trackId, timeOffset, segmentIndex)
-       └─ ffmpeg -ss <offset> -t <duration> -i <input> ...
-             ↓
-       segment_0000.ts  (or segment_N.ts)
-
-generateAllSegments(trackPath, trackId)
-  └─ ffmpeg HLS muxer → index.temp.m3u8 → atomic rename → index.m3u8
-
-pregenerateFirstSegments(tracks[])
-  └─ pLimit(4), each → generateFirstSegment(p, id) → generateSegment(p, id, 0)
+  → timeOffset = segmentIndex * SEGMENT_DURATION
+  → ffmpeg -ss <timeOffset> -t <SEGMENT_DURATION> -i <trackPath>
+      -codec:a aac -b:a <HLS_BITRATE> -f mpegts <cacheDir>/segment_N.ts
+  → skips if file already exists (lock map prevents concurrent duplicates)
 ```
 
-### Playback flow
+## Playlist endpoint
 
 ```
-1. Reload  →  pregenerateFirstSegments()  →  segment_0000.ts for every track
+GET /api/hls/:trackId/playlist.m3u8
 
-2. Play     →  GET playlist.m3u8
-               ├─ index.m3u8 exists?        → return it (done)
-               ├─ only segment_0000.ts?     → build partial playlist in-memory,
-               │                               spawn generateAllSegments() in bg,
-               │                               return partial playlist
-               └─ nothing exists?           → generateAllSegments() sync (fallback)
+totalSegments = ceil(track.playtimeSeconds / HLS_SEGMENT_DURATION)
 
-3. Player plays segment_0000.ts instantly (file on disk, zero TTFB)
-   Ffmpeg finishes → index.temp.m3u8 renamed → index.m3u8
+for i in 0..totalSegments-1:
+  isLast = (i === totalSegments - 1)
+  duration = isLast
+    ? track.playtimeSeconds - i * SEGMENT_DURATION
+    : SEGMENT_DURATION
 
-4. Player reloads playlist → finds full playlist → continues
+  #EXTINF:{duration},
+  segment_{i}.ts
+
+#EXT-X-ENDLIST  // always — VOD, known duration
 ```
 
-### Partial playlist (no `#EXT-X-ENDLIST`)
+**No disk reads involved.** Pure arithmetic from DB field `playtimeSeconds`.
 
-```m3u8
-#EXTM3U
-#EXT-X-VERSION:3
-#EXT-X-TARGETDURATION:10
-#EXT-X-MEDIA-SEQUENCE:0
-#EXTINF:10.000,
-segment_0000.ts
+## Segment endpoint
+
+```
+GET /api/hls/:trackId/segment_N.ts
+
+exists on disk?  → Bun.file(cacheDir/segment_N.ts)
+else             → generateSegment(trackPath, trackId, N) → Bun.file(result)
 ```
 
-No ENDLIST signals the player to reload for new segments.
+## What this removes
 
-## Edge cases handled
+| Gone | Replaced by |
+|---|---|
+| `generateAllSegments()` | Individual `generateSegment()` calls |
+| `spawnAllSegments()` / background promotion map | Nothing needed |
+| Temp playlist + atomic rename | No playlist file at all |
+| Two-stage `getOrCreatePlaylist()` | `buildPlaylist()` — pure in-memory |
+| `buildPartialPlaylist()` | Not needed — full deterministic playlist |
+| ENDLIST logic / directory scanning | Always ENDLIST, always from math |
+| `index.m3u8` on disk | Never written |
+| Cache-expiry check on playlist | No playlist to stale-check |
+| Staging / partial state detection | Only one state: segment files in cache dir |
+
+## Disk state
+
+- `hls-cache/<trackId>/segment_0000.ts` — pre-generated during reload (~170 KB)
+- `hls-cache/<trackId>/segment_N.ts` — generated on-the-fly as requested, accumulates over time
+- No playlist files, no temp files
+- 24h TTL cleanup removes stale segment dirs (unchanged)
+
+## Storage estimate (1000 tracks)
+
+| Item | Size |
+|------|------|
+| segment_0000.ts (1000 × 170 KB) | ~170 MB |
+| On-demand segments | Appears over time as tracks are played |
+
+## Implementation status
+
+| File | Status |
+|------|--------|
+| `src/server/hls.ts` | Done — `buildPlaylist()` replaces `getOrCreatePlaylist()`. `generateSegmentAt()` with per-segment lock map handles on-the-fly generation. All bulk/promotion code removed. |
+| `src/index.tsx` | Done — playlist endpoint calls `buildPlaylist(trackId, playtimeSeconds)`. Segment endpoint generates on-the-fly via `generateSegment()` on miss. |
+| `src/shared/env.ts` | Done — `HLS_BITRATE`, `HLS_SEGMENT_DURATION` added |
+| `src/server/library.ts` | Done — `onEnrichmentComplete` hook added |
+
+## Edge cases
 
 | Scenario | Behavior |
 |----------|----------|
-| Track < 10s | First segment covers whatever duration exists. No special handling needed. |
-| Concurrent playlist requests for same track | Lock map prevents spawning multiple ffmpeg processes. |
-| Concurrent first-play + reload | Pre-generation creates cache dirs under track IDs; existing dirs untouched. |
-| ffmpeg failure during pre-generation | Caught per-track, logged, continues to next track. |
-| ffmpeg failure during first-play promotion | Lock-map promise rejects → deleted from map → next request retries synchronously. |
-| Empty library | `getAllTracks()` returns `[]` → no-op. |
-| 24h cache TTL | Unchanged. Pre-generated dirs cleaned by existing `cleanupHlsCache()`. |
-| Library reload while track playing | Pre-generation only writes segment_0000.ts; existing playlists untouched. |
-| HLS disabled (`HLS_ENABLED=false`) | `onEnrichmentComplete` hook checks and returns early. |
-| ffmpeg not found in PATH | Logs error, skips pre-generation without crashing reload. |
+| Track < SD | `totalSegments = 1`. Last segment duration = `playtimeSeconds`. `segment_0000.ts` generated on demand or pre-generated. |
+| Segment request race (two clients, same seg) | Lock map on `generateSegment` — first caller encodes, second gets cached path |
+| `playtimeSeconds` inaccurate | Playlist says N segments, but track actually produces N-1. Last segment request hits ffmpeg → fails → 404. Player retries and recovers. |
+| ffmpeg failure on segment encode | `generateSegment` throws → segment endpoint returns 500 → player retries |
+| Library reload during playback | Pre-generation only writes segment_0000.ts; existing segment files untouched. If track was mid-play, its segment dir remains. |
+| HLS disabled | `onEnrichmentComplete` hook returns early; HLS endpoints return 404 |
+| ffmpeg not found | Pre-generation skips with warning; segment endpoint returns 500 on first encode attempt |
 
-## Future: On-the-fly segment generation
+## Future
 
-The `generateSegment(trackPath, trackId, N)` primitive is designed for eventual
-per-segment on-demand generation:
-
-- Replace `generateAllSegments()` entirely
-- When client requests `segment_0005.ts` and it doesn't exist → call
-  `generateSegment(trackPath, trackId, 5)` and serve the result
-- First segment pre-generation is just a head-start on segment index 0
-
-## Env vars added
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `HLS_BITRATE` | `"128k"` | Audio bitrate for HLS segments (ffmpeg `-b:a` syntax) |
-| `HLS_SEGMENT_DURATION` | `10` | HLS segment duration in seconds |
+The architecture is already the end state: **on-the-fly per-segment generation**.
+The only optional extension is pre-generating more than segment 0
+(e.g., pre-generate next N segments when a track starts playing) — but that's a
+client-side prefetch concern, not server infrastructure.
