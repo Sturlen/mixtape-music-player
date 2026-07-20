@@ -18,6 +18,8 @@ export const env = createEnv({
     PG_PORT: z.coerce.number().int().default(0),
     HLS_ENABLED: z.stringbool().default(false),
     HLS_CACHE_DIR: z.string().optional(),
+    HLS_BITRATE: z.string().default("128k"),
+    HLS_SEGMENT_DURATION: z.coerce.number().int().default(10),
   },
   emptyStringAsUndefined: true,
   runtimeEnv: process.env,

@@ -66,6 +66,7 @@ export const enrichmentProgress = new EnrichmentProgress()
 
 export class Library {
   onIndexRebuilt?: () => Promise<void>
+  onEnrichmentComplete?: () => Promise<void>
 
   constructor(private db: DB) {}
 
@@ -283,7 +284,8 @@ export class Library {
       }),
     )
 
-    Promise.allSettled(jobs).then(() => {
+    Promise.allSettled(jobs).then(async () => {
+      await this.onEnrichmentComplete?.()
       this.rebuildIndex()
       console.log("Metadata complete: from %d files", allFiles.length)
     })

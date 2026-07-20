@@ -12,6 +12,7 @@ import {
   getOrCreatePlaylist,
   getSegmentPath,
   startHlsCleanup,
+  pregenerateFirstSegments,
 } from "@/server/hls"
 import { parse } from "@/parse"
 import type { Album, Artist, Playlist, Track } from "@/lib/types"
@@ -80,6 +81,14 @@ async function isFfmpegEnabled(): Promise<boolean> {
 const library = new Library(db)
 const searchService = new SearchService(library)
 library.onIndexRebuilt = () => searchService.buildIndex()
+library.onEnrichmentComplete = async () => {
+  if (!env.HLS_ENABLED) return
+  const allTracks = (await library.getAllTracks()).map((t) => ({
+    id: t.id,
+    path: t.path,
+  }))
+  await pregenerateFirstSegments(allTracks)
+}
 const playlistStore = {
   tracks: new Map<string, Track>(),
   playlists: new Map<string, Playlist>(),
