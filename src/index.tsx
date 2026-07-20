@@ -9,13 +9,11 @@ import pLimit from "p-limit"
 import { readFileSync } from "fs"
 import { env } from "@/shared/env"
 import {
-  buildPlaylist,
-  initTrackCache,
-  ensureTrackEncode,
-  requestSegment,
-  startHlsCleanup,
-  pregenerateFirstSegments,
-} from "@/server/hls"
+  preencodeTracks,
+  getStreamPath,
+  startStreamCleanup,
+  stopStreamCleanup,
+} from "@/server/stream"
 import { parse } from "@/parse"
 import type { Album, Artist, Playlist, Track } from "@/lib/types"
 import { raise } from "@/lib/utils"
@@ -89,7 +87,7 @@ library.onEnrichmentComplete = async () => {
     id: t.id,
     path: t.path,
   }))
-  await pregenerateFirstSegments(allTracks)
+  await preencodeTracks(allTracks)
 }
 const playlistStore = {
   tracks: new Map<string, Track>(),
@@ -482,51 +480,21 @@ const app = new Elysia()
     return file
   })
   .get(
-    "/api/hls/:trackId/playlist.m3u8",
+    "/api/stream/:trackId",
     async ({ params: { trackId }, set, status }) => {
-      if (!env.HLS_ENABLED) return status(404, "HLS disabled")
-      console.log("[HLS] Playlist requested for track", trackId)
-      const track = await library.getTrack(trackId)
-      if (!track) return status(404, "Track not found")
-      try {
-        initTrackCache(trackId, track.playtimeSeconds)
+      if (!env.HLS_ENABLED) return status(404, "Streaming disabled")
 
-        const playlist = buildPlaylist(trackId, track.playtimeSeconds)
-        set.headers["Content-Type"] = "application/vnd.apple.mpegurl"
-        set.headers["Cache-Control"] = "no-cache"
-
-        ensureTrackEncode(track.path, trackId)
-
-        return playlist
-      } catch (err) {
-        console.error("[HLS] Playlist generation failed:", err)
-        return status(500, "Failed to generate HLS playlist")
+      const streamPath = getStreamPath(trackId)
+      if (existsSync(streamPath)) {
+        return Bun.file(streamPath)
       }
-    },
-  )
-  .get(
-    "/api/hls/:trackId/:filename",
-    async ({ params: { trackId, filename }, set, status }) => {
-      if (!env.HLS_ENABLED) return status(404, "HLS disabled")
-      console.log("[HLS] Segment requested:", trackId, "/", filename)
-      if (filename === "playlist.m3u8") return status(404, "Use playlist endpoint")
-
-      const match = filename.match(/^segment_(\d+)\.ts$/)
-      if (!match) return status(404, "Invalid segment filename")
-      const segmentIndex = parseInt(match[1]!, 10)
 
       const track = await library.getTrack(trackId)
       if (!track) return status(404, "Track not found")
-
-      try {
-        const data = await requestSegment(track.path, trackId, segmentIndex)
-        set.headers["Content-Type"] = "video/MP2T"
-        set.headers["Cache-Control"] = "public, max-age=86400"
-        return new Response(data)
-      } catch (err) {
-        console.error("[HLS] Segment request failed:", err)
-        return status(500, "Failed to serve segment")
-      }
+      const assets = await library.getAudioAssetsByParent(trackId)
+      const asset = assets[0]
+      if (!asset) return status(404, "No audio asset")
+      return Bun.file(asset.path)
     },
   )
   .get("/api/library/progress", () => {
@@ -695,7 +663,7 @@ app.listen(env.PORT, () => {
   }
 
   if (env.HLS_ENABLED) {
-    startHlsCleanup()
+    startStreamCleanup()
   }
 })
 

@@ -15,8 +15,8 @@ async function fetchPlaybackData(trackId: string) {
   return data.url
 }
 
-function hlsUrl(trackId: string) {
-  return `/api/hls/${trackId}/playlist.m3u8`
+function streamUrl(trackId: string) {
+  return `/api/stream/${trackId}`
 }
 
 export const PlayerProvider = ({ children }: PropsWithChildren) => {
@@ -53,7 +53,7 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
     enabled: !!currentTrack,
     queryFn: async ({ queryKey }) => {
       const trackId = queryKey[1] ?? ""
-      if (hlsEnabled) return hlsUrl(trackId)
+      if (hlsEnabled) return streamUrl(trackId)
       return fetchPlaybackData(trackId)
     },
     staleTime: Infinity,
@@ -125,12 +125,12 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
     }
   }, [requestedSeekPosition])
 
-  // Load new src (only when HLS is disabled — HlsPlayer handles HLS)
+  // Load new src
   useEffect(() => {
-    if (!audio_ref.current || hlsEnabled) return
+    if (!audio_ref.current) return
     audio_ref.current.src = src ?? ""
     audio_ref.current.load()
-  }, [src, hlsEnabled])
+  }, [src])
 
   // Play/pause
   useEffect(() => {

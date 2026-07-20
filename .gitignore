@@ -39,6 +39,7 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 .partykit
 /data/hls-cache
+/data/stream-cache
 
 # Playwright
 playwright-report/

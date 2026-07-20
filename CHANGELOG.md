@@ -3,6 +3,15 @@
 Notable changes. Expect proper version numbers when it's actually close to a release version.
 
 
+## [21-07-2026]
+
+
+### Added
+
+- **Streaming**: Tracks are now streamed to the client.
+- **Instant Playback**: Tracks are now pre converted to lightweight aac streams, which the browser can start playing back as soon as it has the first byte. 
+
+
 ## [18-05-2026]
 
 
