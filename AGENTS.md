@@ -118,6 +118,11 @@ Media/
 - **Environment changes:** Edit `/src/shared/env.ts`
 - **Type definitions:** Edit `/src/lib/types.ts`
 
+## Docker / s6-overlay
+
+- `/data/` is for media files only. App data (pglite, playlists) goes under `/config/`, not `/data/`.
+- Never use `lsiown -R` on `/data` — it'll recursively chown bind-mounted music dirs. Use `lsiown` (without `-R`) on specific subdirs only.
+
 ## Modular Route Pattern
 
 When extracting routes to separate files, maintain context access:

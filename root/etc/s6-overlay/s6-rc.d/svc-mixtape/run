@@ -1,0 +1,11 @@
+#!/usr/bin/with-contenv bash
+# shellcheck shell=bash
+
+if [[ -z ${LSIO_READ_ONLY_FS} ]] && [[ -z ${LSIO_NON_ROOT_USER} ]]; then
+    mkdir -p /data/pglite /data/playlists
+    lsiown abc:abc /data/pglite /data/playlists
+fi
+
+cd /app || exit 1
+
+exec s6-setuidgid abc /usr/local/bin/bun run src/index.tsx

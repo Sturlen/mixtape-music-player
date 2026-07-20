@@ -2,20 +2,18 @@ services:
   web:
     build:
       context: .
-      dockerfile: docker/Dockerfile
+      dockerfile: Dockerfile
     volumes:
       - data:/data
-      - /mnt/plex/Library/demo:/data/demo
-      - /mnt/plex/Library/mp3:/data/mp3
+      - /mnt/plex/Library:/data/music
     ports:
-      - "3001:3000"
+      - "3000:3000"
     restart: unless-stopped
     environment:
-      - MUSIC_PATH=/data/demo
-      - MUSIC2_PATH=/data/mp3
-      - GRAFANA_TOKEN
-      - OTEL_EXPORTER_OTLP_ENDPOINT
-      - DATA_PATH=/data
+      - MUSIC_PATH=/data/music/demo/
+      - MUSIC2_PATH=/data/music/mp3/
+      - USE_FFMPEG=true
+      - HLS_ENABLED=true
 
 volumes:
-  data: {}
+  data:

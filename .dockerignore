@@ -27,3 +27,6 @@ helm-charts
 .idea
 coverage*
 .tanstack
+.env.local
+.env.*
+.partykit/

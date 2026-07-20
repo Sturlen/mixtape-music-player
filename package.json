@@ -26,7 +26,10 @@
     "test:e2e:ui:report": "playwright show-report",
     "check": "npm-run-all --parallel lint typecheck format",
     "db:generate": "drizzle-kit generate",
-    "db:up": "drizzle-kit migrate"
+    "db:up": "drizzle-kit migrate",
+    "docker:build": "docker build -t mixtape .",
+    "docker:run": "docker run --rm -v mixtape_data:/data -v /mnt/plex/Library:/data/music -p 3000:3000 mixtape",
+    "docker:compose": "docker compose up --build"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.4.5",
