@@ -9,7 +9,8 @@ const CACHE_TTL_MS = 24 * 60 * 60 * 1000
 const CLEANUP_INTERVAL_MS = 60 * 60 * 1000
 
 function cacheDir(): string {
-  return join(env.DATA_PATH, "stream-cache")
+  const root = env.MIXTAPE_CACHE_DIR ?? env.DATA_PATH
+  return join(root, "stream-cache")
 }
 
 export function getStreamPath(trackId: string): string {

@@ -2,8 +2,8 @@
 # shellcheck shell=bash
 
 if [[ -z ${LSIO_READ_ONLY_FS} ]] && [[ -z ${LSIO_NON_ROOT_USER} ]]; then
-    mkdir -p /config/pglite /config/playlists
-    lsiown abc:abc /config/pglite /config/playlists
+    mkdir -p /config/pglite /config/playlists /data/.mixtape-cache
+    lsiown abc:abc /config/pglite /config/playlists /data/.mixtape-cache
 fi
 
 cd /app || exit 1

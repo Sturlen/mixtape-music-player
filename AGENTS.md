@@ -120,8 +120,12 @@ Media/
 
 ## Docker / s6-overlay
 
-- `/data/` is for media files only. App data (pglite, playlists) goes under `/config/`, not `/data/`.
+- `/data/` is for media files and cache only. App data (pglite, playlists) goes under `/config/`.
+- Pre-encoded stream cache goes under `MIXTAPE_CACHE_DIR` (defaults to `DATA_PATH/stream-cache` in dev,
+  set to `/data/.mixtape-cache/stream-cache` in Docker).
 - Never use `lsiown -R` on `/data` — it'll recursively chown bind-mounted music dirs. Use `lsiown` (without `-R`) on specific subdirs only.
+- When adding a new cache subdirectory under `/data/`, add it to the `mkdir -p` and `lsiown` lines in
+  `root/etc/s6-overlay/s6-rc.d/svc-mixtape/run`.
 
 ## Modular Route Pattern
 

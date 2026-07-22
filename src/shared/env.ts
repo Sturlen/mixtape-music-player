@@ -20,6 +20,7 @@ export const env = createEnv({
     HLS_CACHE_DIR: z.string().optional(),
     HLS_BITRATE: z.string().default("128k"),
     HLS_SEGMENT_DURATION: z.coerce.number().int().default(10),
+    MIXTAPE_CACHE_DIR: z.string().optional(),
   },
   emptyStringAsUndefined: true,
   runtimeEnv: process.env,
