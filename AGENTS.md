@@ -162,6 +162,17 @@ const app = new Elysia()
   .listen(env.PORT)
 ```
 
+## Roadmap & Status Tracking
+
+The single source of truth is `todo.md` at the project root. It replaces `todos/`, `PLAN-*.md`, and any other planning docs.
+
+- **Status prefixes:** `[-]` = active/in progress, `[x]` = done, `[~]` = abandoned, `[ ]` = todo
+- **Active Now** section at the top — what's being worked on right now. Move items here from lower sections when starting them.
+- **Abandoned items** get a `[~]` prefix + one-liner about why. Only create `docs/dead-ends/<topic>.md` if the investigation was significant enough to warrant the detail.
+- When starting work on a todo item, change `[ ]` → `[-]`. When done, `[-]` → `[x]`.
+- When a feature proves unworkable, change `[ ]` → `[~]` with the reason appended. Don't leave dead items as `[ ]`.
+- Don't maintain separate todo/plan files. Everything lives in `todo.md`. If a plan is too long to inline, put a summary + link in `todo.md` and keep the detailed doc elsewhere — but prefer inlining.
+
 ## Elysia Error Handling
 
 Use proper Elysia error handling patterns:
