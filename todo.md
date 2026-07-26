@@ -23,6 +23,10 @@ Status prefixes: `[-]` = active / in progress  `[x]` = done  `[~]` = abandoned  
 
 - [ ] **Custom cassette skins** — user-selectable cassette shell colors/materials
 
+### Desktop Packaging
+
+- [ ] **Compiled binary + OS service** — See `docs/desktop-packaging.md`. Preferred candidate: `bun build --compile` + systemd/launchd service install script. Other options (Tauri, Electron) documented for future reference.
+
 ### Done
 
 - [x] **Library scanning & metadata enrichment** — background concurrency, ffprobe/mediabunny
