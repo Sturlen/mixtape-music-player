@@ -10,18 +10,38 @@ Status prefixes: `[-]` = active / in progress  `[x]` = done  `[~]` = abandoned  
 
 ---
 
+## Bugs
+
+- [ ] **MediaSession dies after pressing skip on lock screen** — pressing next/prev on the lock screen causes MediaSession controls to disappear. Likely related to the track loading gap where playback state briefly goes to "paused" or `setPositionState` gets called with invalid values during the transition.
+- [ ] **Album layout cannot handle very long filenames** — track names that are very long (no spaces, >30 chars) cause the album page layout to break. Track row text overflows or pushes other elements out.
+
+---
+
 ## User-Facing Features
 
 ### Must-Have for v1.0
 
+These features involve schema changes or API response shape changes. Must land before the stable release tag.
+
 - [ ] **Multi-artist tracks** — compilation albums, "feat." collaborators in track rows, artist "Appearances" section. See detailed plan below.
+- [ ] **Player improvements** — shuffle (preserves original order), repeat modes (off/all/one), desired-vs-actual state model. See [`docs/player-improvements.md`](docs/player-improvements.md).
 - [ ] **Image compression** — server resizes cover/artist art on the fly (client already sends `?w=` params)
-- [ ] **User-facing updates** — mechanism to notify users when a new version is available (in-app banner, release API, or similar)
-- [ ] **Radio Mode** — frontend mode that appends songs/albums to the queue instead of replacing them. No interrupting the current song.
+- [ ] **Album metadata extraction** — extract and expose embedded album art, lyrics, descriptions, credits (composer, conductor, engineer, producer, label, release date) from audio files. Scanner changes + new DB columns on albums/tracks + API fields + album detail page sections.
+- [ ] **Import system** — per-source inbox folder for loose audio files. Drop files, analyze metadata, organize into Artist/Album tree, extract cover art, auto-scan. See [`docs/import-system.md`](docs/import-system.md).
+- [ ] **Admin observability dashboard** — single admin page covering:
+  - **Background jobs** — library scan, metadata enrichment, stream pre-encoding, cache cleanup. Status, last-run time, error logs. Toggle/reschedule/trigger manually.
+  - **Streaming stats** — time-to-first-byte per track, playback errors, active streams, bandwidth usage, cache hit rate. Track over time to spot degradation.
+  - **Player telemetry** — play/skip/pause counts, errors per track or format, buffer health. Collected via OTEL and exposed in the dashboard.
+  - **OTEL integration** — the app already ships `@elysiajs/opentelemetry` and OTLP exporter. Instrument key metrics (TTFB per track, stream errors, job durations) as OTEL metrics/spans. Users can point Grafana/SigNoz/Jaeger at the OTLP endpoint for deeper analysis. The dashboard surface shows the essentials; OTEL handles the deep dive.
 
 ### Should-Have
 
-- [ ] **Custom cassette skins** — user-selectable cassette shell colors/materials
+- [ ] **Listen Together — Collab mode** — expand Listen Together with a collab mode where all participants can skip tracks, add to queue, and control playback, not just the host. Server-side permission relaxation for non-host clients, new `addTrack`/`removeTrack` message types, and control enablement for all participants in collab mode. UI for listen together should have on create for DJ and one for collab mode. Mode is set on creation and permissions accordingly.
+- [ ] **Radio Mode** — frontend mode that appends songs/albums to the queue instead of replacing them. No interrupting the current song. Mostly a player state machine change, but the rest of the UI needs one unifed "add track" method, then let player handle details.
+- [ ] **User-facing updates** — in-app banner when a new version is available
+- [ ] **Preload next track** — prefetch next track's playback URL when near end of current track. See `docs/player-improvements.md#preloading-future`.
+- [ ] **Playback event recording** — record every play/skip/seek as a timestamped event. Feeds smart playlists, history, scrobbling, and stats. Additive schema, safe after v1.0 but starts accumulating data earlier.
+- [ ] **Custom cassette skins** — user-selectable cassette shell colors/materials. or even full replacements.
 
 ### Desktop Packaging
 
@@ -35,7 +55,7 @@ Status prefixes: `[-]` = active / in progress  `[x]` = done  `[~]` = abandoned  
 - [x] **Queue management** — shuffle, play/pause/skip/seek via Zustand
 - [x] **Playlist CRUD** — create/edit/delete, add/remove tracks
 - [x] **Multi-user auth** — JWT, admin setup, invitation system
-- [x] **Listen Together** — PartyKit room server, host/follower state sync (no music streaming)
+- [x] **Listen Together (DJ mode)** — PartyKit room server, host/follower state sync with host-only controls
 - [x] **Mobile UI** — drawer controls, swipe
 - [x] **Dominant color extraction** — colorthief MMCQ
 - [x] **Persistent database** — PGlite, survives restarts
@@ -45,6 +65,7 @@ Status prefixes: `[-]` = active / in progress  `[x]` = done  `[~]` = abandoned  
 ### Abandoned
 
 - [~] **HLS streaming with pre-generated segment 0** — independent FFmpeg invocations cause AAC encoder state resets at segment boundaries. Audible hitches persist even with identical encoder params. Fix requires single continuous FFmpeg pass (high CPU at reload). AAC pre-encoding supersedes this. See `docs/HLS-HITCH-ANALYSIS.md`.
+- [~] **Background playback on mobile** — browser freezes the tab ~5 min after screen off. No web API can prevent this (Chromium bug #41132724, open since 2014). Silent oscillator and Media Session API both failed. Requires a native Android app. See `docs/dead-ends/background-playback-mobile.md`.
 
 ---
 
@@ -121,6 +142,41 @@ Add support for compilation albums and collaborative tracks via a `track_artists
 
 ## Project Management & Workflow
 
+
+### General refactor.
+
+Need to seprate client and server state. main API file is growing excessively large with a lot of random functions scattered about. Consider how to put these into larger feature slices.
+
+#### Route Extraction
+
+Extract remaining inline routes from `src/index.tsx` into domain feature slices. Follow pattern from `auth.ts`, `admin.ts`, `playlist.ts`, `libraries.ts`.
+
+- [ ] **1. Define `ServerContext` type** — consolidate RouteContext pattern into single shared context for all route modules
+- [ ] **2. Extract `api/artists.ts`** — GET artists (list/search), GET artists/:artistId
+- [ ] **3. Extract `api/albums.ts`** — GET albums (list/search), GET albums/:albumId, POST playAlbum/:albumId
+- [ ] **4. Extract `api/tracks.ts`** — GET tracks, GET tracks/:trackId, POST player (playback URL)
+- [ ] **5. Extract `api/media.ts`** — GET files/artistart/:artistId, GET files/albumart/:albumId, GET files/track/:trackId, GET assets, GET assets/:assetId, GET stream/:trackId, GET library/progress (SSE)
+- [ ] **6. Extract `api/search.ts`** — GET search (unified across artists/albums/tracks)
+- [ ] **7. Extract `api/stats.ts`** — GET stats
+- [ ] **8. Tidy `src/index.tsx`** — leave only boot sequence (DB init, JWT setup, user seeding, library init, `.listen()`) + mounting extracted route modules
+
+#### Client / Server State Boundary
+
+Clean up mixing between client state (Zustand) and server state (React Query + API responses).
+
+- [ ] **9. Unify `Track` types** — merge `Player.tsx` Track (client view-model with `duration`/colors/`album`) and `lib/types.ts` Track (server-model with `playtimeSeconds`/`albumId`/`path`). Single type with optional fields, or explicit conversion function.
+- [ ] **10. Move React Query hooks out of `lib/api.ts`** — client-only code importing `@/Player`. Move to `client/hooks/` or colocate with pages.
+- [ ] **11. Remove Zustand mutations from API hooks** — `usePlayPlaylist`/`usePlayAlbum` call `useAudioPlayer.use.queueSet()` inside `onSuccess`. Decouple: hook returns data, page handles store mutation.
+- [ ] **12. Decouple `Player.tsx` from server-derived data** — store `Track` should be minimal client type (id, name, duration, artURL). Server enrichment (colors, album metadata) flows in from component layer.
+
+#### Circular Dependency & Module Cleanup
+
+- [ ] **13. Break `lib/eden.ts` → `@/index` circular dep** — extract `App` type into standalone file both can import without pulling in entire app module
+- [ ] **14. Move server-only code out of `lib/`** — `dominant-color.ts` and `imageHandler.ts` use sharp/colorthief → `server/`
+- [ ] **15. Move client-only code out of `lib/`** — `mediasession.tsx` (React hook, `navigator.mediaSession`) → `client/hooks/`. `api.ts` → `client/hooks/`
+- [ ] **16. Prune duplicate modules** — `playlist_parser.ts` vs `new_playlist_parser.ts`, `audio_file_info.ts` vs `server/audio/`. Delete superseded files.
+- [ ] **17. Make Fuse instances injectable** — replace module-level singletons in `lib/fuse.ts` with instances passed through route context
+
 ### App Testability Refactoring
 
 Extract app factory from module-level side effects so routes can be tested in isolation.
@@ -162,7 +218,7 @@ In-memory app instances with mock data for each endpoint. Requires app testabili
 - [ ] **Utilities** — `cn()`, `raise()`
 - [ ] **Math** — `clamp()`
 - [ ] **Track sorting** — `compareTracksByNumberName()`
-- [ ] **Player logic** — shuffle, next song, queue behavior when track deleted
+- [ ] **Player logic** — pure queue functions (advance, shuffle, remove), reconciliation logic, store action transitions. See [`docs/player-improvements.md`](docs/player-improvements.md).
 
 ### Documentation & Process
 
@@ -170,3 +226,31 @@ In-memory app instances with mock data for each endpoint. Requires app testabili
 - [ ] **Release process** — semver tags, GitHub Releases, Docker image tags. CHANGELOG.md stays as release history (date stamps are fine for a solo project — convert to semver at release time).
 - [ ] **Production hardening** — auto-restart, signal handling, bare-metal startup docs (s6 covers Docker)
 - [ ] **Stable API contract** — once v1.0 is near, version the API path (`/api/v1/...`) or declare stability guarantees
+
+---
+
+## Future / Ideas
+
+Low-priority features and long-term ideas. Not scheduled for any release.
+
+### Frontend Only
+
+- [ ] **Keyboard shortcuts** — space for play/pause, arrows for seek/skip, up/down for volume. Pure DOM listener, no backend.
+- [ ] **Crossfade / gapless playback** — overlap fade between tracks via Web Audio API `createGain()` + timing.
+- [ ] **Equalizer / audio effects** — bass boost, preset EQs via `BiquadFilterNode`. Web Audio API pipeline.
+- [ ] **Sleep timer** — stop playing in 15/30/60 min or end of track. Pure timer + pause action.
+- [ ] **Undo queue clear** — snapshot queue before `queueSet()`, restore via Ctrl+Z or toast button.
+- [ ] **Album shuffle** — pick a random album, play all tracks in order. Frontend queue logic.
+- [ ] **Better mobile UI** — swipe-to-queue, track list gestures, haptic feedback.
+
+### Frontend + Backend
+
+- [ ] **Playback history** — log finished tracks with timestamp. New DB table + API + UI list.
+- [ ] **Favorites / likes** — star a track, view all in a playlist. New DB table + API + star UI.
+- [ ] **Ratings** — 1-5 stars on tracks. DB column or table + API + star picker UI.
+- [ ] **Smart playlists** — auto-generated: most played, recently added, unplayed, favorites. Backend query rules + read-only playlist UI.
+- [ ] **Last.fm / ListenBrainz scrobbling** — POST to external API on play. Settings form + scrobble queue.
+- [ ] **Lyrics display** — fetch synced lyrics from LRCLIB or embedded tags. DB column + API + synchronized scrolling UI.
+- [ ] **Offline downloads** — cache tracks via Service Worker + CacheStorage. Download button per album/playlist.
+- [ ] **Audiobooks & podcasts** — long-form content with resume position, chapters, multi-disc grouping. RSS feed parsing for podcasts. Content type model extending the existing schema.
+- [ ] **Release types** — EPs, Singles, Compilations, Live, Soundtrack, etc. New `release_type` column on `albums` (default `"album"`). Detected from `MUSICBRAINZ_RELEASETYPE` tag during enrichment. Frontend groups by type with section headers and badges. See [`docs/release-types.md`](docs/release-types.md).
