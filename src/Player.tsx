@@ -190,7 +190,8 @@ export const useAudioPlayerBase = create<PlayerState>()(
 
           onError: (error) => {
             console.error("Media error:", error)
-            set({ _playbackState: "paused" })
+            set({ _playbackState: "paused", isError: true })
+            get().queueSkip()
           },
 
           onPaused: () => {
@@ -236,7 +237,7 @@ export const useAudioPlayerBase = create<PlayerState>()(
           if (!next_track) {
             return
           }
-          set({ queueIndex: get().queueIndex + 1 })
+          set({ queueIndex: get().queueIndex + 1, requestedPlaybackState: "playing" })
           return next_track
         },
         queuePrev: () => {

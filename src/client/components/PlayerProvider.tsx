@@ -2,7 +2,7 @@ import * as React from "react"
 import { type PropsWithChildren, useEffect } from "react"
 import { useAudioPlayer, useCurrentTrack, useEvents } from "@/Player"
 import { EdenClient } from "@/lib/eden"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useSettings } from "@/client/stores/settings"
 import { HlsPlayer } from "./HlsPlayer"
 
@@ -30,6 +30,7 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
     onEnded,
     onEmptied,
     onLoadStart,
+    onError,
   } = useEvents()
 
   const volume = useAudioPlayer.use.volume()
@@ -39,14 +40,13 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
   const endSeek = useAudioPlayer.use.endSeek()
   const requestedSeekPosition = useAudioPlayer.use.requestedSeekPosition()
   const currentTrack = useCurrentTrack()
+  const currentTime = useAudioPlayer.use.currentTime()
 
   const audio_ref = React.useRef<HTMLAudioElement>(null)
-  const audio_ctx_ref = React.useRef<AudioContext | null>(null)
-  const gain_node_ref = React.useRef<GainNode | null>(null)
-  const keepalive_ref = React.useRef<OscillatorNode | null>(null)
 
   const saved_current_time = useAudioPlayer.use.currentTime()
   const hlsEnabled = useSettings((s) => s.values.hls_enabled) as boolean
+  const queryClient = useQueryClient()
 
   const { data: src } = useQuery({
     queryKey: ["playback", currentTrack?.id, hlsEnabled] as const,
@@ -59,6 +59,37 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
     staleTime: Infinity,
   })
 
+  // Prefetch next track URL when nearing the end of current track
+  const queueTracks = useAudioPlayer.use.queueTracks()
+  const queueIndex = useAudioPlayer.use.queueIndex()
+  const nextTrack = queueTracks[queueIndex + 1]
+  const prefetchedRef = React.useRef<string | null>(null)
+
+  useEffect(() => {
+    if (!currentTrack?.duration) return
+    const nearEnd = currentTime / currentTrack.duration >= 0.85
+    if (!nearEnd) return
+    if (prefetchedRef.current === currentTrack.id) return
+
+    const target = nextTrack
+    if (!target) return
+
+    prefetchedRef.current = currentTrack.id
+    queryClient.prefetchQuery({
+      queryKey: ["playback", target.id, hlsEnabled],
+      queryFn: async () => {
+        if (hlsEnabled) return streamUrl(target.id)
+        return fetchPlaybackData(target.id)
+      },
+      staleTime: Infinity,
+    })
+  }, [currentTime, currentTrack?.id, nextTrack?.id, hlsEnabled, queryClient])
+
+  // Reset prefetch guard when current track changes
+  useEffect(() => {
+    prefetchedRef.current = null
+  }, [currentTrack?.id])
+
   // Restore playback position after reload
   const initial_seek_ref = React.useRef(false)
   useEffect(() => {
@@ -68,52 +99,10 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
     useAudioPlayer.getState().seek(saved_current_time)
   }, [currentTrack, saved_current_time])
 
-  function initAudio() {
-    if (audio_ctx_ref.current || !audio_ref.current) return
-
-    const ctx = new AudioContext()
-    audio_ctx_ref.current = ctx
-
-    // Silent keepalive oscillator — keeps AudioContext in "running" state
-    // so mobile browsers don't suspend the page between tracks
-    const osc = ctx.createOscillator()
-    const silent = ctx.createGain()
-    silent.gain.value = 0
-    osc.connect(silent)
-    silent.connect(ctx.destination)
-    osc.start()
-    keepalive_ref.current = osc
-
-    // Master gain node
-    // Future: insert EQ nodes (BiquadFilterNode, etc.) between source and gain
-    const gain = ctx.createGain()
-    gain.connect(ctx.destination)
-    gain_node_ref.current = gain
-
-    // Connect audio element through Web Audio pipeline
-    const source = ctx.createMediaElementSource(audio_ref.current)
-    source.connect(gain)
-  }
-
-  // Initialize audio context on mount (gain node available immediately for volume)
+  // Volume
   useEffect(() => {
-    initAudio()
-  }, [])
-
-  // Resume context on play
-  useEffect(() => {
-    if (requested_playback_state !== "playing") return
-
-    const ctx = audio_ctx_ref.current
-    if (ctx?.state === "suspended") {
-      ctx.resume()
-    }
-  }, [requested_playback_state])
-
-  // Volume through gain node
-  useEffect(() => {
-    if (gain_node_ref.current) {
-      gain_node_ref.current.gain.value = volume
+    if (audio_ref.current) {
+      audio_ref.current.volume = volume
     }
   }, [volume])
 
@@ -125,9 +114,10 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
     }
   }, [requestedSeekPosition])
 
-  // Load new src
+  // Load new src with autoplay
   useEffect(() => {
     if (!audio_ref.current) return
+    audio_ref.current.autoplay = src != null
     audio_ref.current.src = src ?? ""
     audio_ref.current.load()
   }, [src])
@@ -136,14 +126,11 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
   useEffect(() => {
     if (!audio_ref.current) return
 
-    console.log("is_playing", requested_playback_state)
-
     if (requested_playback_state == "playing") {
       audio_ref.current
         .play()
         .catch((err) => console.error("Play failed:", err))
     } else {
-      console.log("Pause")
       audio_ref.current.pause()
     }
   }, [requested_playback_state])
@@ -172,6 +159,22 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
     }
   }, [is_loading, requested_playback_state])
 
+  // Resume playback when page becomes visible again
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== "visible") return
+      const state = useAudioPlayer.getState()
+      if (state.requestedPlaybackState === "playing" && audio_ref.current?.paused) {
+        audio_ref.current.play().catch((err) =>
+          console.error("Resume playback failed:", err),
+        )
+      }
+    }
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+  }, [])
+
   return (
     <>
       {children}
@@ -187,6 +190,13 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
         onCanPlay={onCanPlay}
         onEmptied={onEmptied}
         onLoadStart={onLoadStart}
+        onError={(e) => {
+          const el = e.currentTarget
+          const msg = el.error?.message
+            ? `MediaError: ${el.error.message}`
+            : "Media playback error"
+          onError?.(new Error(msg))
+        }}
       />
     </>
   )
