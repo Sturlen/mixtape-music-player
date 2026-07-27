@@ -164,10 +164,13 @@ export const PlayerProvider = ({ children }: PropsWithChildren) => {
     const handleVisibilityChange = () => {
       if (document.visibilityState !== "visible") return
       const state = useAudioPlayer.getState()
-      if (state.requestedPlaybackState === "playing" && audio_ref.current?.paused) {
-        audio_ref.current.play().catch((err) =>
-          console.error("Resume playback failed:", err),
-        )
+      if (
+        state.requestedPlaybackState === "playing" &&
+        audio_ref.current?.paused
+      ) {
+        audio_ref.current
+          .play()
+          .catch((err) => console.error("Resume playback failed:", err))
       }
     }
     document.addEventListener("visibilitychange", handleVisibilityChange)

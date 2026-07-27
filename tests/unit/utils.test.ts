@@ -109,13 +109,11 @@ describe("compareTracksByNumberName", () => {
   })
 
   test("all undefined trackNumbers sorts by name", () => {
-    const items = [
-      t({ name: "z" }),
-      t({ name: "a" }),
-      t({ name: "m" }),
-    ]
+    const items = [t({ name: "z" }), t({ name: "a" }), t({ name: "m" })]
     expect(items.sort(compareTracksByNumberName).map((x) => x.name)).toEqual([
-      "a", "m", "z",
+      "a",
+      "m",
+      "z",
     ])
   })
 })

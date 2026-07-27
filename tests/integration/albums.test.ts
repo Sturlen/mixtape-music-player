@@ -13,7 +13,10 @@ describe("GET /api/albums", () => {
 
   test("returns seeded albums with artist names", async () => {
     const { app, db } = await createTestApp()
-    const artist = await seedArtist(db, { stableId: "artist-1", name: "Test Artist" })
+    const artist = await seedArtist(db, {
+      stableId: "artist-1",
+      name: "Test Artist",
+    })
     await seedAlbum(db, artist.id, { stableId: "album-1", name: "Alpha Album" })
     await seedAlbum(db, artist.id, { stableId: "album-2", name: "Beta Album" })
     const res = await app.handle(new Request("http://localhost/api/albums"))
@@ -25,12 +28,17 @@ describe("GET /api/albums", () => {
 
   test("search by name", async () => {
     const { app, db, rebuildIndexes } = await createTestApp()
-    const artist = await seedArtist(db, { stableId: "artist-1", name: "Artist" })
+    const artist = await seedArtist(db, {
+      stableId: "artist-1",
+      name: "Artist",
+    })
     await seedAlbum(db, artist.id, { stableId: "a1", name: "Greatest Hits" })
     await seedAlbum(db, artist.id, { stableId: "a2", name: "Greatest Misses" })
     await seedAlbum(db, artist.id, { stableId: "a3", name: "Something Else" })
     await rebuildIndexes()
-    const res = await app.handle(new Request("http://localhost/api/albums?q=Greatest"))
+    const res = await app.handle(
+      new Request("http://localhost/api/albums?q=Greatest"),
+    )
     const body = await res.json()
     expect(body.albums).toHaveLength(2)
   })
@@ -39,11 +47,27 @@ describe("GET /api/albums", () => {
 describe("GET /api/albums/:albumId", () => {
   test("returns album with tracks sorted by number", async () => {
     const { app, db } = await createTestApp()
-    const artist = await seedArtist(db, { stableId: "artist-1", name: "Artist" })
-    const album = await seedAlbum(db, artist.id, { stableId: "album-1", name: "Album" })
-    await seedTrack(db, album.id, { stableId: "t2", name: "Track B", trackNumber: 2 })
-    await seedTrack(db, album.id, { stableId: "t1", name: "Track A", trackNumber: 1 })
-    const res = await app.handle(new Request(`http://localhost/api/albums/${album.id}`))
+    const artist = await seedArtist(db, {
+      stableId: "artist-1",
+      name: "Artist",
+    })
+    const album = await seedAlbum(db, artist.id, {
+      stableId: "album-1",
+      name: "Album",
+    })
+    await seedTrack(db, album.id, {
+      stableId: "t2",
+      name: "Track B",
+      trackNumber: 2,
+    })
+    await seedTrack(db, album.id, {
+      stableId: "t1",
+      name: "Track A",
+      trackNumber: 1,
+    })
+    const res = await app.handle(
+      new Request(`http://localhost/api/albums/${album.id}`),
+    )
     const body = await res.json()
     expect(body.album).not.toBeNull()
     expect(body.album.name).toBe("Album")
@@ -55,7 +79,11 @@ describe("GET /api/albums/:albumId", () => {
 
   test("returns null for unknown album", async () => {
     const { app } = await createTestApp()
-    const res = await app.handle(new Request("http://localhost/api/albums/00000000-0000-0000-0000-000000000000"))
+    const res = await app.handle(
+      new Request(
+        "http://localhost/api/albums/00000000-0000-0000-0000-000000000000",
+      ),
+    )
     const body = await res.json()
     expect(body.album).toBeNull()
   })

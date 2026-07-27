@@ -27,7 +27,9 @@ describe("GET /api/artists", () => {
     await seedArtist(db, { stableId: "metal", name: "Metallica" })
     await seedArtist(db, { stableId: "doors", name: "The Doors" })
     await rebuildIndexes()
-    const res = await app.handle(new Request("http://localhost/api/artists?q=The+Doors"))
+    const res = await app.handle(
+      new Request("http://localhost/api/artists?q=The+Doors"),
+    )
     const body = await res.json()
     expect(body).toHaveLength(1)
     expect(body[0]!.name).toBe("The Doors")
@@ -37,9 +39,14 @@ describe("GET /api/artists", () => {
 describe("GET /api/artists/:artistId", () => {
   test("returns artist with albums", async () => {
     const { app, db } = await createTestApp()
-    const artist = await seedArtist(db, { stableId: "the-id", name: "Test Artist" })
+    const artist = await seedArtist(db, {
+      stableId: "the-id",
+      name: "Test Artist",
+    })
     const album = await seedAlbum(db, artist.id, { name: "Test Album" })
-    const res = await app.handle(new Request(`http://localhost/api/artists/${artist.id}`))
+    const res = await app.handle(
+      new Request(`http://localhost/api/artists/${artist.id}`),
+    )
     expect(res.status).toBe(200)
     const body = await res.json()
     expect(body.artist).not.toBeNull()
@@ -50,7 +57,11 @@ describe("GET /api/artists/:artistId", () => {
 
   test("returns null for unknown artist", async () => {
     const { app } = await createTestApp()
-    const res = await app.handle(new Request("http://localhost/api/artists/00000000-0000-0000-0000-000000000000"))
+    const res = await app.handle(
+      new Request(
+        "http://localhost/api/artists/00000000-0000-0000-0000-000000000000",
+      ),
+    )
     const body = await res.json()
     expect(body.artist).toBeNull()
   })

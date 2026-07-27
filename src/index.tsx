@@ -42,8 +42,19 @@ export interface AppContext {
 }
 
 export function createApp(ctx: AppContext) {
-  const { db, library, searchService, playlistStore, fuseInstances, jwtSecret, isFfmpegEnabled, reloadLibrary, isProduction } = ctx
-  const { fuse_artists, fuse_albums, fuse_playlists, fuse_tracks } = fuseInstances
+  const {
+    db,
+    library,
+    searchService,
+    playlistStore,
+    fuseInstances,
+    jwtSecret,
+    isFfmpegEnabled,
+    reloadLibrary,
+    isProduction,
+  } = ctx
+  const { fuse_artists, fuse_albums, fuse_playlists, fuse_tracks } =
+    fuseInstances
 
   const app = new Elysia()
     .onError(({ error, code, status }) => {
@@ -69,14 +80,19 @@ export function createApp(ctx: AppContext) {
     .get(
       "/api/search",
       async ({ query: { q } }) => searchService.search(q ?? ""),
-      { detail: "Search artists, albums, tracks", query: t.Object({ q: t.String() }) },
+      {
+        detail: "Search artists, albums, tracks",
+        query: t.Object({ q: t.String() }),
+      },
     )
     .get(
       "/api/artists",
       async ({ query: { q } }) => {
         let artists: Artist[]
         if (q) {
-          artists = fuse_artists.search(q).map((res) => res.item) as unknown as Artist[]
+          artists = fuse_artists
+            .search(q)
+            .map((res) => res.item) as unknown as Artist[]
         } else {
           artists = await library.getArtists()
         }
@@ -138,12 +154,16 @@ export function createApp(ctx: AppContext) {
       async ({ query: { q } }) => {
         let albums: Album[] = []
         if (q) {
-          albums = fuse_albums.search(q).map((res) => res.item) as unknown as Album[]
+          albums = fuse_albums
+            .search(q)
+            .map((res) => res.item) as unknown as Album[]
         } else {
           albums = await library.getAlbums()
         }
         const artistsForAlbums = await library.getArtists()
-        const artistNameMap = new Map(artistsForAlbums.map((a) => [a.id, a.name]))
+        const artistNameMap = new Map(
+          artistsForAlbums.map((a) => [a.id, a.name]),
+        )
         const artMap = await library.getArtBatch(
           albums.map((a) => a.id),
           "album",
@@ -235,31 +255,35 @@ export function createApp(ctx: AppContext) {
       const assets = await library.getAudioAssets()
       return { assets }
     })
-    .get("/api/assets/:assetId", async ({ params: { assetId }, set, status }) => {
-      const asset = await library.getAudioAsset(assetId)
-      if (!asset) return status(404, "Asset not found")
-      if (await isFfmpegEnabled()) {
-        let ffmpeg_stderr = ""
-        try {
-          const start = performance.now()
-          const proc = await $`ffmpeg -i ${asset?.path ?? ""} -f mp3 -vn -q:a 1 pipe:1`.quiet()
-          ffmpeg_stderr = proc.stderr.toString()
-          set.headers["content-type"] = "audio/mpeg"
-          console.log(
-            "ffmpeg took %ds for file '%s'",
-            (performance.now() - start) / 1000,
-            asset.name,
-          )
-          return proc.stdout
-        } catch (error) {
-          console.error(ffmpeg_stderr)
-          console.error(error)
+    .get(
+      "/api/assets/:assetId",
+      async ({ params: { assetId }, set, status }) => {
+        const asset = await library.getAudioAsset(assetId)
+        if (!asset) return status(404, "Asset not found")
+        if (await isFfmpegEnabled()) {
+          let ffmpeg_stderr = ""
+          try {
+            const start = performance.now()
+            const proc =
+              await $`ffmpeg -i ${asset?.path ?? ""} -f mp3 -vn -q:a 1 pipe:1`.quiet()
+            ffmpeg_stderr = proc.stderr.toString()
+            set.headers["content-type"] = "audio/mpeg"
+            console.log(
+              "ffmpeg took %ds for file '%s'",
+              (performance.now() - start) / 1000,
+              asset.name,
+            )
+            return proc.stdout
+          } catch (error) {
+            console.error(ffmpeg_stderr)
+            console.error(error)
+          }
         }
-      }
-      const file = Bun.file(asset?.path ?? "")
-      set.headers["content-type"] = file.type
-      return file
-    })
+        const file = Bun.file(asset?.path ?? "")
+        set.headers["content-type"] = file.type
+        return file
+      },
+    )
     .get(
       "/api/stream/:trackId",
       async ({ params: { trackId }, set, status }) => {
@@ -304,13 +328,18 @@ export function createApp(ctx: AppContext) {
                 cleanup()
                 controller.close()
               }
-            } catch { cleanup() }
+            } catch {
+              cleanup()
+            }
           }
           unsub = enrichmentProgress.listen(send)
           send()
           heartbeat = setInterval(() => {
-            try { controller.enqueue(new TextEncoder().encode(": heartbeat\n\n")) }
-            catch { cleanup() }
+            try {
+              controller.enqueue(new TextEncoder().encode(": heartbeat\n\n"))
+            } catch {
+              cleanup()
+            }
           }, 10000)
         },
         cancel() {
@@ -336,7 +365,11 @@ export function createApp(ctx: AppContext) {
         if (!user) throw status(401, "Authentication required")
         return await reloadLibrary()
       },
-      { detail: { description: "Reloads the internal db and parses all sources again" } },
+      {
+        detail: {
+          description: "Reloads the internal db and parses all sources again",
+        },
+      },
     )
     .post(
       "/api/player",

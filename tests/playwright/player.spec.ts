@@ -1,6 +1,8 @@
 import { test, expect } from "@playwright/test"
 
-test("click a track and verify audio playback with correct metadata", async ({ page }) => {
+test("click a track and verify audio playback with correct metadata", async ({
+  page,
+}) => {
   await page.goto("/login")
   await page.fill("#username", "admin")
   await page.fill("#password", "admin")

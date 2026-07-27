@@ -17,10 +17,7 @@ export function getStreamPath(trackId: string): string {
   return join(cacheDir(), `${trackId}.m4a`)
 }
 
-async function encodeTrack(
-  trackPath: string,
-  trackId: string,
-): Promise<void> {
+async function encodeTrack(trackPath: string, trackId: string): Promise<void> {
   const dir = cacheDir()
   mkdirSync(dir, { recursive: true })
   const outputPath = getStreamPath(trackId)
@@ -47,9 +44,7 @@ export async function preencodeTracks(
   if (tracks.length === 0) return
 
   if (!Bun.which("ffmpeg")) {
-    console.warn(
-      "[Stream] ffmpeg not found in PATH, skipping pre-encode",
-    )
+    console.warn("[Stream] ffmpeg not found in PATH, skipping pre-encode")
     return
   }
 
@@ -62,31 +57,15 @@ export async function preencodeTracks(
         await encodeTrack(t.path, t.id)
         completed++
         if (completed % 100 === 0) {
-          console.log(
-            "[Stream] Pre-encoded",
-            completed,
-            "/",
-            tracks.length,
-          )
+          console.log("[Stream] Pre-encoded", completed, "/", tracks.length)
         }
       } catch (err) {
-        console.error(
-          "[Stream] Failed to pre-encode track",
-          t.id,
-          ":",
-          err,
-        )
+        console.error("[Stream] Failed to pre-encode track", t.id, ":", err)
       }
     }),
   )
   await Promise.allSettled(jobs)
-  console.log(
-    "[Stream] Pre-encoded",
-    completed,
-    "/",
-    tracks.length,
-    "tracks",
-  )
+  console.log("[Stream] Pre-encoded", completed, "/", tracks.length, "tracks")
 }
 
 export function cleanupStreamCache(): void {

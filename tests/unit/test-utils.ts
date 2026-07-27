@@ -7,7 +7,12 @@ import { Library } from "@/server/library"
 import { SearchService } from "@/server/search"
 import type { Album, Artist, Playlist, Track } from "@/lib/types"
 import { createApp, type AppContext } from "@/index"
-import { fuse_artists, fuse_albums, fuse_playlists, fuse_tracks } from "@/lib/fuse"
+import {
+  fuse_artists,
+  fuse_albums,
+  fuse_playlists,
+  fuse_tracks,
+} from "@/lib/fuse"
 import { SignJWT } from "jose"
 
 const TEST_JWT_SECRET = "test-secret"

@@ -1,11 +1,5 @@
 import { $ } from "bun"
-import {
-  existsSync,
-  mkdirSync,
-  readdirSync,
-  rmSync,
-  statSync,
-} from "fs"
+import { existsSync, mkdirSync, readdirSync, rmSync, statSync } from "fs"
 import { join } from "path"
 import { env } from "@/shared/env"
 import pLimit from "p-limit"
@@ -50,7 +44,10 @@ export function buildPlaylist(
   for (let i = 0; i < totalSegments; i++) {
     const isLast = i === totalSegments - 1
     const remainder = playtimeSeconds % SEGMENT_DURATION
-    const duration = isLast && remainder !== 0 ? playtimeSeconds - i * SEGMENT_DURATION : SEGMENT_DURATION
+    const duration =
+      isLast && remainder !== 0
+        ? playtimeSeconds - i * SEGMENT_DURATION
+        : SEGMENT_DURATION
 
     lines.push(`#EXTINF:${duration.toFixed(3)},`)
     lines.push(segmentFilename(i))
@@ -81,7 +78,12 @@ export function initTrackCache(trackId: string, playtimeSeconds: number): void {
     const segPath = join(dir, segmentFilename(i))
     segments.push(existsSync(segPath) ? "complete" : "pending")
   }
-  tracksCache.set(trackId, { total, segments, encodePromise: null, seg0Promise: null })
+  tracksCache.set(trackId, {
+    total,
+    segments,
+    encodePromise: null,
+    seg0Promise: null,
+  })
 }
 
 export function ensureTrackEncode(trackPath: string, trackId: string): void {
@@ -155,23 +157,24 @@ export async function requestSegment(
   if (status === "pending" || status === "encoding") {
     if (!cache.encodePromise) ensureTrackEncode(trackPath, trackId)
     await cache.encodePromise
-    if (cache.segments[segmentIndex] === "complete") return readSegment(trackId, segmentIndex)
+    if (cache.segments[segmentIndex] === "complete")
+      return readSegment(trackId, segmentIndex)
     throw new Error("Segment generation failed")
   }
 
   throw new Error(`Unknown segment status: ${status}`)
 }
 
-async function readSegment(trackId: string, index: number): Promise<ArrayBuffer> {
+async function readSegment(
+  trackId: string,
+  index: number,
+): Promise<ArrayBuffer> {
   const dir = trackCacheDir(trackId)
   const path = join(dir, segmentFilename(index))
   return Bun.file(path).arrayBuffer()
 }
 
-async function doEncodeAll(
-  trackPath: string,
-  trackId: string,
-): Promise<void> {
+async function doEncodeAll(trackPath: string, trackId: string): Promise<void> {
   const dir = ensureTrackCacheDir(trackId)
   const segmentPattern = join(dir, "segment_%04d.ts")
 
@@ -248,7 +251,9 @@ export async function pregenerateFirstSegments(
   if (tracks.length === 0) return
 
   if (!Bun.which("ffmpeg")) {
-    console.warn("[HLS] ffmpeg not found in PATH, skipping first-segment pre-generation")
+    console.warn(
+      "[HLS] ffmpeg not found in PATH, skipping first-segment pre-generation",
+    )
     return
   }
 
@@ -264,12 +269,23 @@ export async function pregenerateFirstSegments(
           console.log("[HLS] Pre-generated", completed, "/", tracks.length)
         }
       } catch (err) {
-        console.error("[HLS] Failed to pre-generate first segment for track", t.id, ":", err)
+        console.error(
+          "[HLS] Failed to pre-generate first segment for track",
+          t.id,
+          ":",
+          err,
+        )
       }
     }),
   )
   await Promise.allSettled(jobs)
-  console.log("[HLS] Pre-generated first segment for", completed, "/", tracks.length, "tracks")
+  console.log(
+    "[HLS] Pre-generated first segment for",
+    completed,
+    "/",
+    tracks.length,
+    "tracks",
+  )
 }
 
 export function cleanupHlsCache(): void {

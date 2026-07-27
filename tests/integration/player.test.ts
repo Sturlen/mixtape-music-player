@@ -1,6 +1,11 @@
 import { describe, test, expect } from "bun:test"
 import { createTestApp, signTestToken } from "../unit/test-utils"
-import { seedArtist, seedAlbum, seedTrack, seedPlaylist } from "../unit/seed-helpers"
+import {
+  seedArtist,
+  seedAlbum,
+  seedTrack,
+  seedPlaylist,
+} from "../unit/seed-helpers"
 import { audioAssets } from "@/db/schema"
 
 async function seedAudioAsset(db: any, trackId: string, overrides?: any) {
@@ -32,7 +37,10 @@ describe("POST /api/player", () => {
     const res = await app.handle(
       new Request("http://localhost/api/player", {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ trackId: track.id }),
       }),
     )
@@ -48,7 +56,10 @@ describe("POST /api/player", () => {
     const res = await app.handle(
       new Request("http://localhost/api/player", {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({}),
       }),
     )
@@ -61,8 +72,13 @@ describe("POST /api/player", () => {
     const res = await app.handle(
       new Request("http://localhost/api/player", {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ trackId: "00000000-0000-0000-0000-000000000000" }),
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          trackId: "00000000-0000-0000-0000-000000000000",
+        }),
       }),
     )
     expect(res.status).toBe(404)
@@ -77,7 +93,10 @@ describe("POST /api/player", () => {
     const res = await app.handle(
       new Request("http://localhost/api/player", {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ trackId: track.id }),
       }),
     )
@@ -121,10 +140,13 @@ describe("POST /api/playAlbum/:albumId", () => {
     const { app } = await createTestApp()
     const token = await signTestToken()
     const res = await app.handle(
-      new Request("http://localhost/api/playAlbum/00000000-0000-0000-0000-000000000000", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      }),
+      new Request(
+        "http://localhost/api/playAlbum/00000000-0000-0000-0000-000000000000",
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      ),
     )
     expect(res.status).toBe(404)
   })
@@ -132,7 +154,9 @@ describe("POST /api/playAlbum/:albumId", () => {
   test("returns 401 without auth", async () => {
     const { app } = await createTestApp()
     const res = await app.handle(
-      new Request("http://localhost/api/playAlbum/anything", { method: "POST" }),
+      new Request("http://localhost/api/playAlbum/anything", {
+        method: "POST",
+      }),
     )
     expect(res.status).toBe(401)
   })
@@ -159,10 +183,13 @@ describe("POST /api/playPlaylist/:playlistId", () => {
     const { app } = await createTestApp()
     const token = await signTestToken()
     const res = await app.handle(
-      new Request("http://localhost/api/playPlaylist/00000000-0000-0000-0000-000000000000", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      }),
+      new Request(
+        "http://localhost/api/playPlaylist/00000000-0000-0000-0000-000000000000",
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      ),
     )
     expect(res.status).toBe(404)
   })
