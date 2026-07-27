@@ -270,3 +270,4 @@ Low-priority features and long-term ideas. Not scheduled for any release.
 - [ ] **Offline downloads** — cache tracks via Service Worker + CacheStorage. Download button per album/playlist.
 - [ ] **Audiobooks & podcasts** — long-form content with resume position, chapters, multi-disc grouping. RSS feed parsing for podcasts. Content type model extending the existing schema.
 - [ ] **Release types** — EPs, Singles, Compilations, Live, Soundtrack, etc. New `release_type` column on `albums` (default `"album"`). Detected from `MUSICBRAINZ_RELEASETYPE` tag during enrichment. Frontend groups by type with section headers and badges. See [`docs/release-types.md`](docs/release-types.md).
+- [ ] **events endpoint** - use event streaming for app events. know when libraries have changed, uploads finished, etc.
