@@ -2,6 +2,7 @@ import { create, type StoreApi, type UseBoundStore } from "zustand"
 import { persist } from "zustand/middleware"
 import { randomUUIDFallback } from "@/lib/uuid"
 import { clamp } from "./lib/math"
+import { advance, prev, remove, shuffleArray } from "@/lib/queue"
 
 export type Track = {
   id: string
@@ -138,17 +139,6 @@ function log(message?: string, ...optionalParams: unknown[]) {
   console.log(`[PLAYER] ${message}`, ...optionalParams)
 }
 
-function shuffle<T>(array: T[]) {
-  for (let i = array.length - 1; i > 0; i--) {
-    // Generate a random index from 0 to i
-    const j = Math.floor(Math.random() * (i + 1))
-    // Swap elements array[i] and array[j]
-    // @ts-expect-error - this is valid syntax for swapping elements in an array
-    ;[array[i], array[j]] = [array[j], array[i]]
-  }
-  return array
-}
-
 export const useAudioPlayerBase = create<PlayerState>()(
   persist(
     (set, get) => {
@@ -233,23 +223,16 @@ export const useAudioPlayerBase = create<PlayerState>()(
           set({ queueTracks })
         },
         queueSkip: () => {
-          const next_track = get().queueTracks[get().queueIndex + 1]
-          if (!next_track) {
-            return
-          }
-          set({ queueIndex: get().queueIndex + 1, requestedPlaybackState: "playing" })
-          return next_track
+          const nextIndex = advance(get().queueIndex, get().queueTracks.length)
+          if (nextIndex === undefined) return
+          set({ queueIndex: nextIndex, requestedPlaybackState: "playing" })
+          return get().queueTracks[nextIndex]
         },
         queuePrev: () => {
-          if (get().queueIndex <= 0) {
-            return
-          }
-          const prev_track = get().queueTracks[get().queueIndex - 1]
-          if (!prev_track) {
-            return
-          }
-          set({ queueIndex: get().queueIndex - 1 })
-          return prev_track
+          const prevIndex = prev(get().queueIndex)
+          if (prevIndex === undefined) return
+          set({ queueIndex: prevIndex })
+          return get().queueTracks[prevIndex]
         },
         queueJump: (trackIndex) => {
           const track = get().queueTracks[trackIndex]
@@ -260,27 +243,16 @@ export const useAudioPlayerBase = create<PlayerState>()(
           return track
         },
         queueRemove: (deleteIndex) => {
-          const exists = get().queueTracks[deleteIndex]
-          if (!exists) {
-            return
-          }
-          const queueTracks = [...get().queueTracks]
-          queueTracks.splice(deleteIndex, 1)
-
-          if (deleteIndex < get().queueIndex) {
-            set({ queueIndex: get().queueIndex - 1, queueTracks })
-          } else if (deleteIndex === get().queueIndex) {
-            if (queueTracks.length === 0) {
-              get().stop()
-            } else {
-              const newIndex = Math.min(
-                get().queueIndex,
-                queueTracks.length - 1,
-              )
-              set({ queueIndex: newIndex, queueTracks })
-            }
+          const result = remove(
+            get().queueTracks,
+            deleteIndex,
+            get().queueIndex,
+          )
+          if (!result) return
+          if (result.items.length === 0) {
+            get().stop()
           } else {
-            set({ queueTracks })
+            set({ queueTracks: result.items, queueIndex: result.currentIndex })
           }
         },
         queueSet: (tracks, startAtIndex) => {
@@ -302,13 +274,9 @@ export const useAudioPlayerBase = create<PlayerState>()(
         isShuffled: false,
         queueShuffle: () => {
           const player = get()
-          const currentTrack = player.queueTracks[player.queueIndex]
-          if (!currentTrack) {
-            return
-          }
-
+          if (player.queueTracks.length === 0) return
           set({
-            queueTracks: shuffle([...player.queueTracks]),
+            queueTracks: shuffleArray(player.queueTracks),
             queueIndex: 0,
             isShuffled: !player.isShuffled,
           })

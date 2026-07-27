@@ -200,9 +200,32 @@ src/
 │   └── fuse.ts      # Keep as-is or export factory function
 ```
 
-### Integration Tests
+### Test Implementation Order
 
-In-memory app instances with mock data for each endpoint. Requires app testability refactoring first.
+Tests before refactoring. Pure functions first, then extraction, then infrastructure, then integration.
+
+#### Phase 1: Pure Utility Tests (no code changes needed)
+
+- [x] **Math** — `clamp()` in `src/lib/math.ts`
+- [x] **Utils** — `cn()`, `raise()`, `formatTime()` in `src/lib/utils.ts`
+- [x] **Data types** — `Duration`, `DataSize` in `src/lib/data_type.ts`
+
+#### Phase 2: Extract Pure Functions → Test
+
+Extract module-private logic into shared lib, then test in same step.
+
+- [x] **Track sorting** — move `compareTracksByNumberName()` from `src/index.tsx` to `src/lib/utils.ts` → test it
+- [x] **Queue primitives** — extract `advance()`, `prev()`, `remove()`, `shuffleArray()` from `Player.tsx` store into `src/lib/queue.ts` → test them
+
+#### Phase 3: App Testability Refactoring
+
+See [`# App Testability Refactoring`](#app-testability-refactoring) above. Enables in-process integration tests.
+
+- [ ] Items 1-9 from App Testability Refactoring section
+
+#### Phase 4: Integration Tests (uses `createApp()` factory)
+
+In-memory app instances with mock data. No server spawn. Runs in-process.
 
 - [ ] **Stats:** `GET /api/stats` returns correct counts
 - [ ] **Artists:** list, search, by-id, unknown
@@ -212,13 +235,6 @@ In-memory app instances with mock data for each endpoint. Requires app testabili
 - [ ] **Player:** `POST /api/player` (valid/missing/unknown trackId), `playAlbum`, `playPlaylist`
 - [ ] **Files:** album art, artist art (success + 404)
 - [ ] **Library:** reload endpoint
-
-### Unit Tests
-
-- [ ] **Utilities** — `cn()`, `raise()`
-- [ ] **Math** — `clamp()`
-- [ ] **Track sorting** — `compareTracksByNumberName()`
-- [ ] **Player logic** — pure queue functions (advance, shuffle, remove), reconciliation logic, store action transitions. See [`docs/player-improvements.md`](docs/player-improvements.md).
 
 ### Documentation & Process
 

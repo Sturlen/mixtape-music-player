@@ -16,7 +16,7 @@ import {
 } from "@/server/stream"
 import { parse } from "@/parse"
 import type { Album, Artist, Playlist, Track } from "@/lib/types"
-import { raise } from "@/lib/utils"
+import { raise, compareTracksByNumberName } from "@/lib/utils"
 import { $ } from "bun"
 import { eq } from "drizzle-orm"
 import { jwt } from "@elysiajs/jwt"
@@ -51,18 +51,6 @@ if (env.HLS_ENABLED) {
     Bun.color("yellow", "ansi") +
       "HLS streaming is enabled. Audio files will be transcoded via FFmpeg on first play.",
   )
-}
-
-function compareTracksByNumberName(a: Track, b: Track): number {
-  if (a.trackNumber !== undefined && b.trackNumber !== undefined) {
-    return a.trackNumber - b.trackNumber
-  } else if (a.trackNumber !== undefined) {
-    return -1
-  } else if (b.trackNumber !== undefined) {
-    return 1
-  } else {
-    return a.name.localeCompare(b.name)
-  }
 }
 
 const started_at = performance.now()
