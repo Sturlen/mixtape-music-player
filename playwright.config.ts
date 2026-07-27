@@ -11,7 +11,7 @@ export default defineConfig({
   },
   webServer: {
     command:
-      "NODE_ENV=production MUSIC_PATH=./demo-music DATA_PATH=./data USE_FFMPEG=0 HLS_ENABLED=0 ADMIN_USERNAME=admin ADMIN_PASSWORD=admin bun --no-env-file src/index.tsx",
+      "NODE_ENV=production MUSIC_PATH=./demo-music DATA_PATH=./data USE_FFMPEG=0 HLS_ENABLED=0 ADMIN_USERNAME=admin ADMIN_PASSWORD=admin bun --no-env-file src/server.tsx",
     port: 3000,
     reuseExistingServer: !process.env.CI,
     timeout: 30000,

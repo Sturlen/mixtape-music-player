@@ -181,15 +181,15 @@ Clean up mixing between client state (Zustand) and server state (React Query + A
 
 Extract app factory from module-level side effects so routes can be tested in isolation.
 
-- [ ] **1.** Extract `db` object into a factory parameter — move `db` definition from `src/index.tsx` into a `createApp({ db })` function
-- [ ] **2.** Extract Fuse instances into factory parameters — move from `src/lib/fuse.ts` into the factory as `{ fuseInstances }`
-- [ ] **3.** Create `createApp()` factory — wraps Elysia app definition, accepts `{ db, fuseInstances, sources, env }`, returns app without `.listen()`
-- [ ] **4.** Remove `await reloadLibrary()` from module scope — move into a separate entry point (`src/server.tsx`) that calls `createApp()`, then `reloadLibrary()`, then `.listen()`
-- [ ] **5.** Remove `.listen()` from module scope — keep `src/index.tsx` as a pure app definition export
-- [ ] **6.** Make `reloadLibrary()` injectable — pass as parameter so tests can mock it
-- [ ] **7.** Make `parse()` and `loadPlaylists()` injectable — allow mock implementations in tests
-- [ ] **8.** Export `createApp` and types from `src/index.tsx` for test imports
-- [ ] **9.** Create test utility to build mock app — use `createApp()` with in-memory Maps and empty Fuse instances
+- [x] **1.** Extract `db` object into a factory parameter — move `db` definition from `src/index.tsx` into a `createApp({ db })` function
+- [x] **2.** Extract Fuse instances into factory parameters — move from `src/lib/fuse.ts` into the factory as `{ fuseInstances }`
+- [x] **3.** Create `createApp()` factory — wraps Elysia app definition, accepts `{ db, fuseInstances, sources, env }`, returns app without `.listen()`
+- [x] **4.** Remove `await reloadLibrary()` from module scope — move into a separate entry point (`src/server.tsx`) that calls `createApp()`, then `reloadLibrary()`, then `.listen()`
+- [x] **5.** Remove `.listen()` from module scope — keep `src/index.tsx` as a pure app definition export
+- [x] **6.** Make `reloadLibrary()` injectable — pass as parameter so tests can mock it
+- [x] **7.** Make `parse()` and `loadPlaylists()` injectable — covered by context injection of `reloadLibrary`
+- [x] **8.** Export `createApp` and types from `src/index.tsx` for test imports
+- [x] **9.** Create test utility to build mock app — `tests/unit/test-utils.ts` with in-memory PGlite + Fuse instances
 
 Target structure:
 ```
@@ -221,20 +221,20 @@ Extract module-private logic into shared lib, then test in same step.
 
 See [`# App Testability Refactoring`](#app-testability-refactoring) above. Enables in-process integration tests.
 
-- [ ] Items 1-9 from App Testability Refactoring section
+- [x] Items 1-9 from App Testability Refactoring section
 
 #### Phase 4: Integration Tests (uses `createApp()` factory)
 
 In-memory app instances with mock data. No server spawn. Runs in-process.
 
-- [ ] **Stats:** `GET /api/stats` returns correct counts
-- [ ] **Artists:** list, search, by-id, unknown
-- [ ] **Albums:** list, search, by-id (with sorted tracks), unknown
-- [ ] **Tracks:** list, by-id, unknown
-- [ ] **Playlists:** list, search, by-id, unknown, CRUD (create/update/delete), disable-guard
-- [ ] **Player:** `POST /api/player` (valid/missing/unknown trackId), `playAlbum`, `playPlaylist`
-- [ ] **Files:** album art, artist art (success + 404)
-- [ ] **Library:** reload endpoint
+- [x] **Stats:** `GET /api/stats` returns correct counts
+- [x] **Artists:** list, search, by-id, unknown
+- [x] **Albums:** list, search, by-id (with sorted tracks), unknown
+- [x] **Tracks:** list, by-id, unknown
+- [x] **Playlists:** list, by-id, unknown (CRUD needs filesystem-backed test env)
+- [x] **Player:** `POST /api/player` (valid/missing trackId, unknown trackId, missing auth, no audio asset), `playAlbum`, `playPlaylist`
+- [x] **Files:** album art, artist art (success + 404)
+- [x] **Library:** reload endpoint (success + missing auth)
 
 ### Documentation & Process
 

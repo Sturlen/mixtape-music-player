@@ -9,7 +9,7 @@ export async function startServer() {
   const port = Math.floor(Math.random() * 10000) + 30000
 
   serverProcess = spawn({
-    cmd: ["bun", "--no-env-file", "src/index.tsx"],
+    cmd: ["bun", "--no-env-file", "src/server.tsx"],
     env: {
       NODE_ENV: "test",
       PORT: String(port),

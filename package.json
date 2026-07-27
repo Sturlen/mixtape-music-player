@@ -7,9 +7,9 @@
   },
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"bun --hot src/index.tsx\" \"bunx --bun vite --host\"",
+    "dev": "concurrently \"bun --hot src/server.tsx\" \"bunx --bun vite --host\"",
     "build": "bunx --bun vite build",
-    "start": "NODE_ENV=production bun src/index.tsx",
+    "start": "NODE_ENV=production bun src/server.tsx",
     "generate-routes": "tsr generate",
     "watch-routes": "tsr watch",
     "lint": "eslint . --ext .ts,.tsx",
