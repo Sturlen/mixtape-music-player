@@ -3,6 +3,27 @@
 Notable changes. Expect proper version numbers when it's actually close to a release version.
 
 
+## [30-07-2026]
+
+### Added
+
+- **E2E test suite** — `bun run test:e2e` builds the Docker image, runs Playwright browser tests, and stops the container. Tests cover the homepage, login, album navigation, and audio playback.
+- **Testcontainers** — `tests/e2e/helpers/container.ts` starts `mixtape:e2e` with MP3 test fixtures and JPEG images. Waits for `/api/ready` before the test run.
+- **`GET /api/ready`** — new endpoint in `AppContext`. Blocks until library enrichment finishes. Used by the container wait strategy.
+- **8 integration tests** — stats with seeded data, playlist search, track file serving, asset list, asset file serving. `seedAudioAsset()` helper.
+- **Test music fixtures** — `tests/e2e/fixtures/music/` has 1 artist, 1 album, 3 MP3s, 2 JPEGs.
+
+### Fixed
+
+- **`tests/newPlaylistParser.test.ts`** — expected tracks changed. Created missing `data/empty/` directory.
+- **Duplicate `docker:build` script** in `package.json`.
+
+### Changed
+
+- **E2E tests** — old subprocess tests now use Playwright with a real browser. Tests user actions instead of API calls.
+- **`package.json`** — `"test"` runs unit/integration only. `"test:e2e"` builds the Docker image and runs Playwright. Removed `@playwright/test` from production dependencies.
+
+
 ## [21-07-2026]
 
 

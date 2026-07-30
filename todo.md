@@ -223,18 +223,38 @@ See [`# App Testability Refactoring`](#app-testability-refactoring) above. Enabl
 
 - [x] Items 1-9 from App Testability Refactoring section
 
-#### Phase 4: Integration Tests (uses `createApp()` factory)
+#### Phase 4: Integration Tests
 
-In-memory app instances with mock data. No server spawn. Runs in-process.
+The app factory creates test instances in memory. No server start. **44 tests in 9 files.**
 
-- [x] **Stats:** `GET /api/stats` returns correct counts
-- [x] **Artists:** list, search, by-id, unknown
-- [x] **Albums:** list, search, by-id (with sorted tracks), unknown
-- [x] **Tracks:** list, by-id, unknown
-- [x] **Playlists:** list, by-id, unknown (CRUD needs filesystem-backed test env)
-- [x] **Player:** `POST /api/player` (valid/missing trackId, unknown trackId, missing auth, no audio asset), `playAlbum`, `playPlaylist`
-- [x] **Files:** album art, artist art (success + 404)
-- [x] **Library:** reload endpoint (success + missing auth)
+- [x] **Stats** — empty DB, seeded counts
+- [x] **Artists** — list, search, by-id (with albums), unknown
+- [x] **Albums** — list, search, by-id (sorted tracks), unknown
+- [x] **Tracks** — list, by-id, unknown
+- [x] **Playlists** — list, search (`?q=`), by-id, unknown
+- [x] **Player** — `POST /api/player` (valid/missing/unknown trackId, no auth, no asset), `playAlbum`, `playPlaylist`
+- [x] **Files** — album art, artist art, track file, assets list, asset file (200 + 404 per endpoint)
+- [x] **Library** — reload (with and without auth)
+- [x] **Search** — `GET /api/search?q=` returns results
+- [x] `seedAudioAsset()` helper in `tests/unit/seed-helpers.ts`
+- [x] `GET /api/ready` endpoint in `AppContext` (blocks until enrichment finishes)
+
+#### Phase 5: E2E Tests
+
+Containerized with `testcontainers` + `playwright`. Tests the complete stack in Docker.
+
+- [x] **Infrastructure:**
+  - `tests/e2e/helpers/container.ts` — start and stop `mixtape:e2e` with test fixtures, FFmpeg, HLS
+  - `tests/e2e/global-setup.ts` — start container, write URL to file
+  - `tests/e2e/global-teardown.ts` — stop container, remove URL file
+  - `tests/e2e/fixtures/music/` — 3 silent MP3s, 2 JPEG images
+  - `playwright.config.ts` — point Playwright at container URL
+  - `bun run test:e2e` — build image, run tests, stop container
+
+- [x] **Home page** — MIXTAPE logo, nav links, stat cards are visible
+- [x] **Auth** — login with admin credentials, wrong password shows error, user capsule appears
+- [x] **Albums** — navigate to albums, open detail page, see track rows
+- [x] **Player** — click a track: audio plays (currentTime > 0), scroller shows track name, no "No Track Playing" text
 
 ### Documentation & Process
 
