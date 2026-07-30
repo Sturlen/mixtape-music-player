@@ -16,7 +16,8 @@ describe("parsePlaylists", () => {
           { id: "trackeb4d5eaa2d900185", name: "A Proper Story" },
           { id: "track692bf6b99ac61a02", name: "Stained Glass" },
           { id: "trackedb22e9831c7d490", name: "Terminal March" },
-          { id: "trackeb4d5eaa2d900185", name: "A Proper Story" }, // Duplicate track
+          { id: "trackeb4d5eaa2d900185", name: "A Proper Story" },
+          { id: "track692bf6b99ac61a02", name: "Stained Glass" },
         ],
       },
     ])

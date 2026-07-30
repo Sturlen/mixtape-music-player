@@ -19,6 +19,11 @@ import {
 import type { Playlist, Track } from "@/lib/types"
 import { createApp, type AppContext } from "./index"
 
+let resolveReady: (() => void) | null = null
+const readyPromise = new Promise<void>((resolve) => {
+  resolveReady = resolve
+})
+
 const started_at = performance.now()
 
 if (env.USE_FFMPEG) {
@@ -44,12 +49,14 @@ const library = new Library(db)
 const searchService = new SearchService(library)
 library.onIndexRebuilt = () => searchService.buildIndex()
 library.onEnrichmentComplete = async () => {
-  if (!env.HLS_ENABLED) return
-  const allTracks = (await library.getAllTracks()).map((t) => ({
-    id: t.id,
-    path: t.path,
-  }))
-  await preencodeTracks(allTracks)
+  if (env.HLS_ENABLED) {
+    const allTracks = (await library.getAllTracks()).map((t) => ({
+      id: t.id,
+      path: t.path,
+    }))
+    await preencodeTracks(allTracks)
+  }
+  resolveReady?.()
 }
 
 const playlistStore = {
@@ -202,6 +209,7 @@ const app = createApp({
   isFfmpegEnabled,
   reloadLibrary,
   isProduction,
+  ready: async () => await readyPromise,
 })
 
 app.listen(env.PORT, () => {

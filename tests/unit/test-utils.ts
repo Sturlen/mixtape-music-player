@@ -54,6 +54,7 @@ export async function createTestApp() {
     isFfmpegEnabled: async () => false,
     reloadLibrary: async () => {},
     isProduction: false,
+    ready: async () => {},
   }
 
   const app = createApp(ctx)

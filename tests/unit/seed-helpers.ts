@@ -4,6 +4,7 @@ import {
   albums,
   tracks,
   artAssets,
+  audioAssets,
   playlists,
   playlistTracks,
   sources,
@@ -49,6 +50,26 @@ export async function seedTrack(
       albumId,
       playtimeSeconds: 180,
       path: `/dev/null/track-${trackCounter}.mp3`,
+      ...overrides,
+    })
+    .returning()
+  return row!
+}
+
+export async function seedAudioAsset(
+  db: DB,
+  trackId: string,
+  overrides?: Partial<typeof audioAssets.$inferInsert>,
+) {
+  const [row] = await db
+    .insert(audioAssets)
+    .values({
+      stableId: `audio-${crypto.randomUUID().slice(0, 8)}`,
+      parentId: trackId,
+      path: "/dev/null/audio.mp3",
+      name: "Audio Track",
+      filetype: "audio",
+      fileExt: ".mp3",
       ...overrides,
     })
     .returning()

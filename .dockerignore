@@ -32,3 +32,6 @@ coverage*
 .partykit/
 data
 docs
+tests/
+test-results/
+logs/

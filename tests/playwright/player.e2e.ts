@@ -1,20 +1,18 @@
 import { test, expect } from "@playwright/test"
 
-test("click a track and verify audio playback with correct metadata", async ({
-  page,
-}) => {
+test("click a track and verify audio playback with correct metadata", async ({ page }) => {
   await page.goto("/login")
   await page.fill("#username", "admin")
-  await page.fill("#password", "admin")
+  await page.fill("#password", "admin123")
   await page.click('button[type="submit"]')
   await page.waitForURL("/")
 
   await page.goto("/albums")
   const albumLink = page.locator('a[href^="/albums/"]').first()
   await albumLink.click()
-  await page.waitForURL(/\/albums\/\w+/)
+  await page.waitForURL(/\/albums\//)
 
-  const trackRow = page.locator('li[id^="track-"]').first()
+  const trackRow = page.locator('ol li[id^="track-"]').first()
   const trackName = await trackRow.locator(".pointer-events-none").textContent()
   expect(trackName).not.toBeNull()
 

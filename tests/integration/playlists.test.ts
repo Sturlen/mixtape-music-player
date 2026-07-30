@@ -40,6 +40,30 @@ describe("GET /api/playlists", () => {
     const body = await res.json()
     expect(body.playlists).toHaveLength(2)
   })
+
+  test("returns fuzzy search results with ?q parameter", async () => {
+    const { app, ctx } = await createTestApp()
+    ctx.playlistStore.playlists.set("p1", {
+      id: "p1",
+      name: "My Awesome Mixtape",
+      tracks: [{ id: "t1", name: "Song A" }],
+    })
+    ctx.playlistStore.playlists.set("p2", {
+      id: "p2",
+      name: "Chill Vibes",
+      tracks: [{ id: "t2", name: "Song B" }],
+    })
+    ctx.fuseInstances.fuse_playlists.setCollection(
+      Array.from(ctx.playlistStore.playlists.values()),
+    )
+    const res = await app.handle(
+      new Request("http://localhost/api/playlists?q=mixtape"),
+    )
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.playlists).toHaveLength(1)
+    expect(body.playlists[0]!.name).toBe("My Awesome Mixtape")
+  })
 })
 
 describe("GET /api/playlists/:id", () => {

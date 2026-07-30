@@ -39,6 +39,7 @@ export interface AppContext {
   isFfmpegEnabled: () => Promise<boolean>
   reloadLibrary: () => Promise<void>
   isProduction: boolean
+  ready: () => Promise<void>
 }
 
 export function createApp(ctx: AppContext) {
@@ -52,6 +53,7 @@ export function createApp(ctx: AppContext) {
     isFfmpegEnabled,
     reloadLibrary,
     isProduction,
+    ready,
   } = ctx
   const { fuse_artists, fuse_albums, fuse_playlists, fuse_tracks } =
     fuseInstances
@@ -77,6 +79,10 @@ export function createApp(ctx: AppContext) {
     .get("/api/*", "418")
     .get("/api", () => redirect("/openapi"))
     .get("/api/stats", async () => await library.getStats())
+    .get("/api/ready", async () => {
+      await ready()
+      return { status: "ok" }
+    })
     .get(
       "/api/search",
       async ({ query: { q } }) => searchService.search(q ?? ""),
